@@ -1,5 +1,5 @@
 import { hashPassword } from "better-auth/crypto";
-import type { Db } from "@/server/db";
+import type { DbOrTx } from "@/server/db";
 import { account, user, type UserRole } from "@/server/db/schema";
 
 type NewCredentialUser = {
@@ -12,31 +12,30 @@ type NewCredentialUser = {
 
 /**
  * Creates a user with an email/password account, bypassing public sign-up (which is disabled).
+ * Run inside a transaction so the user and account rows are written together.
  * Callers are responsible for authorization.
  */
-export async function createCredentialUser(db: Db, input: NewCredentialUser) {
+export async function createCredentialUser(db: DbOrTx, input: NewCredentialUser) {
   const passwordHash = await hashPassword(input.password);
 
-  return db.transaction(async (tx) => {
-    const [created] = await tx
-      .insert(user)
-      .values({
-        email: input.email.toLowerCase(),
-        name: input.name,
-        role: input.role,
-        schoolId: input.schoolId ?? null,
-        emailVerified: true,
-      })
-      .returning();
-    if (!created) throw new Error("User insert returned no row");
+  const [created] = await db
+    .insert(user)
+    .values({
+      email: input.email.toLowerCase(),
+      name: input.name,
+      role: input.role,
+      schoolId: input.schoolId ?? null,
+      emailVerified: true,
+    })
+    .returning();
+  if (!created) throw new Error("User insert returned no row");
 
-    await tx.insert(account).values({
-      userId: created.id,
-      accountId: created.id,
-      providerId: "credential",
-      password: passwordHash,
-    });
-
-    return created;
+  await db.insert(account).values({
+    userId: created.id,
+    accountId: created.id,
+    providerId: "credential",
+    password: passwordHash,
   });
+
+  return created;
 }

@@ -14,7 +14,8 @@ const loginSchema = z.object({
   password: z.string().min(1, "Şifrenizi girin."),
 });
 
-export function LoginForm() {
+/** `next` must already be validated with safeRedirectPath. */
+export function LoginForm({ next }: { next: string | null }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -45,8 +46,8 @@ export function LoginForm() {
       return;
     }
 
-    // The root page redirects to the home page of the signed-in role.
-    router.replace("/");
+    // Without `next`, the root page redirects to the home page of the signed-in role.
+    router.replace(next ?? "/");
     router.refresh();
   }
 

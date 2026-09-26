@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.7.0 | 2026-09-27 | feat | Davet koduyla veli kaydı ve mevcut hesaba çocuk ekleme, zorunlu KVKK onayları, KVKK metin sayfaları, veli çocuk listesi, girişte güvenli `next` dönüşü; "Veli A, öğrenci B'yi göremez" testleri | 2 |
 | 0.6.0 | 2026-09-27 | feat | Öğrenci başına davet kodu + QR (hash'li, tek/çok kullanımlık, süreli, iptal edilebilir), sınıf için yazdırılabilir davet kartları, kilitli kod kullanımı, DB tabanlı rate limit, KVKK taslak metinleri | 2 |
 | 0.5.0 | 2026-09-27 | feat | Öğretmen sınıf oluşturma, sınıf listesi, öğrenci ekleme (tekli + önizlemeli toplu), öğrenci düzenleme ve aktif/pasif; audit kaydı | 2 |
 | 0.4.0 | 2026-09-27 | feat | Davet kodu, KVKK rıza kaydı ve audit log tabloları; veli–öğrenci bağlantısına davet kodu referansı | 2 |
