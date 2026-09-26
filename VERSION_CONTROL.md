@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.3.1 | 2026-09-27 | test | Yetki testleri (PGlite): guard'lar, oturum yardımcıları, giriş, kapalı kayıt, rol yükseltme engeli, giriş rate limit'i; vite-tsconfig-paths kaldırıldı | 1 |
 | 0.3.0 | 2026-09-27 | feat | Better Auth ile e-posta/şifre girişi (açık kayıt kapalı, rol istemciden atanamaz, giriş rate limit), rol bazlı yönlendirme, proxy, rol sayfaları, sahiplik guard'ları, seed | 1 |
 | 0.2.0 | 2026-09-27 | feat | Faz 1 şeması ve ilk migration: okul, Better Auth tabloları, sınıf, sınıf–öğretmen, karakter türü, öğrenci, veli–öğrenci | 1 |
 | 0.1.2 | 2026-09-27 | chore | Next.js 16 + Tailwind 4 + shadcn/ui iskeleti, Docker Compose (Postgres 17), Drizzle/Vitest yapılandırması, script'ler | 1 |
