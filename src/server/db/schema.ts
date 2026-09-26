@@ -27,8 +27,11 @@ const updatedAt = () =>
 
 export const userRole = pgEnum("user_role", ["admin", "teacher", "parent"]);
 export const parentRelation = pgEnum("parent_relation", ["mother", "father", "guardian", "other"]);
+export const consentKind = pgEnum("consent_kind", ["privacy_notice", "explicit_consent"]);
 
 export type UserRole = (typeof userRole.enumValues)[number];
+export type ParentRelation = (typeof parentRelation.enumValues)[number];
+export type ConsentKind = (typeof consentKind.enumValues)[number];
 
 export const school = pgTable("school", {
   id: uuid().primaryKey().defaultRandom(),
@@ -188,6 +191,26 @@ export const student = pgTable(
   ],
 );
 
+export const inviteCode = pgTable(
+  "invite_code",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    studentId: uuid()
+      .notNull()
+      .references(() => student.id, { onDelete: "cascade" }),
+    // SHA-256 of the normalized code; the plain code is only shown once at creation.
+    codeHash: text().notNull().unique(),
+    singleUse: boolean().notNull().default(true),
+    expiresAt: timestamp({ withTimezone: true }),
+    usedAt: timestamp({ withTimezone: true }),
+    usedById: uuid().references(() => user.id, { onDelete: "set null" }),
+    revokedAt: timestamp({ withTimezone: true }),
+    createdById: uuid().references(() => user.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index().on(t.studentId)],
+);
+
 export const parentStudent = pgTable(
   "parent_student",
   {
@@ -198,7 +221,44 @@ export const parentStudent = pgTable(
       .notNull()
       .references(() => student.id, { onDelete: "cascade" }),
     relation: parentRelation().notNull().default("other"),
+    inviteCodeId: uuid().references(() => inviteCode.id, { onDelete: "set null" }),
     createdAt: createdAt(),
   },
   (t) => [primaryKey({ columns: [t.parentId, t.studentId] }), index().on(t.studentId)],
+);
+
+export const consentRecord = pgTable(
+  "consent_record",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    // The child the consent covers; consent is collected per linked child.
+    studentId: uuid().references(() => student.id, { onDelete: "cascade" }),
+    kind: consentKind().notNull(),
+    docVersion: text().notNull(),
+    ip: text(),
+    userAgent: text(),
+    acceptedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    withdrawnAt: timestamp({ withTimezone: true }),
+  },
+  (t) => [index().on(t.userId)],
+);
+
+// Append-only.
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    schoolId: uuid().references(() => school.id, { onDelete: "set null" }),
+    actorId: uuid().references(() => user.id, { onDelete: "set null" }),
+    action: text().notNull(),
+    entity: text().notNull(),
+    entityId: text().notNull(),
+    data: jsonb().$type<Record<string, unknown>>().notNull().default({}),
+    ip: text(),
+    createdAt: createdAt(),
+  },
+  (t) => [index().on(t.entity, t.entityId), index().on(t.schoolId, t.createdAt)],
 );

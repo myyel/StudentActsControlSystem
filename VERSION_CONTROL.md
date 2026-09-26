@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.4.0 | 2026-09-27 | feat | Davet kodu, KVKK rıza kaydı ve audit log tabloları; veli–öğrenci bağlantısına davet kodu referansı | 2 |
 | 0.3.2 | 2026-09-27 | docs | Faz 1 tamamlandı: CLAUDE.md komutları ve test notları güncellendi, güncel faz 2 | 1 |
 | 0.3.1 | 2026-09-27 | test | Yetki testleri (PGlite): guard'lar, oturum yardımcıları, giriş, kapalı kayıt, rol yükseltme engeli, giriş rate limit'i; vite-tsconfig-paths kaldırıldı | 1 |
 | 0.3.0 | 2026-09-27 | feat | Better Auth ile e-posta/şifre girişi (açık kayıt kapalı, rol istemciden atanamaz, giriş rate limit), rol bazlı yönlendirme, proxy, rol sayfaları, sahiplik guard'ları, seed | 1 |
