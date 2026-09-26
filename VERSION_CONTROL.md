@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.9.0 | 2026-09-27 | feat | Davranış tipleri yönetimi (okul/ev sekmeleri, ekle/düzenle, aktif/pasif, sıralama), yeni sınıfa varsayılan 14 davranış, eski sınıflar için "varsayılan listeyi yükle", sınıf alt menüsü | 3 |
 | 0.8.0 | 2026-09-27 | feat | Davranış tipi ve davranış olayı tabloları (puan kısıtları, ev yalnızca pozitif, snapshot'lar, xp/denge farkları, batch benzersizliği) | 3 |
 | 0.7.3 | 2026-09-27 | docs | Faz 2 tamamlandı: PRD'ye davet/KVKK kararları, CLAUDE.md'ye kod kalıpları ve `db:reset`, güncel faz 3 | 2 |
 | 0.7.2 | 2026-09-27 | fix | Özel mesajı olmayan doğrulama hataları İngilizce yerine Türkçe gösteriliyor (Zod Türkçe dil paketi) | 2 |

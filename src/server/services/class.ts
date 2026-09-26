@@ -5,6 +5,7 @@ import type { AuthUser } from "@/server/auth/guards";
 import { forbidden } from "@/server/auth/errors";
 import type { CreateClassInput } from "@/server/validation/class";
 import { writeAudit } from "./audit";
+import { seedDefaultBehaviorTypes } from "./behavior-type";
 
 /** Creates a class in the teacher's own school and assigns the teacher to it. */
 export async function createClass(db: Db, teacher: AuthUser, input: CreateClassInput, ip?: string | null) {
@@ -19,6 +20,7 @@ export async function createClass(db: Db, teacher: AuthUser, input: CreateClassI
     if (!created) throw new Error("Class insert returned no row");
 
     await tx.insert(classTeacher).values({ classId: created.id, userId: teacher.id });
+    await seedDefaultBehaviorTypes(tx, created.id);
     await writeAudit(tx, {
       action: "class.create",
       entity: "class",

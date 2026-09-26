@@ -7,11 +7,16 @@ export type AuditAction =
   | "student.update"
   | "invite.create"
   | "invite.revoke"
-  | "parent.link";
+  | "parent.link"
+  | "behavior_type.create"
+  | "behavior_type.update"
+  | "behavior.give"
+  | "behavior.undo"
+  | "behavior.delete";
 
 export type AuditEntry = {
   action: AuditAction;
-  entity: "class" | "student" | "invite_code" | "parent_student";
+  entity: "class" | "student" | "invite_code" | "parent_student" | "behavior_type" | "behavior_event";
   entityId: string;
   actorId?: string | null;
   schoolId?: string | null;

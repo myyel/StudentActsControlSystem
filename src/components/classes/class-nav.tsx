@@ -1,0 +1,36 @@
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+
+const TABS = [
+  { key: "puanlama", label: "Puanlama", href: (id: string) => `/ogretmen/siniflar/${id}` },
+  { key: "davranislar", label: "Davranışlar", href: (id: string) => `/ogretmen/siniflar/${id}/davranislar` },
+  { key: "davetler", label: "Veli davet kartları", href: (id: string) => `/ogretmen/siniflar/${id}/davetler` },
+] as const;
+
+export type ClassTab = (typeof TABS)[number]["key"];
+
+export function ClassNav({ classId, className, active }: { classId: string; className: string; active: ClassTab }) {
+  return (
+    <div className="flex flex-col gap-2 print:hidden">
+      <Link href="/ogretmen" className="text-sm text-muted-foreground hover:underline">
+        ← Sınıflarım
+      </Link>
+      <h1 className="text-2xl font-semibold">{className}</h1>
+      <nav aria-label="Sınıf menüsü" className="-mx-1 flex gap-1 overflow-x-auto">
+        {TABS.map((tab) => (
+          <Link
+            key={tab.key}
+            href={tab.href(classId)}
+            aria-current={tab.key === active ? "page" : undefined}
+            className={cn(
+              "flex min-h-11 shrink-0 items-center rounded-md px-3 text-sm font-medium transition-colors",
+              tab.key === active ? "bg-primary text-primary-foreground" : "hover:bg-accent",
+            )}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </nav>
+    </div>
+  );
+}
