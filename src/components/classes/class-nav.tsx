@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 
 const TABS = [
   { key: "puanlama", label: "Puanlama", href: (id: string) => `/ogretmen/siniflar/${id}` },
+  { key: "matris", label: "Matris", href: (id: string) => `/ogretmen/siniflar/${id}/matris` },
   { key: "davranislar", label: "Davranışlar", href: (id: string) => `/ogretmen/siniflar/${id}/davranislar` },
   { key: "duraklar", label: "Duraklar", href: (id: string) => `/ogretmen/siniflar/${id}/duraklar` },
   { key: "davetler", label: "Veli davet kartları", href: (id: string) => `/ogretmen/siniflar/${id}/davetler` },
