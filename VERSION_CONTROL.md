@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.15.0 | 2026-09-27 | feat | Veli için çocuğun yol haritası: ders kartları, ilerleme çubuğu, konu başlıkları altında durak patikası (tamamlandı + yıldız, "şu an burada", soluk gelecek duraklar); veli ana sayfasından bağlantı | 4 |
 | 0.14.0 | 2026-09-27 | feat | Sınıf matrisi (öğrenci × durak, ders sekmeleri): dokunarak durum döngüsü, yıldız modu, iyimser güncelleme, durak başlığından tüm sınıf/seçili öğrenciler için toplu işaretleme, tamamlayan sayıları | 4 |
 | 0.13.0 | 2026-09-27 | feat | Ders → Konu → Durak yönetimi: ekle, yeniden adlandır, arşivle/geri al, @dnd-kit ile dokunmatik ve klavyeyle sürükle-bırak sıralama (Türkçe ekran okuyucu duyuruları) | 4 |
 | 0.12.0 | 2026-09-27 | feat | Ders, konu, durak (arşivlenebilir) ve öğrenci ilerlemesi tabloları (durum + yalnızca tamamlanmışta 0–3 yıldız) | 4 |

@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { InviteCodeEntry } from "@/components/parents/invite-code-entry";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RELATION_LABEL } from "@/lib/relations";
 import { formatStudentName } from "@/lib/student-names";
@@ -20,11 +22,19 @@ export default async function ParentHomePage() {
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2">
           {children.map((c) => (
-            <li key={c.id} className="rounded-xl border p-4">
-              <p className="text-lg font-semibold">{formatStudentName(c)}</p>
-              <p className="text-sm text-muted-foreground">
-                {c.className} · {RELATION_LABEL[c.relation]}
-              </p>
+            <li key={c.id} className="flex flex-col gap-3 rounded-xl border p-4">
+              <div>
+                <p className="text-lg font-semibold">{formatStudentName(c)}</p>
+                <p className="text-sm text-muted-foreground">
+                  {c.className} · {RELATION_LABEL[c.relation]}
+                </p>
+              </div>
+              <Link
+                href={`/veli/${c.id}/yol-haritasi`}
+                className={buttonVariants({ variant: "outline", className: "h-11 self-start" })}
+              >
+                Yol haritası
+              </Link>
             </li>
           ))}
         </ul>
