@@ -1,5 +1,6 @@
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import type { Db } from "@/server/db";
+import { isUniqueViolation } from "@/server/db/errors";
 import { parentStudent, schoolClass, student, user, type ParentRelation } from "@/server/db/schema";
 import { createCredentialUser } from "@/server/auth/users";
 import { forbidden } from "@/server/auth/errors";
@@ -49,12 +50,6 @@ export async function registerParentWithInvite(db: Db, input: RegisterInput) {
   }
 }
 
-function isUniqueViolation(error: unknown): boolean {
-  for (let e: unknown = error; e && typeof e === "object"; e = (e as { cause?: unknown }).cause) {
-    if ((e as { code?: unknown }).code === "23505") return true;
-  }
-  return false;
-}
 
 const childColumns = {
   id: student.id,

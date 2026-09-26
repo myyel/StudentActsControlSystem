@@ -100,6 +100,7 @@ export async function listStudentsForClass(db: Db, classId: string) {
       firstName: student.firstName,
       lastInitial: student.lastInitial,
       active: student.active,
+      xp: student.xp,
       parentCount: count(parentStudent.parentId),
     })
     .from(student)
