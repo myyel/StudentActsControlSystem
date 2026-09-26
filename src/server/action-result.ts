@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { AuthError } from "@/server/auth/errors";
 
 export type ActionResult<T = undefined> =

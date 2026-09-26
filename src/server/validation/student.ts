@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { MAX_BULK_STUDENTS, MAX_FIRST_NAME_LENGTH, parseStudentLines } from "@/lib/student-names";
 
 export const studentNameSchema = z.object({

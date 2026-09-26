@@ -1,5 +1,5 @@
 import { and, eq, isNull } from "drizzle-orm";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { db } from "@/server/db";
 import { classTeacher, parentStudent, schoolClass, student, type UserRole } from "@/server/db/schema";
 import { forbidden } from "./errors";

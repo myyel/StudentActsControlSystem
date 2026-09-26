@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import type { InviteOptions } from "@/server/services/invite";
 
 /** From the form: an unchecked "singleUse" checkbox is simply absent. */

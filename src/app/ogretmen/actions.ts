@@ -2,7 +2,7 @@
 
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { db } from "@/server/db";
 import { forbidden } from "@/server/auth/errors";
 import { assertTeacherOfClass, assertTeacherOfStudent } from "@/server/auth/guards";

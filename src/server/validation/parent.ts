@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { parentRelation } from "@/server/db/schema";
 
 const checked = (message: string) =>
