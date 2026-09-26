@@ -23,5 +23,6 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.1.2 | 2026-09-27 | chore | Next.js 16 + Tailwind 4 + shadcn/ui iskeleti, Docker Compose (Postgres 17), Drizzle/Vitest yapılandırması, script'ler | 1 |
 | 0.1.1 | 2026-09-27 | chore | Sürüm kontrol dosyası ve commit başına sürümleme kuralı eklendi | 1 |
 | 0.1.0 | 2026-09-27 | docs | Faz 0: veri modeli kararları, PRD §6 şeması, CLAUDE.md kural 4 güncellendi | 0 |

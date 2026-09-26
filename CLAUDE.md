@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+@AGENTS.md
+
 Bu proje, ilkokul (6–10 yaş) sınıfları için öğretmen–veli davranış ve gelişim takip uygulamasıdır. Ürün gereksinimleri: **`docs/PRD.md`** — her oturuma başlamadan oku.
 
 ## Teknoloji yığını
