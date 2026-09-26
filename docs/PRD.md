@@ -71,9 +71,17 @@
 
 ### 4.5 Akademik duraklar
 - Hiyerarşi: **Ders → Konu → Durak** (sıralı; sürükle-bırak ile sıralama).
+  - Sürükle-bırak dokunmatik ekranda ve klavyeyle çalışır (`@dnd-kit`). Sıralama aynı üst öğe içindedir; durağı başka konuya taşımak henüz yok.
+  - Silme yerine **arşivleme**: arşivlenen öğe (ve altındakiler) matriste ve veli ekranında görünmez, ilerleme kayıtları korunur, geri alınabilir.
 - Her öğrenci × durak için durum: `not_started` | `in_progress` | `completed` (+ isteğe bağlı 0–3 yıldız).
+  - Yıldız yalnızca tamamlanan duraklarda olabilir.
 - Öğretmen görünümü: sınıf matrisi (satır öğrenci, sütun durak), hücreye dokunarak durum değiştirme, toplu işaretleme.
+  - Matris ders ders gösterilir; sütunlar konu başlıkları altında gruplanır.
+  - Dokunuş durumu döndürür: Başlamadı → Devam ediyor → Tamamlandı → Başlamadı. "Yıldız modu" açıkken tamamlanmış hücreye dokunmak yıldızı 0→1→2→3→0 yapar.
+  - Toplu işaretleme durak başlığından yapılır: tüm sınıf veya seçili öğrenciler için Tamamlandı / Devam ediyor / Başlamadı. Zaten tamamlanmış hücrelerin yıldızı korunur.
 - Veli görünümü: çocuğun her ders için ilerlediği "yol haritası" görseli.
+  - Tüm duraklar görünür: tamamlananlar renkli + yıldız, devam eden "şu an burada" vurgulu, gelecek duraklar soluk. Ders başına ilerleme çubuğu var. Başka öğrenciyle kıyas yoktur.
+- İlerleme değişiklikleri veliye bildirim göndermez (bildirimler Faz 7).
 
 ### 4.6 Karakterler
 - Birden fazla karakter türü (örn. ejderha, baykuş, robot, tohum→ağaç); öğrenci/öğretmen seçer.
@@ -147,6 +155,7 @@ Subject(id, classId, name, sortOrder, archivedAt?)
 Topic(id, subjectId, name, sortOrder, archivedAt?)
 Stage(id, topicId, name, sortOrder, archivedAt?)
 StudentProgress(studentId, stageId, status, stars 0–3?, updatedById?, updatedAt)  PK(studentId, stageId)
+  -- satır yoksa "başlamadı"; başlamadı'ya dönüş satırı siler. check: stars yalnızca status='completed'
 Message(id, classId, studentId?, authorId?, title, body, createdAt, deletedAt?)
 MessageRead(messageId, parentId, readAt, reaction?)                PK(messageId, parentId)
 Notification(id, userId, type, payload jsonb, url, readAt?, createdAt)
