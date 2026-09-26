@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StudentEditForm } from "@/components/classes/student-edit-form";
+import { StudentInvites } from "@/components/invites/student-invites";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatStudentName } from "@/lib/student-names";
 import { RELATION_LABEL } from "@/lib/relations";
 import { db } from "@/server/db";
 import { assertTeacherOfStudent } from "@/server/auth/guards";
 import { orNotFound, requirePageRole } from "@/server/auth/session";
+import { listInvitesForStudent } from "@/server/services/invite";
 import { getStudentForTeacher } from "@/server/services/student";
 
 export default async function StudentPage({
@@ -16,20 +18,23 @@ export default async function StudentPage({
   const { user } = await requirePageRole("teacher");
   await orNotFound(assertTeacherOfStudent(user, ogrenciId));
 
-  const student = await getStudentForTeacher(db, ogrenciId);
+  const [student, invites] = await Promise.all([
+    getStudentForTeacher(db, ogrenciId),
+    listInvitesForStudent(db, ogrenciId),
+  ]);
   // The URL's class must be the student's class.
   if (student.classId !== sinifId) notFound();
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <div>
+      <div className="print:hidden">
         <Link href={`/ogretmen/siniflar/${sinifId}`} className="text-sm text-muted-foreground hover:underline">
           ← {student.className}
         </Link>
         <h1 className="text-2xl font-semibold">{formatStudentName(student)}</h1>
       </div>
 
-      <Card>
+      <Card className="print:hidden">
         <CardHeader>
           <CardTitle>Bilgiler</CardTitle>
         </CardHeader>
@@ -43,7 +48,7 @@ export default async function StudentPage({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="print:hidden">
         <CardHeader>
           <CardTitle>Bağlı veliler</CardTitle>
         </CardHeader>
@@ -62,6 +67,15 @@ export default async function StudentPage({
               ))}
             </ul>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="print:border-0 print:shadow-none">
+        <CardHeader className="print:hidden">
+          <CardTitle>Veli davet kodu</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <StudentInvites studentId={student.id} studentName={formatStudentName(student)} invites={invites} />
         </CardContent>
       </Card>
     </div>

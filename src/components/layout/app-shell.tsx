@@ -10,14 +10,14 @@ type AppShellProps = {
 export function AppShell({ user, children }: AppShellProps) {
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="flex items-center justify-between gap-4 border-b px-4 py-2">
+      <header className="flex items-center justify-between gap-4 border-b px-4 py-2 print:hidden">
         <div className="min-w-0">
           <p className="truncate font-medium">{user.name}</p>
           <p className="text-sm text-muted-foreground">{ROLE_LABEL[user.role]}</p>
         </div>
         <SignOutButton />
       </header>
-      <main className="flex-1 p-4">{children}</main>
+      <main className="flex-1 p-4 print:p-0">{children}</main>
     </div>
   );
 }

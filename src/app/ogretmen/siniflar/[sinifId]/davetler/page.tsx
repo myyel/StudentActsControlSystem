@@ -1,0 +1,29 @@
+import Link from "next/link";
+import { ClassInvites } from "@/components/invites/class-invites";
+import { db } from "@/server/db";
+import { assertTeacherOfClass } from "@/server/auth/guards";
+import { orNotFound, requirePageRole } from "@/server/auth/session";
+import { getClass } from "@/server/services/class";
+
+export default async function ClassInvitesPage({ params }: PageProps<"/ogretmen/siniflar/[sinifId]/davetler">) {
+  const { sinifId } = await params;
+  const { user } = await requirePageRole("teacher");
+  await orNotFound(assertTeacherOfClass(user, sinifId));
+  const cls = await getClass(db, sinifId);
+
+  return (
+    <div className="mx-auto flex max-w-5xl flex-col gap-6">
+      <div className="print:hidden">
+        <Link href={`/ogretmen/siniflar/${sinifId}`} className="text-sm text-muted-foreground hover:underline">
+          ← {cls.name}
+        </Link>
+        <h1 className="text-2xl font-semibold">Veli davet kartları</h1>
+        <p className="text-muted-foreground">
+          Her öğrenci için bir davet kartı üretilir. Kartları yazdırıp velilere dağıtabilirsiniz; veli QR&apos;ı
+          okutarak veya kodu girerek kayıt olur.
+        </p>
+      </div>
+      <ClassInvites classId={sinifId} />
+    </div>
+  );
+}
