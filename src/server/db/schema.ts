@@ -12,6 +12,7 @@ import {
   smallint,
   text,
   timestamp,
+  unique,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -28,10 +29,13 @@ const updatedAt = () =>
 export const userRole = pgEnum("user_role", ["admin", "teacher", "parent"]);
 export const parentRelation = pgEnum("parent_relation", ["mother", "father", "guardian", "other"]);
 export const consentKind = pgEnum("consent_kind", ["privacy_notice", "explicit_consent"]);
+export const behaviorScope = pgEnum("behavior_scope", ["school", "home"]);
+export const eventDeleteReason = pgEnum("event_delete_reason", ["undo", "delete"]);
 
 export type UserRole = (typeof userRole.enumValues)[number];
 export type ParentRelation = (typeof parentRelation.enumValues)[number];
 export type ConsentKind = (typeof consentKind.enumValues)[number];
+export type BehaviorScope = (typeof behaviorScope.enumValues)[number];
 
 export const school = pgTable("school", {
   id: uuid().primaryKey().defaultRandom(),
@@ -261,4 +265,64 @@ export const auditLog = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index().on(t.entity, t.entityId), index().on(t.schoolId, t.createdAt)],
+);
+
+export const behaviorType = pgTable(
+  "behavior_type",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    classId: uuid()
+      .notNull()
+      .references(() => schoolClass.id, { onDelete: "cascade" }),
+    name: varchar({ length: 40 }).notNull(),
+    icon: varchar({ length: 16 }).notNull(),
+    points: integer().notNull(),
+    scope: behaviorScope().notNull(),
+    active: boolean().notNull().default(true),
+    sortOrder: integer().notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index().on(t.classId, t.scope, t.sortOrder),
+    check("behavior_type_points_check", sql`${t.points} <> 0 and ${t.points} between -10 and 10`),
+    // Home behaviors are positive only (product decision, phase 0).
+    check("behavior_type_home_positive_check", sql`${t.scope} <> 'home' or ${t.points} > 0`),
+  ],
+);
+
+export const behaviorEvent = pgTable(
+  "behavior_event",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    studentId: uuid()
+      .notNull()
+      .references(() => student.id, { onDelete: "cascade" }),
+    classId: uuid()
+      .notNull()
+      .references(() => schoolClass.id, { onDelete: "cascade" }),
+    behaviorTypeId: uuid().references(() => behaviorType.id, { onDelete: "set null" }),
+    // Copies taken at the time of the event: editing the type never rewrites history.
+    nameSnapshot: varchar({ length: 40 }).notNull(),
+    iconSnapshot: varchar({ length: 16 }).notNull(),
+    pointsSnapshot: integer().notNull(),
+    // What this event added to the student's counters; reverted exactly on undo/delete.
+    xpDelta: integer().notNull(),
+    balanceDelta: integer().notNull(),
+    source: behaviorScope().notNull(),
+    givenById: uuid().references(() => user.id, { onDelete: "set null" }),
+    note: varchar({ length: 200 }),
+    // Client-generated per tap; groups bulk scoring and makes retries idempotent.
+    batchId: uuid().notNull(),
+    createdAt: createdAt(),
+    deletedAt: timestamp({ withTimezone: true }),
+    deletedById: uuid().references(() => user.id, { onDelete: "set null" }),
+    deleteReason: eventDeleteReason(),
+  },
+  (t) => [
+    unique("behavior_event_student_batch_unique").on(t.studentId, t.batchId),
+    index().on(t.studentId, t.createdAt),
+    index().on(t.classId, t.createdAt),
+    index().on(t.batchId),
+    check("behavior_event_xp_delta_check", sql`${t.xpDelta} >= 0`),
+  ],
 );
