@@ -30,11 +30,19 @@
 - Öğretmen sınıf oluşturur, öğrenci ekler (tek tek veya satır satır isim yapıştırarak toplu).
 - Öğrenci: ad, soyad (isteğe bağlı baş harf), karakter türü, aktif/pasif.
 - Öğretmen her öğrenci için **veli davet kodu + QR** üretir (tek kullanımlık veya süreli, iptal edilebilir).
+  - Varsayılan: **tek kullanımlık, 14 gün**. Öğretmen kod başına tek/çok kullanımlık ve 7/14/30 gün/süresiz seçebilir.
+  - Kod 8 karakterdir (`ABCD-EFGH`, karışan 0/O, 1/I/L yok). Veritabanında yalnızca hash'i durur; düz kod yalnızca üretildiği anda gösterilir, kaybolursa yeni kod üretilir.
+  - Sınıfın tamamı için yazdırılabilir davet kartları üretilebilir.
+- Yeni öğrenciye okulun ilk aktif karakter türü atanır (değiştirme Faz 5). Öğrenci silme Faz 9'da (KVKK) ele alınır.
 
 ### 4.2 Veli kaydı
 - Veli yalnızca davet koduyla kayıt olur / mevcut hesabına çocuk ekler. Açık kayıt yoktur.
 - Bir öğrencinin birden fazla velisi, bir velinin birden fazla çocuğu olabilir.
 - Kayıt sırasında KVKK aydınlatma metni gösterilir, açık rıza alınır ve kaydedilir.
+  - "Aydınlatma metnini okudum" ve "açık rıza" kutularının **ikisi de zorunludur**; her bağlanan çocuk için ayrı kayıt (metin sürümü, IP, tarayıcı) tutulur.
+  - Metinler şu an **taslaktır** (`src/content/kvkk.ts`); pilot öncesi okulun hukuken onaylı metniyle değiştirilir ve sürüm artırılır.
+- Davet sayfası, kodu açan kişiye kayıttan önce çocuğun adını, soyad baş harfini ve sınıfını gösterir ("Ada Y. — 2-A"). Kod doğrulama IP başına dakikada 10 denemeyle sınırlıdır.
+- E-posta doğrulama MVP'de yoktur (e-posta gönderim altyapısı yok); pilot öncesi değerlendirilir.
 
 ### 4.3 Davranış puanlama
 - **Davranış tipi**: ad, ikon/emoji, puan (tam sayı, negatif olabilir), kapsam (`school` | `home`), sınıfa ait, aktif/pasif.

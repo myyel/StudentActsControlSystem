@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.7.3 | 2026-09-27 | docs | Faz 2 tamamlandı: PRD'ye davet/KVKK kararları, CLAUDE.md'ye kod kalıpları ve `db:reset`, güncel faz 3 | 2 |
 | 0.7.2 | 2026-09-27 | fix | Özel mesajı olmayan doğrulama hataları İngilizce yerine Türkçe gösteriliyor (Zod Türkçe dil paketi) | 2 |
 | 0.7.1 | 2026-09-27 | chore | Faz 2 seed verisi (2 öğretmen, 2-A/2-B, davet koduyla bağlanan 6 veli, rıza/audit kayıtları, deneme için aktif/iptal/süresi dolmuş kodlar) ve `pnpm db:reset` | 2 |
 | 0.7.0 | 2026-09-27 | feat | Davet koduyla veli kaydı ve mevcut hesaba çocuk ekleme, zorunlu KVKK onayları, KVKK metin sayfaları, veli çocuk listesi, girişte güvenli `next` dönüşü; "Veli A, öğrenci B'yi göremez" testleri | 2 |

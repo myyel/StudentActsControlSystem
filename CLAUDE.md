@@ -61,7 +61,8 @@ docker compose up -d db        # Postgres
 pnpm dev                       # geliştirme sunucusu
 pnpm db:generate               # migration üret
 pnpm db:migrate                # migration uygula
-pnpm db:seed                   # örnek veri (1 okul, 1 admin, 1 öğretmen, 20 öğrenci, 5 veli; şifre: Sifre1234!)
+pnpm db:seed                   # örnek veri (boş DB'de); şifre: Sifre1234!, davet kodlarını konsola yazar
+pnpm db:reset                  # tüm tabloları boşaltıp seed'i yeniden çalıştırır (yalnızca geliştirme)
 pnpm lint && pnpm typecheck
 pnpm test                      # Vitest — PGlite (bellek içi Postgres) kullanır, Docker gerekmez
 pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board projeleri) — Faz 8
@@ -69,6 +70,14 @@ pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board proj
 
 - Testlerde veritabanı: `tests/helpers/db.ts` → `createTestDb()` (migration'lar uygulanmış PGlite). `@/server/db`'yi kullanan kodu test ederken `vi.mock("@/server/db", …)` ile bu örneğe yönlendir (örnek: `tests/integration/guards.test.ts`).
 - Better Auth örneği `createAuth(db, options)` ile üretilir; testte `{ nextjs: false }` geç.
+
+## Kod kalıpları
+- **Zod**'u her zaman `@/lib/zod`'dan import et (`"zod"`dan değil): Türkçe hata mesajları orada ayarlı.
+- **Servisler** `db` parametresi alır (`Db` veya `DbOrTx`), yetki kontrolü yapmaz; çağıran action/sayfa önce guard'ı çalıştırır. Birlikte atomik olması gereken servisler aynı `tx` ile çağrılır.
+- **Action'lar** `ActionResult` döner (`src/server/action-result.ts`): beklenen hatalar `AuthError`/`UserError`/`ZodError` → `toActionError`; kullanıcıya gösterilecek iş hataları `UserError` ile fırlatılır. Değişiklikten sonra `refresh()` (`next/cache`).
+- **Sayfalar** sahiplik hatasında 404 verir: `await orNotFound(assertTeacherOfClass(user, id))`.
+- **Audit**: kritik işlemler `writeAudit(tx, …)` ile aynı transaction içinde yazılır.
+- IP/tarayıcı bilgisi `getRequestMeta()`; üretimde reverse proxy `x-forwarded-for`'u doğru ayarlamalı (Faz 9).
 
 ## Çalışma şekli
 - Her iş için önce plan çıkar, onay al, sonra uygula.
@@ -92,4 +101,4 @@ pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board proj
 8. PWA + responsive e2e testleri + erişilebilirlik
 9. Güvenlik, KVKK (silme/dışa aktarma, audit), Docker deploy, yedekleme, pilot
 
-Güncel faz: **2**
+Güncel faz: **3**
