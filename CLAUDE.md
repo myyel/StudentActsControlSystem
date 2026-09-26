@@ -70,6 +70,7 @@ pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board proj
 - Her özellik için **yetki testleri zorunlu**: özellikle "veli A, öğrenci B'nin verisine erişemez" ve "öğretmen başka sınıfı değiştiremez".
 - Bir fazı bitirmeden önce `pnpm lint && pnpm typecheck && pnpm test` geçmeli.
 - Küçük, anlamlı commit'ler at (Conventional Commits).
+- **Her commit sürümlenir:** `VERSION_CONTROL.md` en üstüne yeni sürüm satırı eklenir ve aynı commit'e dahil edilir; commit `vX.Y.Z` olarak etiketlenir, `git push --follow-tags` ile gönderilir. Kurallar dosyanın başında.
 - Yeni bağımlılık eklemeden önce gerekçesini söyle.
 - Emin olmadığın ürün kararlarında PRD'ye bak; PRD'de yoksa sor, varsayım yapma.
 
