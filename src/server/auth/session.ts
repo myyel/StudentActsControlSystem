@@ -1,10 +1,10 @@
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { ROLE_HOME } from "@/lib/roles";
 import type { UserRole } from "@/server/db/schema";
 import { auth } from "./auth";
-import { unauthenticated } from "./errors";
+import { AuthError, unauthenticated } from "./errors";
 import { assertRole } from "./guards";
 
 /** Session for the current request, deduplicated across a single render. */
@@ -30,4 +30,14 @@ export async function requirePageRole(...roles: UserRole[]) {
   if (!session) redirect("/giris");
   if (!roles.includes(session.user.role)) redirect(ROLE_HOME[session.user.role]);
   return session;
+}
+
+/** For pages: an ownership failure renders 404, so other users' resources look nonexistent. */
+export async function orNotFound<T>(check: Promise<T>): Promise<T> {
+  try {
+    return await check;
+  } catch (error) {
+    if (error instanceof AuthError) notFound();
+    throw error;
+  }
 }

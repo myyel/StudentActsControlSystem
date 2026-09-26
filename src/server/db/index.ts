@@ -5,6 +5,9 @@ import * as schema from "./schema";
 
 /** Driver-agnostic handle: satisfied by node-postgres in the app and PGlite in tests. */
 export type Db = PgDatabase<PgQueryResultHKT, typeof schema>;
+export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
+/** Services accept either, so callers can compose them inside one transaction. */
+export type DbOrTx = Db | Tx;
 
 export function createDb(connectionString: string) {
   const pool = new Pool({ connectionString });
