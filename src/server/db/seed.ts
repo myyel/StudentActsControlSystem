@@ -5,10 +5,11 @@ import { createCredentialUser } from "@/server/auth/users";
 import { newUuid } from "@/lib/uuid";
 import { giveBehavior } from "@/server/services/behavior";
 import { listBehaviorTypes, seedDefaultBehaviorTypes } from "@/server/services/behavior-type";
+import { createNode } from "@/server/services/curriculum";
 import { createInviteCodes, hashInviteCode, inviteUrl, redeemInviteCode, revokeInviteCode } from "@/server/services/invite";
 import { createDb, type Tx } from "./index";
 import * as schema from "./schema";
-import { behaviorEvent, characterType, classTeacher, inviteCode, school, schoolClass, student, type ParentRelation } from "./schema";
+import { behaviorEvent, characterType, studentProgress, classTeacher, inviteCode, school, schoolClass, student, type ParentRelation } from "./schema";
 
 const DEV_PASSWORD = "Sifre1234!";
 const SEED_IP = "127.0.0.1";
@@ -85,6 +86,69 @@ async function seedBehaviorHistory(tx: Tx, teacher: { id: string; role: "teacher
   return count;
 }
 
+type Curriculum = [subject: string, topics: [topic: string, stages: string[]][]][];
+
+const CURRICULUM_2A: Curriculum = [
+  ["Türkçe", [
+    ["Okuma", ["Harfleri tanıma", "Heceleme", "Akıcı okuma", "Okuduğunu anlama"]],
+    ["Yazma", ["Harfleri yazma", "Kelime yazma", "Cümle kurma"]],
+  ]],
+  ["Matematik", [
+    ["Sayılar", ["1–20 arası sayılar", "100’e kadar sayma", "Onluk ve birlik", "Sayıları karşılaştırma"]],
+    ["Toplama", ["Onluk bozmadan toplama", "Onluk bozarak toplama", "Zihinden toplama", "Toplama problemleri"]],
+    ["Çıkarma", ["Onluk bozmadan çıkarma", "Onluk bozarak çıkarma", "Çıkarma problemleri"]],
+  ]],
+  ["Hayat Bilgisi", [
+    ["Okulumuz", ["Sınıf kuralları", "Okul çalışanları", "Güvenli okul"]],
+    ["Ailem", ["Aile bireyleri", "Evdeki görevlerim", "Aile büyükleri"]],
+  ]],
+];
+
+const CURRICULUM_2B: Curriculum = [
+  ["Matematik", [
+    ["Sayılar", ["1–20 arası sayılar", "100’e kadar sayma", "Onluk ve birlik"]],
+    ["Toplama", ["Onluk bozmadan toplama", "Onluk bozarak toplama"]],
+  ]],
+];
+
+type TeacherActor = { id: string; role: "teacher"; schoolId: string };
+
+/** Creates the tree through the service (so ordering matches the app); returns stage ids per subject. */
+async function seedCurriculum(tx: Tx, teacher: TeacherActor, classId: string, curriculum: Curriculum) {
+  const stagesBySubject: string[][] = [];
+  for (const [subjectName, topics] of curriculum) {
+    const subjectId = await createNode(tx, teacher, "subject", classId, subjectName);
+    const ids: string[] = [];
+    for (const [topicName, stageNames] of topics) {
+      const topicId = await createNode(tx, teacher, "topic", subjectId, topicName);
+      for (const name of stageNames) ids.push(await createNode(tx, teacher, "stage", topicId, name));
+    }
+    stagesBySubject.push(ids);
+  }
+  return stagesBySubject;
+}
+
+/**
+ * Each student sits somewhere along each subject: stages before that point are completed
+ * (some with stars), the stage at it is in progress, later ones are not started.
+ */
+async function seedProgress(tx: Tx, teacherId: string, studentIds: string[], stagesBySubject: string[][]) {
+  const random = mulberry32(2027);
+  const rows: (typeof studentProgress.$inferInsert)[] = [];
+  for (const stageIds of stagesBySubject) {
+    for (const studentId of studentIds) {
+      const position = Math.floor(random() * stageIds.length * 0.8);
+      stageIds.slice(0, position + 1).forEach((stageId, i) => {
+        const completed = i < position;
+        const stars = completed && random() < 0.7 ? Math.floor(random() * 4) : null;
+        rows.push({ studentId, stageId, status: completed ? "completed" : "in_progress", stars, updatedById: teacherId });
+      });
+    }
+  }
+  await tx.insert(studentProgress).values(rows);
+  return rows.length;
+}
+
 async function truncateAll(tx: Tx) {
   const tables = Object.values(schema).flatMap((v) => (is(v, PgTable) ? [`"${getTableName(v)}"`] : []));
   await tx.execute(sql.raw(`TRUNCATE ${tables.join(", ")} RESTART IDENTITY CASCADE`));
@@ -145,6 +209,10 @@ async function main() {
         }
       }
 
+      const stages2A = await seedCurriculum(tx, { id: teacher.id, role: "teacher", schoolId }, a.cls.id, CURRICULUM_2A);
+      await seedCurriculum(tx, { id: teacher2.id, role: "teacher", schoolId }, b.cls.id, CURRICULUM_2B);
+      const progressCount = await seedProgress(tx, teacher.id, a.students.map((s) => s.id), stages2A);
+
       const eventCount = await seedBehaviorHistory(
         tx,
         { id: teacher.id, role: "teacher", schoolId },
@@ -172,7 +240,7 @@ async function main() {
       const expired = await invite(11, { singleUse: true, validDays: 7 });
       await tx.update(inviteCode).set({ expiresAt: new Date(Date.now() - 60_000) }).where(eq(inviteCode.codeHash, hashInviteCode(expired.code)));
 
-      return { active, revoked, expired, eventCount };
+      return { active, revoked, expired, eventCount, progressCount };
     });
 
     if (!printed) {
@@ -189,6 +257,7 @@ async function main() {
     console.log("  veli1@ornek.okul       Ada Y. ve Ali K. (2-A)");
     console.log("  veli2 … veli5          birer çocuk (2-A)");
     console.log("  veli6@ornek.okul       Arda C. (2-B)\n");
+    console.log(`Müfredat: 2-A için Türkçe, Matematik, Hayat Bilgisi (${printed.progressCount} ilerleme kaydı); 2-B için Matematik.`);
     console.log(`Davranış geçmişi: 2-A için son 10 güne yayılmış ${printed.eventCount} puan kaydı.
 `);
     console.log("Kullanılabilir davet kodları (2-A):");
