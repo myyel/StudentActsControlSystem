@@ -2,10 +2,13 @@ import { eq, getTableName, is, sql } from "drizzle-orm";
 import { PgTable } from "drizzle-orm/pg-core";
 import { formatInviteCode } from "@/lib/invite-code";
 import { createCredentialUser } from "@/server/auth/users";
+import { newUuid } from "@/lib/uuid";
+import { giveBehavior } from "@/server/services/behavior";
+import { listBehaviorTypes, seedDefaultBehaviorTypes } from "@/server/services/behavior-type";
 import { createInviteCodes, hashInviteCode, inviteUrl, redeemInviteCode, revokeInviteCode } from "@/server/services/invite";
 import { createDb, type Tx } from "./index";
 import * as schema from "./schema";
-import { characterType, classTeacher, inviteCode, school, schoolClass, student, type ParentRelation } from "./schema";
+import { behaviorEvent, characterType, classTeacher, inviteCode, school, schoolClass, student, type ParentRelation } from "./schema";
 
 const DEV_PASSWORD = "Sifre1234!";
 const SEED_IP = "127.0.0.1";
@@ -25,11 +28,61 @@ const CLASS_2B = [
 async function addClass(tx: Tx, schoolId: string, teacherId: string, name: string, names: readonly (readonly [string, string])[], characterTypeIds: string[]) {
   const [cls] = await tx.insert(schoolClass).values({ schoolId, name, gradeLevel: 2, academicYear: "2026-2027" }).returning();
   await tx.insert(classTeacher).values({ classId: cls!.id, userId: teacherId });
+  await seedDefaultBehaviorTypes(tx, cls!.id);
   const students = await tx
     .insert(student)
     .values(names.map(([firstName, lastInitial], i) => ({ classId: cls!.id, firstName, lastInitial, characterTypeId: characterTypeIds[i % characterTypeIds.length]! })))
     .returning();
   return { cls: cls!, students };
+}
+
+/** Deterministic PRNG so every reset produces the same history. */
+function mulberry32(seed: number) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * About 12 scores per school day over the last 10 days, through the real scoring service
+ * (so counters stay consistent), then moved back in time. Mostly positive, a few negative,
+ * and one whole-class "Derse katıldı" per day.
+ */
+async function seedBehaviorHistory(tx: Tx, teacher: { id: string; role: "teacher"; schoolId: string }, classId: string, studentIds: string[]) {
+  const random = mulberry32(2026);
+  const pick = <T,>(items: T[]) => items[Math.floor(random() * items.length)]!;
+  const types = await listBehaviorTypes(tx, classId, { scope: "school", activeOnly: true });
+  const positive = types.filter((t) => t.points > 0);
+  const negative = types.filter((t) => t.points < 0);
+  const participation = types.find((t) => t.name === "Derse katıldı")!;
+  let count = 0;
+
+  for (let daysAgo = 10; daysAgo >= 1; daysAgo--) {
+    const day = new Date(Date.now() - daysAgo * 86_400_000);
+    if (day.getUTCDay() === 0 || day.getUTCDay() === 6) continue; // weekends
+    // School hours 09:00–15:00 Istanbul = 06:00–12:00 UTC.
+    const at = (minutes: number) => new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), 6) + minutes * 60_000);
+
+    const scores: { ids: string[]; typeId: string; at: Date }[] = [
+      { ids: studentIds.filter(() => random() < 0.6), typeId: participation.id, at: at(10) },
+    ];
+    for (let i = 0; i < 12; i++) {
+      const type = random() < 0.85 ? pick(positive) : pick(negative);
+      scores.push({ ids: [pick(studentIds)], typeId: type.id, at: at(20 + Math.floor(random() * 330)) });
+    }
+
+    for (const score of scores) {
+      if (score.ids.length === 0) continue;
+      const batchId = newUuid();
+      await giveBehavior(tx, teacher, classId, { studentIds: score.ids, behaviorTypeId: score.typeId, note: null, batchId }, SEED_IP);
+      await tx.update(behaviorEvent).set({ createdAt: score.at }).where(eq(behaviorEvent.batchId, batchId));
+      count += score.ids.length;
+    }
+  }
+  return count;
 }
 
 async function truncateAll(tx: Tx) {
@@ -92,6 +145,13 @@ async function main() {
         }
       }
 
+      const eventCount = await seedBehaviorHistory(
+        tx,
+        { id: teacher.id, role: "teacher", schoolId },
+        a.cls.id,
+        a.students.map((s) => s.id),
+      );
+
       // Codes to try the invite flow with (2-A students without parents).
       const invite = async (index: number, options: { singleUse: boolean; validDays: number | null }) => {
         const s = a.students[index]!;
@@ -112,7 +172,7 @@ async function main() {
       const expired = await invite(11, { singleUse: true, validDays: 7 });
       await tx.update(inviteCode).set({ expiresAt: new Date(Date.now() - 60_000) }).where(eq(inviteCode.codeHash, hashInviteCode(expired.code)));
 
-      return { active, revoked, expired };
+      return { active, revoked, expired, eventCount };
     });
 
     if (!printed) {
@@ -129,6 +189,8 @@ async function main() {
     console.log("  veli1@ornek.okul       Ada Y. ve Ali K. (2-A)");
     console.log("  veli2 … veli5          birer çocuk (2-A)");
     console.log("  veli6@ornek.okul       Arda C. (2-B)\n");
+    console.log(`Davranış geçmişi: 2-A için son 10 güne yayılmış ${printed.eventCount} puan kaydı.
+`);
     console.log("Kullanılabilir davet kodları (2-A):");
     for (const c of printed.active) console.log(`  ${line(c)}  (${c.note})`);
     console.log("\nHata ekranlarını denemek için:");

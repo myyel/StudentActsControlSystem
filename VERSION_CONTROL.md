@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.11.1 | 2026-09-27 | chore | Faz 3 seed: 2-A ve 2-B'ye varsayılan davranışlar, 2-A için son 10 günün hafta içi günlerine yayılmış ~200 puan kaydı (puanlama servisiyle, sabit tohumlu) | 3 |
 | 0.11.0 | 2026-09-27 | feat | Öğrenci detayında XP ve denge sayaçları, son 7 gün olumlu/olumsuz grafiği (okul saat dilimi), güne göre gruplu zaman çizelgesi, onaylı kayıt silme, "daha fazla" sayfalama | 3 |
 | 0.10.0 | 2026-09-27 | feat | Karta dokun → davranış seç puanlama, çoklu seçimle toplu puanlama, 10 sn geri alma çubuğu, xp/denge sayaçlarının aynı transaction'da güncellenmesi, tekrarlanan isteklere karşı batch kimliği, olay silme servisi | 3 |
 | 0.9.0 | 2026-09-27 | feat | Davranış tipleri yönetimi (okul/ev sekmeleri, ekle/düzenle, aktif/pasif, sıralama), yeni sınıfa varsayılan 14 davranış, eski sınıflar için "varsayılan listeyi yükle", sınıf alt menüsü | 3 |
