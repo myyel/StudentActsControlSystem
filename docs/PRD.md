@@ -46,9 +46,16 @@
 
 ### 4.3 Davranış puanlama
 - **Davranış tipi**: ad, ikon/emoji, puan (tam sayı, negatif olabilir), kapsam (`school` | `home`), sınıfa ait, aktif/pasif.
-- Yeni sınıfa varsayılan davranış listesi yüklenir (öğretmen düzenleyebilir).
+- Puan −10…+10 arasında, 0 olamaz. Ev davranışları yalnızca +1…+10.
+- Yeni sınıfa varsayılan davranış listesi yüklenir (öğretmen düzenleyebilir; liste `src/content/default-behaviors.ts`):
+  - Okul (+): Yardımlaştı 🤝 +1, Derse katıldı ✋ +1, Ödevini yaptı 📚 +1, Nazik davrandı 💛 +1, Sırasını bekledi ⏳ +1, Düzenli çalıştı 🧹 +1, Harika iş ⭐ +2.
+  - Okul (−): Dersi böldü 🔇 −1, Arkadaşını üzdü 💔 −1, Ödevi eksik 📝 −1.
+  - Ev (+): Odasını topladı 🛏️ +1, Kitap okudu 📖 +1, Ev işine yardım etti 🍽️ +1, Dişlerini fırçaladı 🪥 +1.
+- Kullanılmış davranış tipi silinmez, pasif yapılır.
 - Öğretmen: öğrenci kartına dokun → davranış seç. Çoklu öğrenci seçip toplu puanlama. İsteğe bağlı not.
-- Son işlem birkaç saniye içinde **geri alınabilir**; sonrasında öğretmen kaydı silebilir (audit log'a düşer).
+  - Öğretmen yalnızca **okul** kapsamlı davranışlarla puan verir; ev davranışlarını veli girer (Faz 6).
+  - Sınıf ekranındaki kartlarda yalnızca **ad + XP** görünür; ekran tahtaya yansıtılabileceği için denge ve olumsuz puanlar yalnızca öğrenci detayındadır.
+- Son işlem **10 saniye** içinde geri alınabilir (yalnızca puanı veren öğretmen); sonrasında sınıfın herhangi bir öğretmeni kaydı zaman çizelgesinden silebilir (audit log'a düşer).
 - Her olay (`BehaviorEvent`) puanın **anlık kopyasını** saklar; tipin puanı değişirse geçmiş değişmez.
 - İki sayaç:
   - **XP (gelişim puanı)**: yalnızca pozitif puanların toplamı; negatif puan XP'yi düşürmez; karakteri evrimleştirir.
@@ -95,6 +102,7 @@
 ### 4.10 Öğretmen paneli
 - Sınıf listesi → sınıf ekranı (öğrenci kartları grid).
 - Öğrenci detayı: zaman çizelgesi, haftalık/aylık grafik, akademik durum, bağlı veliler, davet kodları.
+  - Grafik: son 7 gün, gün gün olumlu/olumsuz puan (okulun saat dilimine göre). Aylık görünüm henüz yok.
 - Ayarlar: davranış tipleri, dersler/duraklar, ev XP tavanı.
 
 ## 5. Gizlilik, güvenlik, KVKK
@@ -127,13 +135,14 @@ Student(id, classId, firstName, lastInitial?, characterTypeId, xp=0, balance=0,
 ParentStudent(parentId, studentId, relation, inviteCodeId?, createdAt)  PK(parentId, studentId)
 InviteCode(id, studentId, codeHash, singleUse, expiresAt?, usedAt?, usedById?, revokedAt?,
            createdById, createdAt)                                -- düz kod saklanmaz
-BehaviorTemplate(id, schoolId, name, icon, points, scope, sortOrder)  -- yeni sınıfa kopyalanır
-BehaviorType(id, classId, name, icon, points, scope, active, sortOrder)
-  -- check: scope='home' ⇒ points > 0
+BehaviorType(id, classId, name, icon, points, scope, active, sortOrder, createdAt)
+  -- check: points <> 0 ve −10…10; scope='home' ⇒ points > 0
+  -- varsayılan liste kodda sabit (src/content/default-behaviors.ts); BehaviorTemplate tablosu yok
 BehaviorEvent(id, studentId, classId, behaviorTypeId?, nameSnapshot, iconSnapshot, pointsSnapshot,
-              xpDelta ≥ 0, balanceDelta, source, givenById?, note?, batchId?, clientRequestId?,
-              createdAt, deletedAt?, deletedById?)
-  -- unique(studentId, clientRequestId): çift gönderimi engeller
+              xpDelta ≥ 0, balanceDelta, source, givenById?, note?, batchId,
+              createdAt, deletedAt?, deletedById?, deleteReason? (undo|delete))
+  -- batchId istemcide dokunuş başına üretilir; unique(studentId, batchId) çift gönderimi engeller
+  -- ve toplu puanlamayı gruplar
 Subject(id, classId, name, sortOrder, archivedAt?)
 Topic(id, subjectId, name, sortOrder, archivedAt?)
 Stage(id, topicId, name, sortOrder, archivedAt?)
