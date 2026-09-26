@@ -1,7 +1,8 @@
-export default function Home() {
-  return (
-    <main className="flex flex-1 items-center justify-center p-4">
-      <h1 className="text-2xl font-semibold">Öğrenci Davranış ve Gelişim Sistemi</h1>
-    </main>
-  );
+import { redirect } from "next/navigation";
+import { ROLE_HOME } from "@/lib/roles";
+import { getSession } from "@/server/auth/session";
+
+export default async function Home() {
+  const session = await getSession();
+  redirect(session ? ROLE_HOME[session.user.role] : "/giris");
 }
