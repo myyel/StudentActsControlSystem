@@ -12,11 +12,28 @@ export type AuditAction =
   | "behavior_type.update"
   | "behavior.give"
   | "behavior.undo"
-  | "behavior.delete";
+  | "behavior.delete"
+  | "curriculum.create"
+  | "curriculum.update"
+  | "curriculum.archive"
+  | "curriculum.restore"
+  | "curriculum.reorder"
+  | "progress.set"
+  | "progress.bulk_set";
 
 export type AuditEntry = {
   action: AuditAction;
-  entity: "class" | "student" | "invite_code" | "parent_student" | "behavior_type" | "behavior_event";
+  entity:
+    | "class"
+    | "student"
+    | "invite_code"
+    | "parent_student"
+    | "behavior_type"
+    | "behavior_event"
+    | "subject"
+    | "topic"
+    | "stage"
+    | "student_progress";
   entityId: string;
   actorId?: string | null;
   schoolId?: string | null;
