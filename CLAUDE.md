@@ -56,15 +56,19 @@ docs/PRD.md
 
 ## Komutlar
 ```bash
+cp .env.example .env           # ilk kurulum; BETTER_AUTH_SECRET'ı değiştir
 docker compose up -d db        # Postgres
 pnpm dev                       # geliştirme sunucusu
 pnpm db:generate               # migration üret
 pnpm db:migrate                # migration uygula
-pnpm db:seed                   # örnek veri (1 okul, 1 öğretmen, 20 öğrenci, 5 veli)
+pnpm db:seed                   # örnek veri (1 okul, 1 admin, 1 öğretmen, 20 öğrenci, 5 veli; şifre: Sifre1234!)
 pnpm lint && pnpm typecheck
-pnpm test                      # Vitest
-pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board projeleri)
+pnpm test                      # Vitest — PGlite (bellek içi Postgres) kullanır, Docker gerekmez
+pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board projeleri) — Faz 8
 ```
+
+- Testlerde veritabanı: `tests/helpers/db.ts` → `createTestDb()` (migration'lar uygulanmış PGlite). `@/server/db`'yi kullanan kodu test ederken `vi.mock("@/server/db", …)` ile bu örneğe yönlendir (örnek: `tests/integration/guards.test.ts`).
+- Better Auth örneği `createAuth(db, options)` ile üretilir; testte `{ nextjs: false }` geç.
 
 ## Çalışma şekli
 - Her iş için önce plan çıkar, onay al, sonra uygula.
@@ -88,4 +92,4 @@ pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board proj
 8. PWA + responsive e2e testleri + erişilebilirlik
 9. Güvenlik, KVKK (silme/dışa aktarma, audit), Docker deploy, yedekleme, pilot
 
-Güncel faz: **1**
+Güncel faz: **2**
