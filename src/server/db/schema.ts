@@ -31,11 +31,13 @@ export const parentRelation = pgEnum("parent_relation", ["mother", "father", "gu
 export const consentKind = pgEnum("consent_kind", ["privacy_notice", "explicit_consent"]);
 export const behaviorScope = pgEnum("behavior_scope", ["school", "home"]);
 export const eventDeleteReason = pgEnum("event_delete_reason", ["undo", "delete"]);
+export const progressStatus = pgEnum("progress_status", ["not_started", "in_progress", "completed"]);
 
 export type UserRole = (typeof userRole.enumValues)[number];
 export type ParentRelation = (typeof parentRelation.enumValues)[number];
 export type ConsentKind = (typeof consentKind.enumValues)[number];
 export type BehaviorScope = (typeof behaviorScope.enumValues)[number];
+export type ProgressStatus = (typeof progressStatus.enumValues)[number];
 
 export const school = pgTable("school", {
   id: uuid().primaryKey().defaultRandom(),
@@ -324,5 +326,75 @@ export const behaviorEvent = pgTable(
     index().on(t.classId, t.createdAt),
     index().on(t.batchId),
     check("behavior_event_xp_delta_check", sql`${t.xpDelta} >= 0`),
+  ],
+);
+
+// --- Curriculum: subject → topic → stage (archived, never deleted, so progress survives) ---
+
+export const subject = pgTable(
+  "subject",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    classId: uuid()
+      .notNull()
+      .references(() => schoolClass.id, { onDelete: "cascade" }),
+    name: varchar({ length: 60 }).notNull(),
+    sortOrder: integer().notNull().default(0),
+    archivedAt: timestamp({ withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index().on(t.classId, t.sortOrder)],
+);
+
+export const topic = pgTable(
+  "topic",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    subjectId: uuid()
+      .notNull()
+      .references(() => subject.id, { onDelete: "cascade" }),
+    name: varchar({ length: 80 }).notNull(),
+    sortOrder: integer().notNull().default(0),
+    archivedAt: timestamp({ withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index().on(t.subjectId, t.sortOrder)],
+);
+
+export const stage = pgTable(
+  "stage",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    topicId: uuid()
+      .notNull()
+      .references(() => topic.id, { onDelete: "cascade" }),
+    name: varchar({ length: 80 }).notNull(),
+    sortOrder: integer().notNull().default(0),
+    archivedAt: timestamp({ withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index().on(t.topicId, t.sortOrder)],
+);
+
+// No row means "not started"; setting a stage back to not started deletes the row.
+export const studentProgress = pgTable(
+  "student_progress",
+  {
+    studentId: uuid()
+      .notNull()
+      .references(() => student.id, { onDelete: "cascade" }),
+    stageId: uuid()
+      .notNull()
+      .references(() => stage.id, { onDelete: "cascade" }),
+    status: progressStatus().notNull(),
+    stars: smallint(),
+    updatedById: uuid().references(() => user.id, { onDelete: "set null" }),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.studentId, t.stageId] }),
+    index().on(t.stageId),
+    check("student_progress_stars_range_check", sql`${t.stars} between 0 and 3`),
+    check("student_progress_stars_completed_check", sql`${t.stars} is null or ${t.status} = 'completed'`),
   ],
 );

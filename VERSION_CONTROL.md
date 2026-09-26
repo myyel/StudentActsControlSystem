@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.12.0 | 2026-09-27 | feat | Ders, konu, durak (arşivlenebilir) ve öğrenci ilerlemesi tabloları (durum + yalnızca tamamlanmışta 0–3 yıldız) | 4 |
 | 0.11.2 | 2026-09-27 | docs | Faz 3 tamamlandı: PRD'ye puan aralığı, varsayılan liste, 10 sn geri alma, kart görünümü, grafik ve şema değişiklikleri (BehaviorTemplate yok, tek batchId); güncel faz 4 | 3 |
 | 0.11.1 | 2026-09-27 | chore | Faz 3 seed: 2-A ve 2-B'ye varsayılan davranışlar, 2-A için son 10 günün hafta içi günlerine yayılmış ~200 puan kaydı (puanlama servisiyle, sabit tohumlu) | 3 |
 | 0.11.0 | 2026-09-27 | feat | Öğrenci detayında XP ve denge sayaçları, son 7 gün olumlu/olumsuz grafiği (okul saat dilimi), güne göre gruplu zaman çizelgesi, onaylı kayıt silme, "daha fazla" sayfalama | 3 |
