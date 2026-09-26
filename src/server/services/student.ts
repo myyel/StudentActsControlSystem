@@ -1,6 +1,6 @@
 import { and, asc, count, eq, isNull, or } from "drizzle-orm";
 import type { Db, DbOrTx } from "@/server/db";
-import { characterType, parentStudent, schoolClass, student, user } from "@/server/db/schema";
+import { characterType, parentStudent, school, schoolClass, student, user } from "@/server/db/schema";
 import type { StudentName } from "@/lib/student-names";
 import type { AuthUser } from "@/server/auth/guards";
 import { forbidden } from "@/server/auth/errors";
@@ -120,9 +120,13 @@ export async function getStudentForTeacher(db: Db, studentId: string) {
       firstName: student.firstName,
       lastInitial: student.lastInitial,
       active: student.active,
+      xp: student.xp,
+      balance: student.balance,
+      timeZone: school.timezone,
     })
     .from(student)
     .innerJoin(schoolClass, eq(schoolClass.id, student.classId))
+    .innerJoin(school, eq(school.id, schoolClass.schoolId))
     .where(eq(student.id, studentId));
   if (!row) throw forbidden();
 
