@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.24.1 | 2026-09-28 | chore | Faz 6 seed: veli1 (Ada, Ali) ve veli2 (Ayşe) için son 5 güne yayılmış ev kayıtları; Ada için bir gün günlük tavanı aşıyor | 6 |
 | 0.24.0 | 2026-09-28 | feat | Öğretmen zaman çizelgesi: Tümü/Okul/Ev filtresi, her kayıtta Okul/Ev etiketi, ev kayıtlarında girişi yapan veli, tavan nedeniyle XP'si kesilen kayıtlarda açıklama | 6 |
 | 0.23.0 | 2026-09-28 | feat | Veli paneli (`/veli/[ogrenciId]`): çocuk seçici ve çocuk ekleme, karakter + XP çubuğu, haftalık denge ve 7 günlük grafik, Evde bugün (ev davranışı girişi, günlük tavan göstergesi ve uyarısı, 10 sn geri alma, seviye kutlaması), son olaylar (Okul/Ev, notsuz), akademik harita özeti, yer tutucu mesaj kartı; /veli ilk çocuğa yönlendirir, davetten sonra bağlanan çocuğun paneli açılır | 6 |
 | 0.22.1 | 2026-09-28 | fix | Haftalık grafiğin ekran okuyucu tablosu sr-only kapsayıcıya alındı; 360px'te sayfayı genişletip yatay kaydırma oluşturuyordu | 6 |

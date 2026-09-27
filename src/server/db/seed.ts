@@ -5,6 +5,7 @@ import { formatInviteCode } from "@/lib/invite-code";
 import { createCredentialUser } from "@/server/auth/users";
 import { newUuid } from "@/lib/uuid";
 import { giveBehavior } from "@/server/services/behavior";
+import { giveHomeBehavior } from "@/server/services/home-behavior";
 import { listBehaviorTypes, seedDefaultBehaviorTypes } from "@/server/services/behavior-type";
 import { createNode } from "@/server/services/curriculum";
 import { createInviteCodes, hashInviteCode, inviteUrl, redeemInviteCode, revokeInviteCode } from "@/server/services/invite";
@@ -84,6 +85,31 @@ async function seedBehaviorHistory(tx: Tx, teacher: { id: string; role: "teacher
       await giveBehavior(tx, teacher, classId, { studentIds: score.ids, behaviorTypeId: score.typeId, note: null, batchId }, SEED_IP);
       await tx.update(behaviorEvent).set({ createdAt: score.at }).where(eq(behaviorEvent.batchId, batchId));
       count += score.ids.length;
+    }
+  }
+  return count;
+}
+
+/**
+ * Parents' home entries over the last 5 days at 19:00 Istanbul, through the real service (so
+ * the daily cap applies). One child gets every home behavior three times two days ago, which
+ * runs past the class's cap of 10 XP and shows capped entries on the teacher's timeline.
+ */
+async function seedHomeHistory(tx: Tx, entries: { parent: { id: string }; studentId: string; classId: string }[]) {
+  const random = mulberry32(2028);
+  let count = 0;
+  for (const [i, { parent, studentId, classId }] of entries.entries()) {
+    const types = await listBehaviorTypes(tx, classId, { scope: "home", activeOnly: true });
+    const actor = { id: parent.id, role: "parent" as const };
+    for (let daysAgo = 5; daysAgo >= 1; daysAgo--) {
+      const evening = new Date(Date.now() - daysAgo * 86_400_000);
+      evening.setUTCHours(16, Math.floor(random() * 50), 0, 0);
+      const picks = i === 0 && daysAgo === 2 ? [...types, ...types, ...types] : types.filter(() => random() < 0.5);
+      for (const [j, type] of picks.entries()) {
+        const now = new Date(evening.getTime() + j * 60_000);
+        await giveHomeBehavior(tx, actor, studentId, { behaviorTypeId: type.id, batchId: newUuid() }, SEED_IP, now);
+        count++;
+      }
     }
   }
   return count;
@@ -204,6 +230,7 @@ async function main() {
         [5, [["a", 5, "father"]]],
         [6, [["b", 0, "mother"]]],
       ];
+      const parents: { id: string }[] = [];
       for (const [n, children] of PARENTS) {
         const parent = await createCredentialUser(tx, {
           email: `veli${n}@ornek.okul`,
@@ -211,6 +238,7 @@ async function main() {
           password: DEV_PASSWORD,
           role: "parent",
         });
+        parents.push(parent);
         for (const [key, index, relation] of children) {
           const { students, teacher: owner } = classes[key];
           const [created] = await createInviteCodes(tx, owner, [students[index]!.id], { singleUse: true, validDays: 14 }, SEED_IP);
@@ -228,6 +256,12 @@ async function main() {
         a.cls.id,
         a.students.map((s) => s.id),
       );
+      // veli1 → Ada and Ali, veli2 → Ayşe (2-A).
+      const homeCount = await seedHomeHistory(tx, [
+        { parent: parents[0]!, studentId: a.students[0]!.id, classId: a.cls.id },
+        { parent: parents[0]!, studentId: a.students[1]!.id, classId: a.cls.id },
+        { parent: parents[1]!, studentId: a.students[2]!.id, classId: a.cls.id },
+      ]);
 
       // Codes to try the invite flow with (2-A students without parents).
       const invite = async (index: number, options: { singleUse: boolean; validDays: number | null }) => {
@@ -249,7 +283,7 @@ async function main() {
       const expired = await invite(11, { singleUse: true, validDays: 7 });
       await tx.update(inviteCode).set({ expiresAt: new Date(Date.now() - 60_000) }).where(eq(inviteCode.codeHash, hashInviteCode(expired.code)));
 
-      return { active, revoked, expired, eventCount, progressCount };
+      return { active, revoked, expired, eventCount, homeCount, progressCount };
     });
 
     if (!printed) {
@@ -268,7 +302,7 @@ async function main() {
     console.log("  veli6@ornek.okul       Arda C. (2-B)\n");
     console.log(`Müfredat: 2-A için Türkçe, Matematik, Hayat Bilgisi (${printed.progressCount} ilerleme kaydı); 2-B için Matematik.`);
     console.log(`Karakterler: ${CHARACTER_TEMPLATES.map((t) => t.name).join(", ")}; demo seviye eşikleri ${DEMO_LEVEL_THRESHOLDS.join("/")} XP.`);
-    console.log(`Davranış geçmişi: 2-A için son 10 güne yayılmış ${printed.eventCount} puan kaydı.
+    console.log(`Davranış geçmişi: 2-A için son 10 güne yayılmış ${printed.eventCount} puan kaydı; velilerden ${printed.homeCount} ev kaydı (Ada Y. için bir gün tavanı aşıyor).
 `);
     console.log("Kullanılabilir davet kodları (2-A):");
     for (const c of printed.active) console.log(`  ${line(c)}  (${c.note})`);
