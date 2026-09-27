@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.15.3 | 2026-09-27 | docs | README: proje tanımı, özellikler, teknoloji, kurulum, örnek hesaplar, komutlar, yapı, mimari ilkeler, testler, yol haritası | 4 |
 | 0.15.2 | 2026-09-27 | docs | Faz 4 tamamlandı: PRD'ye sürükle-bırak, arşivleme, matris dokunuş/yıldız/toplu işaretleme ve yol haritası kararları; güncel faz 5 | 4 |
 | 0.15.1 | 2026-09-27 | chore | Faz 4 seed: 2-A için Türkçe/Matematik/Hayat Bilgisi (7 konu, 24 durak) ve öğrenci başına tutarlı ilerleme; 2-B için Matematik | 4 |
 | 0.15.0 | 2026-09-27 | feat | Veli için çocuğun yol haritası: ders kartları, ilerleme çubuğu, konu başlıkları altında durak patikası (tamamlandı + yıldız, "şu an burada", soluk gelecek duraklar); veli ana sayfasından bağlantı | 4 |
