@@ -38,3 +38,10 @@ export const giveBehaviorSchema = z.object({
 });
 
 export type GiveBehaviorInput = z.infer<typeof giveBehaviorSchema>;
+
+export const giveHomeBehaviorSchema = z.object({
+  behaviorTypeId: z.uuid(),
+  batchId: z.uuid(),
+});
+
+export type GiveHomeBehaviorInput = z.infer<typeof giveHomeBehaviorSchema>;

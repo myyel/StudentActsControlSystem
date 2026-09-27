@@ -3,6 +3,7 @@ import { auditLog } from "@/server/db/schema";
 
 export type AuditAction =
   | "class.create"
+  | "class.update"
   | "student.create"
   | "student.update"
   | "invite.create"
@@ -11,6 +12,7 @@ export type AuditAction =
   | "behavior_type.create"
   | "behavior_type.update"
   | "behavior.give"
+  | "behavior.give_home"
   | "behavior.undo"
   | "behavior.delete"
   | "curriculum.create"

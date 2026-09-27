@@ -58,3 +58,27 @@ export async function getClass(db: Db, classId: string) {
   if (!row) throw forbidden();
   return row;
 }
+
+/** Call only after assertTeacherOfClass. */
+export async function updateHomeDailyXpCap(db: Db, actor: AuthUser, classId: string, cap: number, ip?: string | null) {
+  await db.transaction(async (tx) => {
+    const [before] = await tx
+      .select({ cap: schoolClass.homeDailyXpCap, schoolId: schoolClass.schoolId })
+      .from(schoolClass)
+      .where(eq(schoolClass.id, classId))
+      .for("update");
+    if (!before) throw forbidden();
+    if (before.cap === cap) return;
+
+    await tx.update(schoolClass).set({ homeDailyXpCap: cap }).where(eq(schoolClass.id, classId));
+    await writeAudit(tx, {
+      action: "class.update",
+      entity: "class",
+      entityId: classId,
+      actorId: actor.id,
+      schoolId: before.schoolId,
+      data: { homeDailyXpCap: { from: before.cap, to: cap } },
+      ip,
+    });
+  });
+}

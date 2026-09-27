@@ -1,18 +1,19 @@
 import { and, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import type { Db } from "@/server/db";
-import { behaviorEvent, user } from "@/server/db/schema";
+import { behaviorEvent, user, type BehaviorScope } from "@/server/db/schema";
 
 export const TIMELINE_PAGE = 30;
 export const TIMELINE_MAX = 500;
 
-/** Call only after assertTeacherOfStudent. Newest first, deleted events hidden. */
-export async function getStudentTimeline(db: Db, studentId: string, limit = TIMELINE_PAGE) {
+/** Call only after assertTeacherOfStudent. Newest first, deleted events hidden; optionally one source only. */
+export async function getStudentTimeline(db: Db, studentId: string, limit = TIMELINE_PAGE, source?: BehaviorScope) {
   const rows = await db
     .select({
       id: behaviorEvent.id,
       name: behaviorEvent.nameSnapshot,
       icon: behaviorEvent.iconSnapshot,
       points: behaviorEvent.pointsSnapshot,
+      xpDelta: behaviorEvent.xpDelta,
       source: behaviorEvent.source,
       note: behaviorEvent.note,
       createdAt: behaviorEvent.createdAt,
@@ -20,7 +21,13 @@ export async function getStudentTimeline(db: Db, studentId: string, limit = TIME
     })
     .from(behaviorEvent)
     .leftJoin(user, eq(user.id, behaviorEvent.givenById))
-    .where(and(eq(behaviorEvent.studentId, studentId), isNull(behaviorEvent.deletedAt)))
+    .where(
+      and(
+        eq(behaviorEvent.studentId, studentId),
+        isNull(behaviorEvent.deletedAt),
+        source ? eq(behaviorEvent.source, source) : undefined,
+      ),
+    )
     .orderBy(desc(behaviorEvent.createdAt), desc(behaviorEvent.id))
     .limit(Math.min(limit, TIMELINE_MAX) + 1);
 
@@ -36,7 +43,7 @@ export type DaySummary = { day: string; positive: number; negative: number };
 
 /**
  * Positive and negative points per day for the last 7 days (today included), in the school's
- * time zone. Days without events are 0. Call only after assertTeacherOfStudent.
+ * time zone. Days without events are 0. Call only after assertTeacherOfStudent or assertParentOfStudent.
  */
 export async function getLast7Days(db: Db, studentId: string, timeZone: string, now = new Date()) {
   const days = Array.from({ length: 7 }, (_, i) => localDay(new Date(now.getTime() - (6 - i) * 86_400_000), timeZone));

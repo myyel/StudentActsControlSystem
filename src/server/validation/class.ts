@@ -18,3 +18,13 @@ export function currentAcademicYear(now = new Date()) {
   const year = now.getFullYear();
   return now.getMonth() >= 8 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
 }
+
+export const MAX_HOME_DAILY_XP_CAP = 50;
+
+export const homeDailyXpCapSchema = z.object({
+  homeDailyXpCap: z.coerce
+    .number({ message: "Tavanı girin." })
+    .int("Tavan tam sayı olmalı.")
+    .min(0, "Tavan negatif olamaz.")
+    .max(MAX_HOME_DAILY_XP_CAP, `Tavan en fazla ${MAX_HOME_DAILY_XP_CAP} olabilir.`),
+});
