@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.20.2 | 2026-09-28 | docs | Faz 5 tamamlandı: PRD'ye tür seçimi (yalnızca öğretmen), sabit 5 seviye ve eşik kuralları, admin tür yönetimi, tahta modu oturumu ve kart içeriği kararları; README güncellendi; güncel faz 6 | 5 |
 | 0.20.1 | 2026-09-28 | chore | Faz 5 seed: okula ait 4 karakter türü (Ejderha, Baykuş, Robot, Tohum) ve 5'er aşama, demo seviye eşikleri 0/4/8/12/16 XP; öğrenciler geçmişe göre 2–5. seviyelerde | 5 |
 | 0.20.0 | 2026-09-28 | feat | Tahta modu (`/tahta/[sinifId]`): öğretmen oturumuyla tam ekran, büyük karakter kartları (ad + seviye çubuğu; XP, denge, sıralama yok), yalnızca olumlu davranışlar, tüm sınıfa puan, 80px dokunma hedefleri, büyük geri alma çubuğu ve seviye kutlaması; sınıf menüsünde bağlantı | 5 |
 | 0.19.0 | 2026-09-28 | feat | Öğretmen ekranlarında karakter: öğrenci detayında aşama, seviye, ilerleme çubuğu ve tür seçici (seviye korunur); puanlama kartlarında karakter görseli; seviye atlayınca evrim animasyonu ve konfeti (azaltılmış harekette sade geçiş) | 5 |

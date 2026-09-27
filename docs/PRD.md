@@ -33,7 +33,7 @@
   - Varsayılan: **tek kullanımlık, 14 gün**. Öğretmen kod başına tek/çok kullanımlık ve 7/14/30 gün/süresiz seçebilir.
   - Kod 8 karakterdir (`ABCD-EFGH`, karışan 0/O, 1/I/L yok). Veritabanında yalnızca hash'i durur; düz kod yalnızca üretildiği anda gösterilir, kaybolursa yeni kod üretilir.
   - Sınıfın tamamı için yazdırılabilir davet kartları üretilebilir.
-- Yeni öğrenciye okulun ilk aktif karakter türü atanır (değiştirme Faz 5). Öğrenci silme Faz 9'da (KVKK) ele alınır.
+- Yeni öğrenciye okulun ilk aktif karakter türü atanır; öğretmen öğrenci detayından değiştirebilir. Öğrenci silme Faz 9'da (KVKK) ele alınır.
 
 ### 4.2 Veli kaydı
 - Veli yalnızca davet koduyla kayıt olur / mevcut hesabına çocuk ekler. Açık kayıt yoktur.
@@ -84,15 +84,24 @@
 - İlerleme değişiklikleri veliye bildirim göndermez (bildirimler Faz 7).
 
 ### 4.6 Karakterler
-- Birden fazla karakter türü (örn. ejderha, baykuş, robot, tohum→ağaç); öğrenci/öğretmen seçer.
-- Seviye XP eşikleri **tüm türler için ortaktır** (okul bazlı tek tablo, admin ayarlar). Her tür, her seviye için kendi görselini (evrim aşaması) sağlar; tür değişse de seviye aynı kalır.
-- Seviye atlandığında animasyonlu kutlama.
+- Birden fazla karakter türü (ejderha, baykuş, robot, tohum→ağaç).
+  - Türü **yalnızca öğretmen** seçer/değiştirir (öğrenci detayı; çocuk isterse tahtada öğretmenle birlikte seçer). Veli değiştiremez. Değişiklik audit log'a düşer.
+- **Sabit 5 seviye.** XP eşikleri **tüm türler için ortaktır** (okul bazlı tek tablo, admin ayarlar); varsayılan 0 / 20 / 50 / 100 / 200 XP. 1. seviyenin eşiği 0'dır, her eşik bir öncekinden büyüktür.
+  - Eşikler düşürülürse yeni eşiğe ulaşan öğrenciler hemen yükselir; eşikler yükseltilirse kimse düşmez. Değişiklik audit log'a düşer.
+- Her tür, her seviye için kendi görselini ve adını (evrim aşaması) sağlar; tür değişse de seviye aynı kalır.
+  - Admin okulunun türlerini adlandırır, aşama adlarını değiştirir, aktif/pasif yapar. En az bir tür aktif kalmalıdır. Pasif tür yeni seçimlerde görünmez; kullanan öğrencinin karakteri değişmez. Genel (okula ait olmayan) türler salt okunurdur.
+  - Yeni tür ekleme ve görsel yükleme henüz yoktur; görseller kodla gelir (`public/characters/<tür>/<seviye>.svg`).
+- Seviye atlandığında animasyonlu kutlama (evrim + konfeti; hareket azaltma tercihinde sade geçiş). Hem öğretmen puanlama ekranında hem tahta modunda gösterilir.
 - Karakter **hiçbir koşulda geri gitmez**.
 - Görseller özgündür (telifli karakter kullanılmaz); SVG veya Lottie. MVP'de yer tutucu SVG kullanılır.
 
 ### 4.7 Tahta modu
-- Öğretmen sınıfı tam ekran açar: büyük karakter kartları, dokunarak olumlu puan verme.
-- Tahta modunda **negatif puanlar ve denge gösterilmez**, sıralama/liderlik tablosu yoktur.
+- Öğretmen sınıfı tam ekran açar (`/tahta/[sinifId]`): büyük karakter kartları, dokunarak olumlu puan verme.
+  - **Oturum:** öğretmenin normal oturumu ve aynı yetki kontrolleri; ayrı tahta bağlantısı/kodu yoktur.
+  - Kartta karakter, ad ve bir sonraki seviyeye ilerleme çubuğu bulunur; **XP sayısı gösterilmez** (kıyas olmasın). Kartlar ada göre sıralıdır.
+  - Yalnızca olumlu davranışlar listelenir; tek öğrenciye veya "Tüm sınıf"a puan verilir. Not alanı yoktur. 10 saniyelik geri alma burada da vardır.
+  - Dokunma hedefleri en az 80px; tam ekran düğmesi ve sınıfa dönüş bağlantısı vardır.
+- Tahta modunda **negatif puanlar ve denge gösterilmez**, sıralama/liderlik tablosu yoktur. Sunucu bu ekrana XP, denge veya olumsuz olay verisi göndermez.
 
 ### 4.8 Mesajlar ve bildirimler
 - Mesaj türleri: **sınıf duyurusu** (tüm veliler) ve **öğrenciye özel mesaj** (o öğrencinin velileri).
@@ -136,8 +145,10 @@ Session / Account / Verification  -- Better Auth standart tabloları
 Class(id, schoolId, name, gradeLevel 1–4, academicYear, homeDailyXpCap=10, archivedAt?, createdAt)
 ClassTeacher(classId, userId, createdAt)                         PK(classId, userId)
 CharacterType(id, schoolId?, name, active, sortOrder)             -- schoolId null = genel tür
-CharacterLevel(schoolId, level, xpThreshold)                      PK(schoolId, level); tüm türler için ortak
-CharacterStage(id, characterTypeId, level, name, assetUrl)        unique(characterTypeId, level)
+CharacterLevel(schoolId, level 1–5, xpThreshold ≥ 0)              PK(schoolId, level); tüm türler için ortak
+  -- okulda kayıt yoksa varsayılan eşikler (src/lib/character.ts) kullanılır
+CharacterStage(id, characterTypeId, level 1–5, name, assetUrl)    unique(characterTypeId, level)
+  -- aşama yoksa genel yer tutucu görsel gösterilir
 Student(id, classId, firstName, lastInitial?, characterTypeId, xp=0, balance=0,
         characterLevel=1, active, createdAt, deletedAt?)
 ParentStudent(parentId, studentId, relation, inviteCodeId?, createdAt)  PK(parentId, studentId)
@@ -173,7 +184,7 @@ AuditLog(id, schoolId?, actorId?, action, entity, entityId, data jsonb, ip?, cre
 
 **Silme davranışları:** öğrenciye ait tablolar öğrenci silinince `CASCADE`; `givenById`, `authorId`, `actorId`, `updatedById` gibi aktör kolonları kullanıcı silinince `SET NULL`.
 
-**İleride karar verilecek:** karakter türünü kimin seçtiği (Faz 5), tahta modunun oturum biçimi (Faz 5), yıl sonu sınıf geçişi, KVKK silmede hard delete / anonimleştirme (Faz 9).
+**İleride karar verilecek:** yıl sonu sınıf geçişi, KVKK silmede hard delete / anonimleştirme (Faz 9).
 
 ## 7. MVP kapsamı dışı (sonraki sürümler)
 - Veli ↔ öğretmen serbest sohbet

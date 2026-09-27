@@ -8,7 +8,7 @@
 
 Ürün gereksinimleri: [`docs/PRD.md`](docs/PRD.md) · Sürüm geçmişi: [`VERSION_CONTROL.md`](VERSION_CONTROL.md)
 
-> **Durum:** geliştirme aşamasında (MVP, Faz 5 / 9). Pilot kullanıma henüz hazır değildir.
+> **Durum:** geliştirme aşamasında (MVP, Faz 6 / 9). Pilot kullanıma henüz hazır değildir.
 
 ## Özellikler
 
@@ -26,9 +26,12 @@
 | **Akademik duraklar** | Ders → Konu → Durak yönetimi, sürükle-bırak sıralama (dokunmatik + klavye), arşivleme. |
 | **Sınıf matrisi** | Öğrenci × durak tablosu. Dokunarak durum değiştirme, 0–3 yıldız, durak başlığından toplu işaretleme. |
 | **Veli yol haritası** | Çocuğun her dersteki ilerlemesi: tamamlanan duraklar, "şu an burada", gelecek duraklar. |
+| **Karakterler** | 4 özgün tür × 5 evrim aşaması. XP ile seviye atlama (seviye asla düşmez), animasyonlu kutlama. Öğretmen öğrencinin türünü değiştirir. |
+| **Karakter yönetimi** | Yönetici seviye eşiklerini, tür ve aşama adlarını ayarlar, türleri aktif/pasif yapar. |
+| **Tahta modu** | Akıllı tahtada tam ekran: büyük karakter kartları, yalnızca olumlu puan, tüm sınıfa puan; XP, denge ve sıralama yok. |
 
 ### Sıradakiler
-Karakter sistemi ve tahta modu → veli paneli ve ev davranışları → mesajlar ve Web Push bildirimleri → PWA ve uçtan uca testler → güvenlik, KVKK araçları ve yayına alma. Ayrıntılar: [Yol haritası](#yol-haritası).
+Veli paneli ve ev davranışları → mesajlar ve Web Push bildirimleri → PWA ve uçtan uca testler → güvenlik, KVKK araçları ve yayına alma. Ayrıntılar: [Yol haritası](#yol-haritası).
 
 ## Teknoloji
 
@@ -69,7 +72,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 | Hesap | Rol | İçerik |
 |---|---|---|
-| `admin@ornek.okul` | Yönetici | — |
+| `admin@ornek.okul` | Yönetici | Karakter türleri ve seviye eşikleri (demo için düşük: 0/4/8/12/16 XP) |
 | `ogretmen@ornek.okul` | Öğretmen | 2-A: 20 öğrenci, davranış geçmişi, 3 ders ve ilerleme |
 | `ogretmen2@ornek.okul` | Öğretmen | 2-B: 8 öğrenci, 1 ders |
 | `veli1@ornek.okul` | Veli | Ada Y. ve Ali K. (2-A) |
@@ -105,7 +108,8 @@ src/
     (auth)/giris, davet/[kod]      # giriş, davet koduyla veli kaydı
     ogretmen/                      # öğretmen: sınıflar, puanlama, matris, duraklar, davranışlar, davetler
     veli/                          # veli: çocuklar, yol haritası
-    admin/                         # yönetici (yer tutucu)
+    admin/                         # yönetici: karakterler ve seviye eşikleri
+    tahta/[sinifId]                # tam ekran tahta modu
     kvkk/[belge]                   # aydınlatma ve açık rıza metinleri
     api/auth/[...all]              # Better Auth uç noktaları
   components/                      # arayüz bileşenleri (ui/ = shadcn)
@@ -151,8 +155,8 @@ Geliştirme kuralları ve kod kalıpları: [`CLAUDE.md`](CLAUDE.md).
 | 2 | Sınıf/öğrenci yönetimi, davet kodu + QR, veli kaydı, KVKK rızası | ✅ |
 | 3 | Davranış tipleri, puanlama, geri alma, zaman çizelgesi | ✅ |
 | 4 | Akademik duraklar, sınıf matrisi, veli yol haritası | ✅ |
-| 5 | Karakter sistemi, seviye atlama, tahta modu | ⏳ sıradaki |
-| 6 | Veli paneli, ev davranışları, günlük ev XP tavanı | |
+| 5 | Karakter sistemi, seviye atlama, tahta modu | ✅ |
+| 6 | Veli paneli, ev davranışları, günlük ev XP tavanı | ⏳ sıradaki |
 | 7 | Mesajlar, bildirim merkezi, Web Push, iOS rehberi | |
 | 8 | PWA, responsive uçtan uca testler, erişilebilirlik | |
 | 9 | Güvenlik, KVKK (silme/dışa aktarma), Docker ile yayına alma, yedekleme, pilot | |
@@ -167,5 +171,5 @@ Her commit [Conventional Commits](https://www.conventionalcommits.org/) biçimin
 ## Önemli notlar
 
 - **KVKK metinleri taslaktır** (`src/content/kvkk.ts`). Pilot öncesi okulun hukuken onaylı metinleriyle değiştirilmelidir.
-- Karakter görselleri özgün olacaktır; telifli karakter, logo veya görsel kullanılmaz.
+- Karakter görselleri özgündür (`public/characters/`, şimdilik yer tutucu SVG); telifli karakter, logo veya görsel kullanılmaz.
 - Lisans henüz belirlenmedi.
