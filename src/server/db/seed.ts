@@ -1,5 +1,6 @@
 import { eq, getTableName, is, sql } from "drizzle-orm";
 import { PgTable } from "drizzle-orm/pg-core";
+import { CHARACTER_TEMPLATES, stageAssetUrl } from "@/content/characters";
 import { formatInviteCode } from "@/lib/invite-code";
 import { createCredentialUser } from "@/server/auth/users";
 import { newUuid } from "@/lib/uuid";
@@ -9,9 +10,11 @@ import { createNode } from "@/server/services/curriculum";
 import { createInviteCodes, hashInviteCode, inviteUrl, redeemInviteCode, revokeInviteCode } from "@/server/services/invite";
 import { createDb, type Tx } from "./index";
 import * as schema from "./schema";
-import { behaviorEvent, characterType, studentProgress, classTeacher, inviteCode, school, schoolClass, student, type ParentRelation } from "./schema";
+import { behaviorEvent, characterLevel, characterStage, characterType, studentProgress, classTeacher, inviteCode, school, schoolClass, student, type ParentRelation } from "./schema";
 
 const DEV_PASSWORD = "Sifre1234!";
+// Lower than the defaults (0/20/50/100/200) so ten days of history already show every stage.
+const DEMO_LEVEL_THRESHOLDS = [0, 4, 8, 12, 16];
 const SEED_IP = "127.0.0.1";
 
 const CLASS_2A = [
@@ -170,8 +173,14 @@ async function main() {
       const schoolId = demoSchool!.id;
       const characterTypes = await tx
         .insert(characterType)
-        .values([{ name: "Ejderha", sortOrder: 1 }, { name: "Baykuş", sortOrder: 2 }, { name: "Tohum", sortOrder: 3 }])
+        .values(CHARACTER_TEMPLATES.map((t, i) => ({ schoolId, name: t.name, sortOrder: i + 1 })))
         .returning();
+      await tx.insert(characterStage).values(
+        CHARACTER_TEMPLATES.flatMap((t, i) =>
+          t.stages.map((name, j) => ({ characterTypeId: characterTypes[i]!.id, level: j + 1, name, assetUrl: stageAssetUrl(t.slug, j + 1) })),
+        ),
+      );
+      await tx.insert(characterLevel).values(DEMO_LEVEL_THRESHOLDS.map((xpThreshold, i) => ({ schoolId, level: i + 1, xpThreshold })));
       const typeIds = characterTypes.map((t) => t.id);
 
       const staff = (email: string, name: string, role: "admin" | "teacher") =>
@@ -258,6 +267,7 @@ async function main() {
     console.log("  veli2 … veli5          birer çocuk (2-A)");
     console.log("  veli6@ornek.okul       Arda C. (2-B)\n");
     console.log(`Müfredat: 2-A için Türkçe, Matematik, Hayat Bilgisi (${printed.progressCount} ilerleme kaydı); 2-B için Matematik.`);
+    console.log(`Karakterler: ${CHARACTER_TEMPLATES.map((t) => t.name).join(", ")}; demo seviye eşikleri ${DEMO_LEVEL_THRESHOLDS.join("/")} XP.`);
     console.log(`Davranış geçmişi: 2-A için son 10 güne yayılmış ${printed.eventCount} puan kaydı.
 `);
     console.log("Kullanılabilir davet kodları (2-A):");
