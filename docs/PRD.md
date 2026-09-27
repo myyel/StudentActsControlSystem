@@ -53,7 +53,7 @@
   - Ev (+): Odasını topladı 🛏️ +1, Kitap okudu 📖 +1, Ev işine yardım etti 🍽️ +1, Dişlerini fırçaladı 🪥 +1.
 - Kullanılmış davranış tipi silinmez, pasif yapılır.
 - Öğretmen: öğrenci kartına dokun → davranış seç. Çoklu öğrenci seçip toplu puanlama. İsteğe bağlı not.
-  - Öğretmen yalnızca **okul** kapsamlı davranışlarla puan verir; ev davranışlarını veli girer (Faz 6).
+  - Öğretmen yalnızca **okul** kapsamlı davranışlarla puan verir; ev davranışlarını veli girer.
   - Sınıf ekranındaki kartlarda yalnızca **ad + XP** görünür; ekran tahtaya yansıtılabileceği için denge ve olumsuz puanlar yalnızca öğrenci detayındadır.
 - Son işlem **10 saniye** içinde geri alınabilir (yalnızca puanı veren öğretmen); sonrasında sınıfın herhangi bir öğretmeni kaydı zaman çizelgesinden silebilir (audit log'a düşer).
 - Her olay (`BehaviorEvent`) puanın **anlık kopyasını** saklar; tipin puanı değişirse geçmiş değişmez.
@@ -67,7 +67,12 @@
 - Ev kapsamlı davranış listesini öğretmen belirler; veli yalnızca listeden seçer.
 - Ev davranışları **yalnızca pozitif** puanlı olabilir.
 - Günlük ev XP tavanı (sınıf ayarı, varsayılan 10). Tavan yalnızca XP'ye uygulanır; tavanı aşan kısım XP'ye eklenmez. "Gün" okulun saat dilimine (`Europe/Istanbul`) göre hesaplanır.
-- Ev olayları öğretmen ekranında "Ev" etiketiyle ayrı görünür.
+  - Tavan çocuk başınadır; birden fazla velinin girişleri aynı tavanı paylaşır. Tavanı aşan giriş yine kaydedilir ve dengeye tam puanla eklenir; veliye "tavan doldu" bilgisi gösterilir.
+  - Öğretmen tavanı Davranışlar → Ev sekmesinden 0–50 arasında ayarlar (0: ev girişleri XP kazandırmaz). Değişiklik audit log'a düşer.
+  - Geri alınan veya silinen ev girişi o günün tavanını yeniden açar.
+- Veli ev davranışını **yalnızca bugün** için girer (kayıt giriş anına yazılır); geçmiş güne giriş yoktur.
+- Veli kendi girdiği kaydı **10 saniye içinde geri alabilir**; sonrasında yanlış kaydı yalnızca öğretmen zaman çizelgesinden silebilir. Başka velinin veya öğretmenin kaydını geri alamaz.
+- Ev olayları öğretmen ekranında "Ev" etiketiyle ayrı görünür: zaman çizelgesinde Tümü/Okul/Ev filtresi, girişi yapan velinin adı ve tavan nedeniyle XP'si kesilen kayıtlar için açıklama.
 
 ### 4.5 Akademik duraklar
 - Hiyerarşi: **Ders → Konu → Durak** (sıralı; sürükle-bırak ile sıralama).
@@ -112,8 +117,10 @@
 - Veli bildirim tercihleri: mesajlar, olumlu davranışlar, olumsuz davranışlar, seviye atlama.
 
 ### 4.9 Veli paneli
-- Çocuk seçici (birden fazla çocuk varsa).
-- Kartlar: karakter + XP ilerleme çubuğu, haftalık davranış dengesi, son olaylar (okul/ev), akademik yol haritası, okunmamış mesajlar.
+- `/veli` ilk çocuğun paneline (`/veli/[ogrenciId]`) yönlendirir; çocuk yoksa davet kodu girişi gösterilir. Davetle bağlanan çocuğun paneli açılır.
+- Çocuk seçici (birden fazla çocuk varsa) ve "Çocuk ekle" bağlantısı.
+- Kartlar: karakter + XP ilerleme çubuğu, haftalık davranış dengesi (son 7 gün grafiği), "Evde bugün" (ev davranışı girişi ve günlük tavan göstergesi), son 10 olay (okul/ev), akademik yol haritası özeti (ders başına tamamlanan durak ve "şu an"), okunmamış mesajlar (Faz 7'ye kadar yer tutucu).
+- Son olaylarda öğretmenin **notları ve puanı kimin verdiği gösterilmez**; not öğretmene özeldir.
 - Veli başka hiçbir öğrenciye ait veri göremez (isim listesi dahil).
 
 ### 4.10 Öğretmen paneli

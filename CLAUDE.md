@@ -101,4 +101,4 @@ pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board proj
 8. PWA + responsive e2e testleri + erişilebilirlik
 9. Güvenlik, KVKK (silme/dışa aktarma, audit), Docker deploy, yedekleme, pilot
 
-Güncel faz: **6**
+Güncel faz: **7**

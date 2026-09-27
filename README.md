@@ -8,7 +8,7 @@
 
 Ürün gereksinimleri: [`docs/PRD.md`](docs/PRD.md) · Sürüm geçmişi: [`VERSION_CONTROL.md`](VERSION_CONTROL.md)
 
-> **Durum:** geliştirme aşamasında (MVP, Faz 6 / 9). Pilot kullanıma henüz hazır değildir.
+> **Durum:** geliştirme aşamasında (MVP, Faz 7 / 9). Pilot kullanıma henüz hazır değildir.
 
 ## Özellikler
 
@@ -22,16 +22,18 @@
 | **Davranış puanlama** | Karta dokun → davranış seç (2 dokunuş), toplu puanlama, 10 sn geri alma, zaman çizelgesinden silme. |
 | **Davranış tipleri** | Okul/ev kapsamlı, olumlu/olumsuz puanlı davranışlar; her yeni sınıfa varsayılan liste gelir. |
 | **XP ve denge** | XP yalnızca olumlu puanlardan artar; davranış dengesi olumlu + olumsuz toplamdır. Sayaçlar olayla aynı transaction'da güncellenir. |
-| **Öğrenci detayı** | Zaman çizelgesi, son 7 günün olumlu/olumsuz grafiği, bağlı veliler, davet kodları. |
+| **Öğrenci detayı** | Zaman çizelgesi (Tümü/Okul/Ev filtresi), son 7 günün olumlu/olumsuz grafiği, bağlı veliler, davet kodları. |
 | **Akademik duraklar** | Ders → Konu → Durak yönetimi, sürükle-bırak sıralama (dokunmatik + klavye), arşivleme. |
 | **Sınıf matrisi** | Öğrenci × durak tablosu. Dokunarak durum değiştirme, 0–3 yıldız, durak başlığından toplu işaretleme. |
 | **Veli yol haritası** | Çocuğun her dersteki ilerlemesi: tamamlanan duraklar, "şu an burada", gelecek duraklar. |
 | **Karakterler** | 4 özgün tür × 5 evrim aşaması. XP ile seviye atlama (seviye asla düşmez), animasyonlu kutlama. Öğretmen öğrencinin türünü değiştirir. |
 | **Karakter yönetimi** | Yönetici seviye eşiklerini, tür ve aşama adlarını ayarlar, türleri aktif/pasif yapar. |
+| **Veli paneli** | Çocuk seçici, karakter, haftalık denge, son olaylar, akademik harita özeti; mesaj kartı Faz 7'de dolacak. |
+| **Ev davranışları** | Veli bugün evde yapılanları işaretler; günlük ev XP tavanı (öğretmen ayarlar) yalnızca XP'yi sınırlar; 10 sn geri alma. |
 | **Tahta modu** | Akıllı tahtada tam ekran: büyük karakter kartları, yalnızca olumlu puan, tüm sınıfa puan; XP, denge ve sıralama yok. |
 
 ### Sıradakiler
-Veli paneli ve ev davranışları → mesajlar ve Web Push bildirimleri → PWA ve uçtan uca testler → güvenlik, KVKK araçları ve yayına alma. Ayrıntılar: [Yol haritası](#yol-haritası).
+Mesajlar ve Web Push bildirimleri → PWA ve uçtan uca testler → güvenlik, KVKK araçları ve yayına alma. Ayrıntılar: [Yol haritası](#yol-haritası).
 
 ## Teknoloji
 
@@ -75,7 +77,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 | `admin@ornek.okul` | Yönetici | Karakter türleri ve seviye eşikleri (demo için düşük: 0/4/8/12/16 XP) |
 | `ogretmen@ornek.okul` | Öğretmen | 2-A: 20 öğrenci, davranış geçmişi, 3 ders ve ilerleme |
 | `ogretmen2@ornek.okul` | Öğretmen | 2-B: 8 öğrenci, 1 ders |
-| `veli1@ornek.okul` | Veli | Ada Y. ve Ali K. (2-A) |
+| `veli1@ornek.okul` | Veli | Ada Y. ve Ali K. (2-A), son 5 günün ev kayıtları |
 | `veli2` … `veli5@ornek.okul` | Veli | Birer çocuk (2-A) |
 | `veli6@ornek.okul` | Veli | Arda C. (2-B) |
 
@@ -107,7 +109,7 @@ src/
   app/
     (auth)/giris, davet/[kod]      # giriş, davet koduyla veli kaydı
     ogretmen/                      # öğretmen: sınıflar, puanlama, matris, duraklar, davranışlar, davetler
-    veli/                          # veli: çocuklar, yol haritası
+    veli/                          # veli: panel, ev davranışları, yol haritası, çocuk ekleme
     admin/                         # yönetici: karakterler ve seviye eşikleri
     tahta/[sinifId]                # tam ekran tahta modu
     kvkk/[belge]                   # aydınlatma ve açık rıza metinleri
@@ -156,8 +158,8 @@ Geliştirme kuralları ve kod kalıpları: [`CLAUDE.md`](CLAUDE.md).
 | 3 | Davranış tipleri, puanlama, geri alma, zaman çizelgesi | ✅ |
 | 4 | Akademik duraklar, sınıf matrisi, veli yol haritası | ✅ |
 | 5 | Karakter sistemi, seviye atlama, tahta modu | ✅ |
-| 6 | Veli paneli, ev davranışları, günlük ev XP tavanı | ⏳ sıradaki |
-| 7 | Mesajlar, bildirim merkezi, Web Push, iOS rehberi | |
+| 6 | Veli paneli, ev davranışları, günlük ev XP tavanı | ✅ |
+| 7 | Mesajlar, bildirim merkezi, Web Push, iOS rehberi | ⏳ sıradaki |
 | 8 | PWA, responsive uçtan uca testler, erişilebilirlik | |
 | 9 | Güvenlik, KVKK (silme/dışa aktarma), Docker ile yayına alma, yedekleme, pilot | |
 
