@@ -171,6 +171,42 @@ export const characterType = pgTable("character_type", {
   sortOrder: integer().notNull().default(0),
 });
 
+// XP thresholds are shared by every character type of a school (PRD §4.6).
+// A school without rows uses DEFAULT_LEVEL_THRESHOLDS (src/lib/character.ts).
+export const characterLevel = pgTable(
+  "character_level",
+  {
+    schoolId: uuid()
+      .notNull()
+      .references(() => school.id, { onDelete: "cascade" }),
+    level: smallint().notNull(),
+    xpThreshold: integer().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.schoolId, t.level] }),
+    check("character_level_level_check", sql`${t.level} between 1 and 5`),
+    check("character_level_threshold_check", sql`${t.xpThreshold} >= 0`),
+  ],
+);
+
+// One evolution stage (name + picture) per type and level.
+export const characterStage = pgTable(
+  "character_stage",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    characterTypeId: uuid()
+      .notNull()
+      .references(() => characterType.id, { onDelete: "cascade" }),
+    level: smallint().notNull(),
+    name: varchar({ length: 40 }).notNull(),
+    assetUrl: text().notNull(),
+  },
+  (t) => [
+    unique("character_stage_type_level_unique").on(t.characterTypeId, t.level),
+    check("character_stage_level_check", sql`${t.level} between 1 and 5`),
+  ],
+);
+
 export const student = pgTable(
   "student",
   {
