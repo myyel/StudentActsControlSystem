@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatStudentName } from "@/lib/student-names";
 import { RELATION_LABEL } from "@/lib/relations";
+import { cn } from "@/lib/utils";
 import { db } from "@/server/db";
 import { assertTeacherOfStudent } from "@/server/auth/guards";
 import { orNotFound, requirePageRole } from "@/server/auth/session";
@@ -22,7 +23,10 @@ export default async function StudentPage({
   searchParams,
 }: PageProps<"/ogretmen/siniflar/[sinifId]/ogrenciler/[ogrenciId]">) {
   const { sinifId, ogrenciId } = await params;
-  const requested = Number((await searchParams).adet);
+  const query = await searchParams;
+  const requested = Number(query.adet);
+  const kaynak = query.kaynak === "ev" || query.kaynak === "okul" ? query.kaynak : undefined;
+  const source = kaynak === "ev" ? "home" : kaynak === "okul" ? "school" : undefined;
   const limit = Number.isInteger(requested) && requested > 0 ? Math.min(requested, TIMELINE_MAX) : TIMELINE_PAGE;
   const { user } = await requirePageRole("teacher");
   await orNotFound(assertTeacherOfStudent(user, ogrenciId));
@@ -31,12 +35,14 @@ export default async function StudentPage({
     getStudentForTeacher(db, ogrenciId),
     getStudentCharacter(db, ogrenciId),
     listInvitesForStudent(db, ogrenciId),
-    getStudentTimeline(db, ogrenciId, limit),
+    getStudentTimeline(db, ogrenciId, limit, source),
   ]);
   // The URL's class must be the student's class.
   if (student.classId !== sinifId) notFound();
   const week = await getLast7Days(db, ogrenciId, student.timeZone);
   const base = `/ogretmen/siniflar/${sinifId}/ogrenciler/${ogrenciId}`;
+  const filterHref = (k?: string) => (k ? `${base}?kaynak=${k}` : base);
+  const moreHref = `${base}?${new URLSearchParams({ ...(kaynak && { kaynak }), adet: String(limit + TIMELINE_PAGE) })}`;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -81,10 +87,35 @@ export default async function StudentPage({
           <CardTitle>Zaman çizelgesi</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
+          <nav aria-label="Kaynak" className="flex flex-wrap gap-2">
+            {(
+              [
+                [undefined, "Tümü"],
+                ["okul", "Okul"],
+                ["ev", "Ev"],
+              ] as const
+            ).map(([k, label]) => {
+              const current = k === kaynak;
+              return (
+                <Link
+                  key={label}
+                  href={filterHref(k)}
+                  scroll={false}
+                  aria-current={current ? "page" : undefined}
+                  className={cn(
+                    "flex min-h-11 items-center rounded-md border px-4 text-sm font-medium",
+                    current ? "border-primary bg-primary/10" : "hover:bg-accent",
+                  )}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </nav>
           <StudentTimeline items={timeline.items} timeZone={student.timeZone} />
           {timeline.hasMore && limit < TIMELINE_MAX && (
             <Link
-              href={`${base}?adet=${limit + TIMELINE_PAGE}`}
+              href={moreHref}
               scroll={false}
               className={buttonVariants({ variant: "outline", className: "h-11 self-start" })}
             >

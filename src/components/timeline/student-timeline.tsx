@@ -10,6 +10,7 @@ type Item = {
   name: string;
   icon: string;
   points: number;
+  xpDelta: number;
   source: BehaviorScope;
   note: string | null;
   createdAt: Date;
@@ -50,12 +51,19 @@ export function StudentTimeline({ items, timeZone }: { items: Item[]; timeZone: 
                     >
                       {formatPoints(e.points)}
                     </span>
-                    {e.source === "home" && <Badge variant="secondary">Ev</Badge>}
+                    <Badge variant={e.source === "home" ? "secondary" : "outline"}>
+                      {e.source === "home" ? "Ev" : "Okul"}
+                    </Badge>
                   </span>
                   <span className="text-sm text-muted-foreground">
                     {time.format(e.createdAt)}
-                    {e.givenByName && ` · ${e.givenByName}`}
+                    {e.givenByName && ` · ${e.source === "home" ? "Veli: " : ""}${e.givenByName}`}
                   </span>
+                  {e.points > 0 && e.xpDelta < e.points && (
+                    <span className="text-sm text-amber-700 dark:text-amber-400">
+                      Günlük ev XP tavanı: {e.xpDelta > 0 ? `yalnızca +${e.xpDelta} XP eklendi` : "XP eklenmedi"}
+                    </span>
+                  )}
                   {e.note && <span className="text-sm">“{e.note}”</span>}
                 </div>
                 <DeleteEventButton eventId={e.id} label={e.name} />
