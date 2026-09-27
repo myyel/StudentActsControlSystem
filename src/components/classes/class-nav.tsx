@@ -1,3 +1,4 @@
+import { Presentation } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +18,16 @@ export function ClassNav({ classId, className, active }: { classId: string; clas
       <Link href="/ogretmen" className="text-sm text-muted-foreground hover:underline">
         ← Sınıflarım
       </Link>
-      <h1 className="text-2xl font-semibold">{className}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-semibold">{className}</h1>
+        <Link
+          href={`/tahta/${classId}`}
+          className="flex min-h-11 items-center gap-2 rounded-md border px-3 text-sm font-medium hover:bg-accent"
+        >
+          <Presentation className="size-4" aria-hidden />
+          Tahta modu
+        </Link>
+      </div>
       <nav aria-label="Sınıf menüsü" className="-mx-1 flex gap-1 overflow-x-auto">
         {TABS.map((tab) => (
           <Link
