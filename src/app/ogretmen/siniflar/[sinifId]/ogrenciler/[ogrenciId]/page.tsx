@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { StudentCharacter } from "@/components/characters/student-character";
 import { StudentEditForm } from "@/components/classes/student-edit-form";
 import { StudentInvites } from "@/components/invites/student-invites";
 import { StudentTimeline } from "@/components/timeline/student-timeline";
@@ -11,6 +12,7 @@ import { RELATION_LABEL } from "@/lib/relations";
 import { db } from "@/server/db";
 import { assertTeacherOfStudent } from "@/server/auth/guards";
 import { orNotFound, requirePageRole } from "@/server/auth/session";
+import { getStudentCharacter } from "@/server/services/character";
 import { listInvitesForStudent } from "@/server/services/invite";
 import { getStudentForTeacher } from "@/server/services/student";
 import { getLast7Days, getStudentTimeline, TIMELINE_MAX, TIMELINE_PAGE } from "@/server/services/timeline";
@@ -25,8 +27,9 @@ export default async function StudentPage({
   const { user } = await requirePageRole("teacher");
   await orNotFound(assertTeacherOfStudent(user, ogrenciId));
 
-  const [student, invites, timeline] = await Promise.all([
+  const [student, character, invites, timeline] = await Promise.all([
     getStudentForTeacher(db, ogrenciId),
+    getStudentCharacter(db, ogrenciId),
     listInvitesForStudent(db, ogrenciId),
     getStudentTimeline(db, ogrenciId, limit),
   ]);
@@ -54,6 +57,15 @@ export default async function StudentPage({
           <p className="text-3xl font-semibold">{student.balance > 0 ? `+${student.balance}` : student.balance}</p>
         </div>
       </div>
+
+      <Card className="print:hidden">
+        <CardHeader>
+          <CardTitle>Karakter</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <StudentCharacter studentId={student.id} character={character} />
+        </CardContent>
+      </Card>
 
       <Card className="print:hidden">
         <CardHeader>

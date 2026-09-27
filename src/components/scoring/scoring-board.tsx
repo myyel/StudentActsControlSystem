@@ -3,6 +3,8 @@
 import { Check } from "lucide-react";
 import { useCallback, useState, useTransition } from "react";
 import { giveBehaviorAction } from "@/app/ogretmen/scoring-actions";
+import { CharacterImage } from "@/components/characters/character-image";
+import { LevelUpCelebration, type Celebration } from "@/components/characters/level-up-celebration";
 import { Button } from "@/components/ui/button";
 import { formatPoints, UNDO_WINDOW_MS } from "@/lib/behavior";
 import { formatStudentName } from "@/lib/student-names";
@@ -11,7 +13,13 @@ import { newUuid } from "@/lib/uuid";
 import { BehaviorPicker, type PickerBehavior } from "./behavior-picker";
 import { UndoBar, type LastScore } from "./undo-bar";
 
-type Student = { id: string; firstName: string; lastInitial: string | null; xp: number };
+type Student = {
+  id: string;
+  firstName: string;
+  lastInitial: string | null;
+  xp: number;
+  stage: { name: string; assetUrl: string };
+};
 
 type Props = { classId: string; students: Student[]; behaviors: PickerBehavior[] };
 
@@ -23,8 +31,10 @@ export function ScoringBoard({ classId, students, behaviors }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [lastScore, setLastScore] = useState<LastScore | null>(null);
   const [flash, setFlash] = useState<Set<string>>(new Set());
+  const [celebrations, setCelebrations] = useState<{ key: string; items: Celebration[] } | null>(null);
   const [pending, start] = useTransition();
   const closeUndo = useCallback(() => setLastScore(null), []);
+  const closeCelebration = useCallback(() => setCelebrations(null), []);
 
   const byId = new Map(students.map((s) => [s.id, s]));
   const title =
@@ -54,7 +64,7 @@ export function ScoringBoard({ classId, students, behaviors }: Props) {
         setError(result.error);
         return;
       }
-      const { name, points, count } = result.data;
+      const { name, points, count, levelUps } = result.data;
       const who = count === 1 ? formatStudentName(byId.get(studentIds[0]!)!) : `${count} öğrenci`;
       setTargets(null);
       setSelected(new Set());
@@ -64,6 +74,12 @@ export function ScoringBoard({ classId, students, behaviors }: Props) {
       setLastScore({ batchId, label: `${who} · ${name} ${formatPoints(points)}`, expiresAt });
       setFlash(new Set(studentIds));
       setTimeout(() => setFlash(new Set()), 900);
+      if (levelUps.length > 0) {
+        setCelebrations({
+          key: `level-up-${batchId}`,
+          items: levelUps.map((levelUp) => ({ studentName: formatStudentName(byId.get(levelUp.studentId)!), levelUp })),
+        });
+      }
     });
   }
 
@@ -114,13 +130,16 @@ export function ScoringBoard({ classId, students, behaviors }: Props) {
                 onClick={() => onCardClick(s.id)}
                 aria-pressed={selectMode ? isSelected : undefined}
                 className={cn(
-                  "relative flex min-h-24 w-full flex-col items-start justify-between gap-2 rounded-xl border p-3 text-left transition-colors hover:bg-accent",
+                  "relative flex min-h-24 w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors hover:bg-accent",
                   isSelected && "border-primary bg-primary/10",
                   flash.has(s.id) && "motion-safe:animate-pulse border-emerald-500",
                 )}
               >
-                <span className="text-lg font-semibold">{formatStudentName(s)}</span>
-                <span className="text-sm text-muted-foreground">{s.xp} XP</span>
+                <CharacterImage stage={s.stage} size={56} decorative />
+                <span className="flex min-w-0 flex-col gap-1">
+                  <span className="truncate text-lg font-semibold">{formatStudentName(s)}</span>
+                  <span className="text-sm text-muted-foreground">{s.xp} XP</span>
+                </span>
                 {isSelected && (
                   <Check className="absolute top-2 right-2 size-5 text-primary" aria-hidden />
                 )}
@@ -144,6 +163,9 @@ export function ScoringBoard({ classId, students, behaviors }: Props) {
       />
 
       {lastScore && <UndoBar key={lastScore.batchId} score={lastScore} onClose={closeUndo} />}
+      {celebrations && (
+        <LevelUpCelebration key={celebrations.key} items={celebrations.items} onDone={closeCelebration} />
+      )}
     </div>
   );
 }

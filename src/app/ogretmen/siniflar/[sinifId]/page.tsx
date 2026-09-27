@@ -10,6 +10,7 @@ import { assertTeacherOfClass } from "@/server/auth/guards";
 import { orNotFound, requirePageRole } from "@/server/auth/session";
 import { listBehaviorTypes } from "@/server/services/behavior-type";
 import { getClass } from "@/server/services/class";
+import { withStages } from "@/server/services/character";
 import { listStudentsForClass } from "@/server/services/student";
 
 export default async function ClassPage({ params }: PageProps<"/ogretmen/siniflar/[sinifId]">) {
@@ -22,7 +23,7 @@ export default async function ClassPage({ params }: PageProps<"/ogretmen/sinifla
     listStudentsForClass(db, sinifId),
     listBehaviorTypes(db, sinifId, { scope: "school", activeOnly: true }),
   ]);
-  const active = students.filter((s) => s.active);
+  const active = await withStages(db, students.filter((s) => s.active));
   const inactive = students.filter((s) => !s.active);
   const withoutParent = active.filter((s) => s.parentCount === 0).length;
 
@@ -36,7 +37,7 @@ export default async function ClassPage({ params }: PageProps<"/ogretmen/sinifla
 
       <ScoringBoard
         classId={sinifId}
-        students={active.map(({ id, firstName, lastInitial, xp }) => ({ id, firstName, lastInitial, xp }))}
+        students={active.map(({ id, firstName, lastInitial, xp, stage }) => ({ id, firstName, lastInitial, xp, stage }))}
         behaviors={behaviors.map(({ id, name, icon, points }) => ({ id, name, icon, points }))}
       />
 

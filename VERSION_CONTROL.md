@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.19.0 | 2026-09-28 | feat | Öğretmen ekranlarında karakter: öğrenci detayında aşama, seviye, ilerleme çubuğu ve tür seçici (seviye korunur); puanlama kartlarında karakter görseli; seviye atlayınca evrim animasyonu ve konfeti (azaltılmış harekette sade geçiş) | 5 |
 | 0.18.0 | 2026-09-28 | feat | Admin karakter sayfası (`/admin/karakterler`): 5 seviyenin XP eşikleri, okulun karakter türlerini adlandırma/aktif-pasif yapma ve aşama adları (önizlemeli); genel türler salt okunur | 5 |
 | 0.17.0 | 2026-09-28 | feat | Karakter servisi: seviye eşikleri (varsayılan 0/20/50/100/200, düşürmeden yeniden hesaplama), puan verirken aynı transaction içinde seviye atlama (`levelUps`), tür/aşama düzenleme, öğrenci türü değiştirme, tahta verisi; 4 tür × 5 aşama özgün yer tutucu SVG; yetki ve seviye testleri | 5 |
 | 0.16.0 | 2026-09-28 | feat | Karakter tabloları: okul bazlı seviye eşikleri (`character_level`, 1–5) ve tür başına evrim aşamaları (`character_stage`) | 5 |

@@ -126,3 +126,29 @@
     @apply bg-background text-foreground;
   }
 }
+/* Level-up celebration (used with motion-safe: so reduced motion gets a plain swap). */
+@theme {
+  --animate-evolve-out: evolve-out 700ms ease-in forwards;
+  --animate-evolve-in: evolve-in 900ms cubic-bezier(0.34, 1.56, 0.64, 1) 550ms both;
+  --animate-confetti: confetti 1800ms ease-in 500ms both;
+  --animate-pop: pop 400ms ease-out both;
+
+  @keyframes evolve-out {
+    0% { transform: scale(1); opacity: 1; filter: brightness(1); }
+    60% { transform: scale(1.08); opacity: 1; filter: brightness(2.2); }
+    100% { transform: scale(0.4); opacity: 0; filter: brightness(3); }
+  }
+  @keyframes evolve-in {
+    0% { transform: scale(0.3) rotate(-12deg); opacity: 0; }
+    70% { transform: scale(1.12) rotate(4deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+  }
+  @keyframes confetti {
+    0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; }
+  }
+  @keyframes pop {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+}
