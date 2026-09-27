@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.22.1 | 2026-09-28 | fix | Haftalık grafiğin ekran okuyucu tablosu sr-only kapsayıcıya alındı; 360px'te sayfayı genişletip yatay kaydırma oluşturuyordu | 6 |
 | 0.22.0 | 2026-09-28 | feat | Davranışlar sayfasının Ev sekmesinde günlük ev XP tavanı ayarı (0–50, açıklamalı) | 6 |
 | 0.21.0 | 2026-09-28 | feat | Ev davranışı servisi: veli yalnızca çocuğunun sınıfının aktif ev davranışlarını bugün için girer; günlük ev XP tavanı okul saat dilimine göre ve yalnızca XP'ye uygulanır (denge tam puan), aynı transaction'da seviye; tekrar gönderime dayanıklı; öğretmen için tavan ayarı servisi; veli paneli verisi (notsuz, parent_student üzerinden); zaman çizelgesinde kaynak filtresi; yetki ve tavan testleri | 6 |
 | 0.20.2 | 2026-09-28 | docs | Faz 5 tamamlandı: PRD'ye tür seçimi (yalnızca öğretmen), sabit 5 seviye ve eşik kuralları, admin tür yönetimi, tahta modu oturumu ve kart içeriği kararları; README güncellendi; güncel faz 6 | 5 |

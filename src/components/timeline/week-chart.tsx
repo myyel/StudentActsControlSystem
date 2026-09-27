@@ -37,25 +37,28 @@ export function WeekChart({ days }: { days: DaySummary[] }) {
           <span className="size-3 rounded-sm bg-red-500" aria-hidden /> Olumsuz: −{totalNegative}
         </span>
       </figcaption>
-      <table className="sr-only">
-        <caption>Son 7 gün, gün gün olumlu ve olumsuz puanlar</caption>
-        <thead>
-          <tr>
-            <th scope="col">Gün</th>
-            <th scope="col">Olumlu</th>
-            <th scope="col">Olumsuz</th>
-          </tr>
-        </thead>
-        <tbody>
-          {days.map((d) => (
-            <tr key={d.day}>
-              <th scope="row">{d.day}</th>
-              <td>{d.positive}</td>
-              <td>{d.negative}</td>
+      {/* Tables ignore sr-only sizing and can widen the page; the wrapper clips it. */}
+      <div className="sr-only">
+        <table>
+          <caption>Son 7 gün, gün gün olumlu ve olumsuz puanlar</caption>
+          <thead>
+            <tr>
+              <th scope="col">Gün</th>
+              <th scope="col">Olumlu</th>
+              <th scope="col">Olumsuz</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {days.map((d) => (
+              <tr key={d.day}>
+                <th scope="row">{d.day}</th>
+                <td>{d.positive}</td>
+                <td>{d.negative}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }
