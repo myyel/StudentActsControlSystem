@@ -12,7 +12,7 @@ import { getRequestMeta } from "@/server/request";
 import { formatInviteCode } from "@/lib/invite-code";
 import { formatStudentName } from "@/lib/student-names";
 import { setStudentCharacterType } from "@/server/services/character";
-import { createClass } from "@/server/services/class";
+import { createClass, updateHomeDailyXpCap } from "@/server/services/class";
 import {
   createInviteCodes,
   getInviteStudentId,
@@ -21,7 +21,7 @@ import {
   revokeInviteCode,
 } from "@/server/services/invite";
 import { addStudents, listStudentsForClass, updateStudent } from "@/server/services/student";
-import { createClassSchema } from "@/server/validation/class";
+import { createClassSchema, homeDailyXpCapSchema } from "@/server/validation/class";
 import { classInviteSchema, inviteOptionsSchema } from "@/server/validation/invite";
 import { studentCharacterSchema } from "@/server/validation/character";
 import { bulkStudentsSchema, studentNameSchema } from "@/server/validation/student";
@@ -45,6 +45,24 @@ export async function createClassAction(_: unknown, formData: FormData): Promise
     return toActionError(error);
   }
   redirect(`/ogretmen/siniflar/${classId}`);
+}
+
+export async function updateHomeDailyXpCapAction(
+  classId: string,
+  _: unknown,
+  formData: FormData,
+): Promise<ActionResult<undefined>> {
+  try {
+    const { user } = await requireRole("teacher");
+    await assertTeacherOfClass(user, classId);
+    const { homeDailyXpCap } = homeDailyXpCapSchema.parse({ homeDailyXpCap: formData.get("homeDailyXpCap") });
+    const { ip } = await getRequestMeta();
+    await updateHomeDailyXpCap(db, user, classId, homeDailyXpCap, ip);
+    refresh();
+    return ok(undefined, "Kaydedildi.");
+  } catch (error) {
+    return toActionError(error);
+  }
 }
 
 export async function addStudentAction(

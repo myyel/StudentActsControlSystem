@@ -4,6 +4,7 @@ import { BehaviorTypeForm } from "@/components/behaviors/behavior-type-form";
 import { BehaviorTypeList } from "@/components/behaviors/behavior-type-list";
 import { LoadDefaultsButton } from "@/components/behaviors/load-defaults-button";
 import { ClassNav } from "@/components/classes/class-nav";
+import { HomeCapForm } from "@/components/classes/home-cap-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { db } from "@/server/db";
@@ -60,8 +61,19 @@ export default async function BehaviorTypesPage({
       <p className="text-sm text-muted-foreground">
         {scope === "school"
           ? "Derste öğrencilere verdiğiniz davranışlar. Olumsuz davranışlar yalnızca öğretmen ve veli ekranlarında görünür."
-          : "Velilerin evde işaretleyebileceği davranışlar (veli girişi Faz 6'da açılacak)."}
+          : "Velilerin evde işaretleyebileceği davranışlar. Yalnızca olumlu puanlı olabilir."}
       </p>
+
+      {scope === "home" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Günlük ev XP tavanı</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <HomeCapForm classId={sinifId} cap={cls.homeDailyXpCap} />
+          </CardContent>
+        </Card>
+      )}
 
       <BehaviorTypeList key={scope} items={types} scope={scope} />
 

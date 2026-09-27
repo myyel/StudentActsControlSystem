@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.22.0 | 2026-09-28 | feat | Davranışlar sayfasının Ev sekmesinde günlük ev XP tavanı ayarı (0–50, açıklamalı) | 6 |
 | 0.21.0 | 2026-09-28 | feat | Ev davranışı servisi: veli yalnızca çocuğunun sınıfının aktif ev davranışlarını bugün için girer; günlük ev XP tavanı okul saat dilimine göre ve yalnızca XP'ye uygulanır (denge tam puan), aynı transaction'da seviye; tekrar gönderime dayanıklı; öğretmen için tavan ayarı servisi; veli paneli verisi (notsuz, parent_student üzerinden); zaman çizelgesinde kaynak filtresi; yetki ve tavan testleri | 6 |
 | 0.20.2 | 2026-09-28 | docs | Faz 5 tamamlandı: PRD'ye tür seçimi (yalnızca öğretmen), sabit 5 seviye ve eşik kuralları, admin tür yönetimi, tahta modu oturumu ve kart içeriği kararları; README güncellendi; güncel faz 6 | 5 |
 | 0.20.1 | 2026-09-28 | chore | Faz 5 seed: okula ait 4 karakter türü (Ejderha, Baykuş, Robot, Tohum) ve 5'er aşama, demo seviye eşikleri 0/4/8/12/16 XP; öğrenciler geçmişe göre 2–5. seviyelerde | 5 |
