@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Tohum: Genç ağaç">
+<title>Tohum: Genç ağaç</title>
+<circle cx="100" cy="100" r="98" fill="#f1f8e9"/>
+<ellipse cx="100" cy="178" rx="56" ry="8" fill="#000" opacity=".08"/>
+<path d="M40 170 C60 150 140 150 160 170Z" fill="#8d6e63"/><path d="M92 166 L96 110 L104 110 L108 166Z" fill="#795548"/><circle cx="100" cy="86" r="44" fill="#66bb6a"/><circle cx="70" cy="100" r="24" fill="#66bb6a"/><circle cx="130" cy="100" r="24" fill="#66bb6a"/><circle cx="86" cy="86" r="8" fill="#fff"/><circle cx="87.2" cy="86.8" r="4.8" fill="#2b2b3a"/><circle cx="88.8" cy="84" r="1.76" fill="#fff"/><circle cx="114" cy="86" r="8" fill="#fff"/><circle cx="115.2" cy="86.8" r="4.8" fill="#2b2b3a"/><circle cx="116.8" cy="84" r="1.76" fill="#fff"/><path d="M92 102 Q100 108.4 108 102" fill="none" stroke="#2b2b3a" stroke-width="3" stroke-linecap="round"/><circle cx="74" cy="98" r="5" fill="#ff8a80" opacity=".55"/><circle cx="126" cy="98" r="5" fill="#ff8a80" opacity=".55"/>
+</svg>

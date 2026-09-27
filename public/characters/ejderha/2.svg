@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Ejderha: Çatlayan yumurta">
+<title>Ejderha: Çatlayan yumurta</title>
+<circle cx="100" cy="100" r="98" fill="#e8f5e9"/>
+<ellipse cx="100" cy="178" rx="56" ry="8" fill="#000" opacity=".08"/>
+<circle cx="100" cy="98" r="34" fill="#43a047"/><circle cx="87" cy="94" r="8" fill="#fff"/><circle cx="88.2" cy="94.8" r="4.8" fill="#2b2b3a"/><circle cx="89.8" cy="92" r="1.76" fill="#fff"/><circle cx="113" cy="94" r="8" fill="#fff"/><circle cx="114.2" cy="94.8" r="4.8" fill="#2b2b3a"/><circle cx="115.8" cy="92" r="1.76" fill="#fff"/><path d="M94 110 Q100 114.8 106 110" fill="none" stroke="#2b2b3a" stroke-width="3" stroke-linecap="round"/><path d="M52 120 L64 108 L76 122 L88 106 L100 122 L112 106 L124 122 L136 108 L148 120 C150 156 128 172 100 172 C72 172 50 156 52 120Z" fill="#a5d6a7"/><circle cx="84" cy="148" r="7" fill="#66bb6a"/><circle cx="120" cy="140" r="9" fill="#66bb6a"/>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Robot: Kutu robot">
+<title>Robot: Kutu robot</title>
+<circle cx="100" cy="100" r="98" fill="#e3f2fd"/>
+<ellipse cx="100" cy="178" rx="56" ry="8" fill="#000" opacity=".08"/>
+<rect x="58" y="70" width="84" height="84" rx="18" fill="#42a5f5"/><rect x="70" y="84" width="60" height="44" rx="10" fill="#263238"/><circle cx="89.2" cy="102.48" r="5.279999999999999" fill="#80deea"/><circle cx="110.80000000000001" cy="102.48" r="5.279999999999999" fill="#80deea"/><path d="M92.8 113.92 Q100 120.08 107.2 113.92" fill="none" stroke="#80deea" stroke-width="3" stroke-linecap="round"/><circle cx="100" cy="142" r="5" fill="#ffca28"/><rect x="72" y="154" width="16" height="14" rx="4" fill="#1e88e5"/><rect x="112" y="154" width="16" height="14" rx="4" fill="#1e88e5"/>
+</svg>

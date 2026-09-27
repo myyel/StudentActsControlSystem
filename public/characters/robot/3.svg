@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Robot: Antenli robot">
+<title>Robot: Antenli robot</title>
+<circle cx="100" cy="100" r="98" fill="#e3f2fd"/>
+<ellipse cx="100" cy="178" rx="56" ry="8" fill="#000" opacity=".08"/>
+<rect x="42" y="104" width="20" height="10" rx="5" fill="#1e88e5"/><circle cx="40" cy="109" r="9" fill="#1e88e5"/><rect x="138" y="104" width="20" height="10" rx="5" fill="#1e88e5"/><circle cx="160" cy="109" r="9" fill="#1e88e5"/><rect x="62" y="92" width="76" height="60" rx="14" fill="#42a5f5"/><circle cx="100" cy="122" r="7" fill="#ffca28"/><rect x="98" y="30" width="4" height="22" fill="#1e88e5"/><circle cx="100" cy="30" r="7" fill="#ef5350"/><rect x="64" y="50" width="72" height="48" rx="14" fill="#42a5f5"/><rect x="72" y="56" width="56" height="36" rx="10" fill="#263238"/><circle cx="89.92" cy="71.12" r="4.32" fill="#80deea"/><circle cx="110.08000000000001" cy="71.12" r="4.32" fill="#80deea"/><path d="M93.28 80.48 Q100 85.52 106.72 80.48" fill="none" stroke="#80deea" stroke-width="3" stroke-linecap="round"/><rect x="56" y="66" width="8" height="16" rx="3" fill="#1e88e5"/><rect x="136" y="66" width="8" height="16" rx="3" fill="#1e88e5"/>
+</svg>

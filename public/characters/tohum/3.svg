@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Tohum: Fidan">
+<title>Tohum: Fidan</title>
+<circle cx="100" cy="100" r="98" fill="#f1f8e9"/>
+<ellipse cx="100" cy="178" rx="56" ry="8" fill="#000" opacity=".08"/>
+<path d="M40 170 C60 150 140 150 160 170Z" fill="#8d6e63"/><path d="M100 162 L100 72" stroke="#388e3c" stroke-width="7" stroke-linecap="round"/><ellipse cx="80" cy="128" rx="20.8" ry="10.4" fill="#66bb6a" transform="rotate(-25 80 128)"/><ellipse cx="120" cy="118" rx="20.8" ry="10.4" fill="#66bb6a" transform="rotate(25 120 118)"/><ellipse cx="82" cy="92" rx="19.2" ry="9.6" fill="#66bb6a" transform="rotate(-35 82 92)"/><ellipse cx="118" cy="82" rx="19.2" ry="9.6" fill="#66bb6a" transform="rotate(35 118 82)"/><ellipse cx="100" cy="66" rx="17.6" ry="8.8" fill="#66bb6a" transform="rotate(90 100 66)"/><circle cx="91" cy="140" r="6" fill="#fff"/><circle cx="91.9" cy="140.6" r="3.5999999999999996" fill="#2b2b3a"/><circle cx="93.1" cy="138.5" r="1.32" fill="#fff"/><circle cx="109" cy="140" r="6" fill="#fff"/><circle cx="109.9" cy="140.6" r="3.5999999999999996" fill="#2b2b3a"/><circle cx="111.1" cy="138.5" r="1.32" fill="#fff"/>
+</svg>

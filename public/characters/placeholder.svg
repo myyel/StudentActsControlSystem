@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Karakter">
+<title>Karakter</title>
+<circle cx="100" cy="100" r="98" fill="#ede7f6"/>
+<ellipse cx="100" cy="178" rx="56" ry="8" fill="#000" opacity=".08"/>
+<circle cx="100" cy="112" r="50" fill="#b39ddb"/><circle cx="84" cy="104" r="10" fill="#fff"/><circle cx="85.5" cy="105" r="6" fill="#2b2b3a"/><circle cx="87.5" cy="101.5" r="2.2" fill="#fff"/><circle cx="116" cy="104" r="10" fill="#fff"/><circle cx="117.5" cy="105" r="6" fill="#2b2b3a"/><circle cx="119.5" cy="101.5" r="2.2" fill="#fff"/><path d="M91 124 Q100 131.2 109 124" fill="none" stroke="#2b2b3a" stroke-width="3" stroke-linecap="round"/><polygon points="100.0,32.0 104.2,42.2 115.2,43.1 106.8,50.2 109.4,60.9 100.0,55.2 90.6,60.9 93.2,50.2 84.8,43.1 95.8,42.2" fill="#ffca28"/>
+</svg>

@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { z } from "@/lib/zod";
 import { db } from "@/server/db";
-import { classTeacher, parentStudent, schoolClass, student, type UserRole } from "@/server/db/schema";
+import { characterType, classTeacher, parentStudent, schoolClass, student, type UserRole } from "@/server/db/schema";
 import { forbidden } from "./errors";
 
 /** The subset of the session user that authorization decisions depend on. */
@@ -25,6 +25,21 @@ export function assertRole(user: AuthUser, ...roles: UserRole[]) {
 export function assertAdminOfSchool(user: AuthUser, schoolId: string) {
   assertRole(user, "admin");
   if (!user.schoolId || user.schoolId !== schoolId) throw forbidden();
+}
+
+/** Admin of the school that owns the character type; global types (no school) are not editable. */
+export async function assertAdminOfCharacterType(user: AuthUser, characterTypeId: string) {
+  assertRole(user, "admin");
+  assertUuid(characterTypeId);
+  if (!user.schoolId) throw forbidden();
+
+  const [row] = await db
+    .select({ id: characterType.id })
+    .from(characterType)
+    .where(and(eq(characterType.id, characterTypeId), eq(characterType.schoolId, user.schoolId)))
+    .limit(1);
+
+  if (!row) throw forbidden();
 }
 
 /** Teacher is assigned to the class and the class is not archived. */

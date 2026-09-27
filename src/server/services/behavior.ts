@@ -8,6 +8,7 @@ import { forbidden } from "@/server/auth/errors";
 import { UserError } from "@/server/action-result";
 import type { GiveBehaviorInput } from "@/server/validation/behavior";
 import { writeAudit } from "./audit";
+import { raiseLevels, type LevelUp } from "./character";
 
 export type GiveResult = {
   batchId: string;
@@ -16,6 +17,8 @@ export type GiveResult = {
   icon: string;
   points: number;
   duplicate: boolean;
+  /** Students whose character reached a new level with this batch. */
+  levelUps: LevelUp[];
 };
 
 async function schoolIdOf(tx: Tx, classId: string) {
@@ -36,6 +39,7 @@ async function existingBatch(db: Db | Tx, classId: string, batchId: string): Pro
     icon: first.iconSnapshot,
     points: first.pointsSnapshot,
     duplicate: true,
+    levelUps: [],
   };
 }
 
@@ -66,7 +70,12 @@ export async function giveBehavior(
 
       // Lock in id order so concurrent bulk scorings cannot deadlock.
       const locked = await tx
-        .select({ id: student.id })
+        .select({
+          id: student.id,
+          xp: student.xp,
+          characterLevel: student.characterLevel,
+          characterTypeId: student.characterTypeId,
+        })
         .from(student)
         .where(
           and(
@@ -107,13 +116,25 @@ export async function giveBehavior(
         .set({ xp: sql`${student.xp} + ${xpDelta}`, balance: sql`${student.balance} + ${balanceDelta}` })
         .where(inArray(student.id, input.studentIds));
 
+      const schoolId = await schoolIdOf(tx, classId);
+      // Same transaction as the counters (CLAUDE.md rule 4); deletes never lower the level.
+      const levelUps =
+        xpDelta > 0 && schoolId ? await raiseLevels(tx, schoolId, locked.map((s) => ({ ...s, xp: s.xp + xpDelta }))) : [];
+
       await writeAudit(tx, {
         action: "behavior.give",
         entity: "behavior_event",
         entityId: input.batchId,
         actorId: actor.id,
-        schoolId: await schoolIdOf(tx, classId),
-        data: { behaviorTypeId: type.id, points: type.points, studentIds: input.studentIds },
+        schoolId,
+        data: {
+          behaviorTypeId: type.id,
+          points: type.points,
+          studentIds: input.studentIds,
+          ...(levelUps.length > 0 && {
+            levelUps: levelUps.map(({ studentId, fromLevel, toLevel }) => ({ studentId, fromLevel, toLevel })),
+          }),
+        },
         ip,
       });
 
@@ -124,6 +145,7 @@ export async function giveBehavior(
         icon: type.icon,
         points: type.points,
         duplicate: false,
+        levelUps,
       };
     });
   } catch (error) {

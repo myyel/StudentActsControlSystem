@@ -19,7 +19,10 @@ export type AuditAction =
   | "curriculum.restore"
   | "curriculum.reorder"
   | "progress.set"
-  | "progress.bulk_set";
+  | "progress.bulk_set"
+  | "character.thresholds_update"
+  | "character_type.update"
+  | "student.character_change";
 
 export type AuditEntry = {
   action: AuditAction;
@@ -33,7 +36,9 @@ export type AuditEntry = {
     | "subject"
     | "topic"
     | "stage"
-    | "student_progress";
+    | "student_progress"
+    | "school"
+    | "character_type";
   entityId: string;
   actorId?: string | null;
   schoolId?: string | null;
