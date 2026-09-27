@@ -2,15 +2,23 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { undoBatchAction } from "@/app/ogretmen/scoring-actions";
+import type { ActionResult } from "@/server/action-result";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export type LastScore = { batchId: string; label: string; expiresAt: number };
 
 /** Bottom bar with a countdown; the server enforces the same window. */
-type Props = { score: LastScore; onClose: () => void; /** Board mode: 80px touch target. */ large?: boolean };
+type Props = {
+  score: LastScore;
+  onClose: () => void;
+  /** Board mode: 80px touch target. */
+  large?: boolean;
+  /** Defaults to the teacher's undo; parents pass their own. */
+  undo?: (batchId: string) => Promise<ActionResult<{ undone: number }>>;
+};
 
-export function UndoBar({ score, onClose, large }: Props) {
+export function UndoBar({ score, onClose, large, undo = undoBatchAction }: Props) {
   const [now, setNow] = useState(() => Date.now());
   const [message, setMessage] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -46,7 +54,7 @@ export function UndoBar({ score, onClose, large }: Props) {
             disabled={pending}
             onClick={() =>
               start(async () => {
-                const result = await undoBatchAction(score.batchId);
+                const result = await undo(score.batchId);
                 setMessage(result.ok ? "Geri alındı." : result.error);
               })
             }

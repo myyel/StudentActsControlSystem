@@ -206,7 +206,11 @@ export async function undoBatch(db: Db, actor: AuthUser, batchId: string, ip?: s
     const first = events[0]!;
     if (first.givenById !== actor.id) throw forbidden();
     if (now.getTime() - first.createdAt.getTime() > UNDO_WINDOW_MS) {
-      throw new UserError("Geri alma süresi doldu. Kaydı öğrencinin zaman çizelgesinden silebilirsiniz.");
+      throw new UserError(
+        actor.role === "parent"
+          ? "Geri alma süresi doldu. Yanlış kaydı çocuğunuzun öğretmeni silebilir."
+          : "Geri alma süresi doldu. Kaydı öğrencinin zaman çizelgesinden silebilirsiniz.",
+      );
     }
 
     await reverseEvents(tx, events, actor.id, "undo");

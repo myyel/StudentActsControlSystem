@@ -22,11 +22,12 @@ async function assertInviteRateLimit(ip: string | null) {
 
 /** Public: the invite code is the authorization for creating a parent account. */
 export async function registerParentAction(_: unknown, formData: FormData): Promise<ActionResult<never>> {
+  let studentId: string;
   try {
     const meta = await getRequestMeta();
     await assertInviteRateLimit(meta.ip);
     const input = registerParentSchema.parse(Object.fromEntries(formData));
-    await registerParentWithInvite(db, { ...input, ...meta });
+    ({ studentId } = await registerParentWithInvite(db, { ...input, ...meta }));
     // Sets the session cookie through the nextCookies plugin.
     await auth.api.signInEmail({
       body: { email: input.email, password: input.password },
@@ -35,19 +36,20 @@ export async function registerParentAction(_: unknown, formData: FormData): Prom
   } catch (error) {
     return toActionError(error);
   }
-  redirect("/veli");
+  redirect(`/veli/${studentId}`);
 }
 
 /** Signed-in parent adds another child with a code. */
 export async function linkChildAction(_: unknown, formData: FormData): Promise<ActionResult<never>> {
+  let studentId: string;
   try {
     const { user } = await requireRole("parent");
     const meta = await getRequestMeta();
     await assertInviteRateLimit(meta.ip);
     const input = linkChildSchema.parse(Object.fromEntries(formData));
-    await db.transaction((tx) => redeemInviteCode(tx, { ...input, ...meta, parentId: user.id }));
+    ({ studentId } = await db.transaction((tx) => redeemInviteCode(tx, { ...input, ...meta, parentId: user.id })));
   } catch (error) {
     return toActionError(error);
   }
-  redirect("/veli");
+  redirect(`/veli/${studentId}`);
 }
