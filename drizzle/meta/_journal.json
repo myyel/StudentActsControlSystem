@@ -36,6 +36,13 @@
       "when": 1790543194559,
       "tag": "0004_characters",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790593149418,
+      "tag": "0005_messages_notifications",
+      "breakpoints": true
     }
   ]
 }

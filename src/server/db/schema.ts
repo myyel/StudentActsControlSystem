@@ -32,12 +32,21 @@ export const consentKind = pgEnum("consent_kind", ["privacy_notice", "explicit_c
 export const behaviorScope = pgEnum("behavior_scope", ["school", "home"]);
 export const eventDeleteReason = pgEnum("event_delete_reason", ["undo", "delete"]);
 export const progressStatus = pgEnum("progress_status", ["not_started", "in_progress", "completed"]);
+export const messageReaction = pgEnum("message_reaction", ["seen", "thanks"]);
+export const notificationType = pgEnum("notification_type", [
+  "message",
+  "positive_behavior",
+  "negative_behavior",
+  "level_up",
+]);
 
 export type UserRole = (typeof userRole.enumValues)[number];
 export type ParentRelation = (typeof parentRelation.enumValues)[number];
 export type ConsentKind = (typeof consentKind.enumValues)[number];
 export type BehaviorScope = (typeof behaviorScope.enumValues)[number];
 export type ProgressStatus = (typeof progressStatus.enumValues)[number];
+export type MessageReaction = (typeof messageReaction.enumValues)[number];
+export type NotificationType = (typeof notificationType.enumValues)[number];
 
 export const school = pgTable("school", {
   id: uuid().primaryKey().defaultRandom(),
@@ -433,4 +442,98 @@ export const studentProgress = pgTable(
     check("student_progress_stars_range_check", sql`${t.stars} between 0 and 3`),
     check("student_progress_stars_completed_check", sql`${t.stars} is null or ${t.status} = 'completed'`),
   ],
+);
+
+// --- Messages and notifications ---
+
+// Recipients are not frozen at send time: a class announcement (studentId null) reaches every
+// current parent of the class, a student message every current parent of that student.
+export const message = pgTable(
+  "message",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    classId: uuid()
+      .notNull()
+      .references(() => schoolClass.id, { onDelete: "cascade" }),
+    studentId: uuid().references(() => student.id, { onDelete: "cascade" }),
+    authorId: uuid().references(() => user.id, { onDelete: "set null" }),
+    title: varchar({ length: 120 }).notNull(),
+    body: text().notNull(),
+    createdAt: createdAt(),
+    deletedAt: timestamp({ withTimezone: true }),
+  },
+  (t) => [index().on(t.classId, t.createdAt), index().on(t.studentId, t.createdAt)],
+);
+
+export const messageRead = pgTable(
+  "message_read",
+  {
+    messageId: uuid()
+      .notNull()
+      .references(() => message.id, { onDelete: "cascade" }),
+    parentId: uuid()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    readAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    reaction: messageReaction(),
+  },
+  (t) => [primaryKey({ columns: [t.messageId, t.parentId] }), index().on(t.parentId)],
+);
+
+export type NotificationPayload = {
+  studentId?: string;
+  studentName?: string;
+  messageId?: string;
+  /** Behavior batch that created the notification; undo/delete removes it while unread. */
+  batchId?: string;
+  title: string;
+  body: string;
+};
+
+export const notification = pgTable(
+  "notification",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    type: notificationType().notNull(),
+    payload: jsonb().$type<NotificationPayload>().notNull(),
+    // In-app path the notification opens.
+    url: text().notNull(),
+    readAt: timestamp({ withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index().on(t.userId, t.createdAt)],
+);
+
+// No row means enabled.
+export const notificationPreference = pgTable(
+  "notification_preference",
+  {
+    userId: uuid()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    type: notificationType().notNull(),
+    enabled: boolean().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.type] })],
+);
+
+export const pushSubscription = pgTable(
+  "push_subscription",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    endpoint: text().notNull().unique(),
+    p256dh: text().notNull(),
+    auth: text().notNull(),
+    userAgent: text(),
+    failureCount: integer().notNull().default(0),
+    lastSuccessAt: timestamp({ withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index().on(t.userId)],
 );
