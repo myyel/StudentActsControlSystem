@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.35.0 | 2026-09-29 | feat | Üretimde hesap yönetimi: `pnpm admin:cli` (kullanici-olustur: geçici şifre üretir, okul yoksa karakter türleriyle oluşturur; sifre-sifirla: oturumları kapatır; okullar); okul kurulumu `createSchool` servisine taşındı, seed de bunu kullanır | 9 |
 | 0.34.0 | 2026-09-29 | feat | Kötüye kullanım tavanları: öğretmen mesaj gönderme 30/10 dk, veli ev davranışı girişi 60/10 dk (kullanıcı başına) | 9 |
 | 0.33.0 | 2026-09-29 | feat | Yönetici denetim kaydı ekranı (`/admin/denetim`): işlem, kişi (ad/e-posta) ve tarih aralığına göre süzme, sayfalama, Türkçe işlem adları, kayıt ayrıntısı; yönetim panelinde Silme talepleri (bekleyen sayısı) ve Denetim kaydı kartları | 9 |
 | 0.32.0 | 2026-09-29 | feat | Veli: Ayarlar'da Verileriniz kartı (JSON/CSV indirme, çocuk için silme talebi ve durumu), `/veli/hesabi-sil` (şifreyle onay, isteğe bağlı çocuk silme talebi, cihaz aboneliği kaldırılır, girişte "Hesabınız silindi"); Yönetici: `/admin/silme-talepleri` (Bekleyen/Silinen/Reddedilen, öğrenci verisini indirme, adı yazarak kalıcı silme, gerekçeyle reddetme); dışa aktarma route'ları (`/veli/disa-aktar`, `/admin/ogrenciler/[id]/disa-aktar`) hız sınırlı ve audit'e yazılır | 9 |

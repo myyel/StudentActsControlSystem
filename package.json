@@ -16,7 +16,8 @@
     "db:studio": "drizzle-kit studio",
     "db:reset": "tsx --env-file=.env src/server/db/seed.ts --reset",
     "push:keys": "web-push generate-vapid-keys",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "admin:cli": "tsx --env-file-if-exists=.env src/server/db/admin-cli.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

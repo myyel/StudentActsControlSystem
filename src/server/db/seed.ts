@@ -1,6 +1,6 @@
 import { eq, getTableName, is, sql } from "drizzle-orm";
 import { PgTable } from "drizzle-orm/pg-core";
-import { CHARACTER_TEMPLATES, stageAssetUrl } from "@/content/characters";
+import { CHARACTER_TEMPLATES } from "@/content/characters";
 import { formatInviteCode } from "@/lib/invite-code";
 import { createCredentialUser } from "@/server/auth/users";
 import { newUuid } from "@/lib/uuid";
@@ -9,10 +9,11 @@ import { giveHomeBehavior } from "@/server/services/home-behavior";
 import { listBehaviorTypes, seedDefaultBehaviorTypes } from "@/server/services/behavior-type";
 import { createNode } from "@/server/services/curriculum";
 import { markMessageRead, sendMessage, setMessageReaction } from "@/server/services/message";
+import { createSchool } from "@/server/services/school";
 import { createInviteCodes, hashInviteCode, inviteUrl, redeemInviteCode, revokeInviteCode } from "@/server/services/invite";
 import { createDb, type Tx } from "./index";
 import * as schema from "./schema";
-import { behaviorEvent, message, messageRead, notification, characterLevel, characterStage, characterType, studentProgress, classTeacher, inviteCode, school, schoolClass, student, type ParentRelation } from "./schema";
+import { behaviorEvent, message, messageRead, notification, characterLevel, studentProgress, classTeacher, inviteCode, school, schoolClass, student, type ParentRelation } from "./schema";
 
 const DEV_PASSWORD = "Sifre1234!";
 // Lower than the defaults (0/20/50/100/200) so ten days of history already show every stage.
@@ -230,19 +231,9 @@ async function main() {
       if (reset) await truncateAll(tx);
       else if ((await tx.select({ id: school.id }).from(school).limit(1)).length > 0) return null;
 
-      const [demoSchool] = await tx.insert(school).values({ name: "Örnek İlkokulu" }).returning();
-      const schoolId = demoSchool!.id;
-      const characterTypes = await tx
-        .insert(characterType)
-        .values(CHARACTER_TEMPLATES.map((t, i) => ({ schoolId, name: t.name, sortOrder: i + 1 })))
-        .returning();
-      await tx.insert(characterStage).values(
-        CHARACTER_TEMPLATES.flatMap((t, i) =>
-          t.stages.map((name, j) => ({ characterTypeId: characterTypes[i]!.id, level: j + 1, name, assetUrl: stageAssetUrl(t.slug, j + 1) })),
-        ),
-      );
+      const { school: demoSchool, characterTypeIds: typeIds } = await createSchool(tx, "Örnek İlkokulu");
+      const schoolId = demoSchool.id;
       await tx.insert(characterLevel).values(DEMO_LEVEL_THRESHOLDS.map((xpThreshold, i) => ({ schoolId, level: i + 1, xpThreshold })));
-      const typeIds = characterTypes.map((t) => t.id);
 
       const staff = (email: string, name: string, role: "admin" | "teacher") =>
         createCredentialUser(tx, { email, name, password: DEV_PASSWORD, role, schoolId });
