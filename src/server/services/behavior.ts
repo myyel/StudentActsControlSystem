@@ -9,6 +9,7 @@ import { UserError } from "@/server/action-result";
 import type { GiveBehaviorInput } from "@/server/validation/behavior";
 import { writeAudit } from "./audit";
 import { raiseLevels, type LevelUp } from "./character";
+import { notifyBehavior, notifyLevelUps, removeBehaviorNotifications } from "./notification";
 
 export type GiveResult = {
   batchId: string;
@@ -21,13 +22,16 @@ export type GiveResult = {
   levelUps: LevelUp[];
 };
 
+/** Server-only: the parent notifications this batch created, for push delivery after commit. */
+export type GiveOutcome = GiveResult & { notificationIds: string[] };
+
 async function schoolIdOf(tx: Tx, classId: string) {
   const [row] = await tx.select({ schoolId: schoolClass.schoolId }).from(schoolClass).where(eq(schoolClass.id, classId));
   return row?.schoolId ?? null;
 }
 
 /** A batch that was already written (retry or double tap) is returned as-is. */
-async function existingBatch(db: Db | Tx, classId: string, batchId: string): Promise<GiveResult | null> {
+async function existingBatch(db: Db | Tx, classId: string, batchId: string): Promise<GiveOutcome | null> {
   const rows = await db.select().from(behaviorEvent).where(eq(behaviorEvent.batchId, batchId));
   if (rows.length === 0) return null;
   const first = rows[0]!;
@@ -40,12 +44,14 @@ async function existingBatch(db: Db | Tx, classId: string, batchId: string): Pro
     points: first.pointsSnapshot,
     duplicate: true,
     levelUps: [],
+    notificationIds: [],
   };
 }
 
 /**
  * Scores one or more students of a class with a school behavior, all or nothing.
  * Counters are updated in the same transaction as the events (CLAUDE.md rule 4).
+ * Parent notifications are written in the same transaction; pushing them is the caller's job.
  * Call only after assertTeacherOfClass.
  */
 export async function giveBehavior(
@@ -54,7 +60,7 @@ export async function giveBehavior(
   classId: string,
   input: GiveBehaviorInput,
   ip?: string | null,
-): Promise<GiveResult> {
+): Promise<GiveOutcome> {
   try {
     return await db.transaction(async (tx) => {
       const previous = await existingBatch(tx, classId, input.batchId);
@@ -72,6 +78,8 @@ export async function giveBehavior(
       const locked = await tx
         .select({
           id: student.id,
+          firstName: student.firstName,
+          lastInitial: student.lastInitial,
           xp: student.xp,
           characterLevel: student.characterLevel,
           characterTypeId: student.characterTypeId,
@@ -121,6 +129,17 @@ export async function giveBehavior(
       const levelUps =
         xpDelta > 0 && schoolId ? await raiseLevels(tx, schoolId, locked.map((s) => ({ ...s, xp: s.xp + xpDelta }))) : [];
 
+      const notificationIds = [
+        ...(await notifyBehavior(tx, {
+          batchId: input.batchId,
+          students: locked,
+          name: type.name,
+          icon: type.icon,
+          points: type.points,
+        })),
+        ...(await notifyLevelUps(tx, levelUps, locked)),
+      ];
+
       await writeAudit(tx, {
         action: "behavior.give",
         entity: "behavior_event",
@@ -146,6 +165,7 @@ export async function giveBehavior(
         points: type.points,
         duplicate: false,
         levelUps,
+        notificationIds,
       };
     });
   } catch (error) {
@@ -214,6 +234,7 @@ export async function undoBatch(db: Db, actor: AuthUser, batchId: string, ip?: s
     }
 
     await reverseEvents(tx, events, actor.id, "undo");
+    await removeBehaviorNotifications(tx, batchId);
     await writeAudit(tx, {
       action: "behavior.undo",
       entity: "behavior_event",
@@ -235,6 +256,7 @@ export async function deleteEvent(db: Db, actor: AuthUser, eventId: string, ip?:
     if (event.deletedAt) return;
 
     await reverseEvents(tx, [event], actor.id, "delete");
+    await removeBehaviorNotifications(tx, event.batchId, event.studentId);
     await writeAudit(tx, {
       action: "behavior.delete",
       entity: "behavior_event",

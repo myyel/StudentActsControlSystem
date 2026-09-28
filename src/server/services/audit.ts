@@ -24,7 +24,9 @@ export type AuditAction =
   | "progress.bulk_set"
   | "character.thresholds_update"
   | "character_type.update"
-  | "student.character_change";
+  | "student.character_change"
+  | "message.create"
+  | "message.delete";
 
 export type AuditEntry = {
   action: AuditAction;
@@ -40,7 +42,8 @@ export type AuditEntry = {
     | "stage"
     | "student_progress"
     | "school"
-    | "character_type";
+    | "character_type"
+    | "message";
   entityId: string;
   actorId?: string | null;
   schoolId?: string | null;

@@ -1,7 +1,16 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { z } from "@/lib/zod";
 import { db } from "@/server/db";
-import { characterType, classTeacher, parentStudent, schoolClass, student, type UserRole } from "@/server/db/schema";
+import {
+  characterType,
+  classTeacher,
+  message,
+  parentStudent,
+  schoolClass,
+  student,
+  type UserRole,
+} from "@/server/db/schema";
+import { visibleToParent } from "@/server/services/message";
 import { forbidden } from "./errors";
 
 /** The subset of the session user that authorization decisions depend on. */
@@ -102,6 +111,20 @@ export async function assertParentOfStudent(user: AuthUser, studentId: string) {
         isNull(student.deletedAt),
       ),
     )
+    .limit(1);
+
+  if (!row) throw forbidden();
+}
+
+/** Parent may see the message: it is for one of their children or their child's class (not deleted). */
+export async function assertParentOfMessage(user: AuthUser, messageId: string) {
+  assertRole(user, "parent");
+  assertUuid(messageId);
+
+  const [row] = await db
+    .select({ id: message.id })
+    .from(message)
+    .where(and(eq(message.id, messageId), visibleToParent(user.id)))
     .limit(1);
 
   if (!row) throw forbidden();

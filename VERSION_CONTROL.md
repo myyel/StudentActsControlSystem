@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.26.0 | 2026-09-28 | feat | Mesaj servisi (sınıf duyurusu ve öğrenciye özel mesaj, alıcılar anlık çözülür, okundu bilgisi ve hızlı tepki, öğretmene okundu/tepki özeti, soft delete + audit); bildirim servisi (tercihlere uyan oluşturma, okul davranışında olumlu/olumsuz ve seviye atlama bildirimleri aynı transaction'da, geri alma/silmede davranış bildirimi kaldırılır, ev girişleri bildirim üretmez); push servisi (web-push, abonelik kaydı/silme, bilinen push servisleriyle sınırlı endpoint, 404/410 ve 5 hatada abonelik silinir); veli mesaj guard'ı; yetki testleri | 7 |
 | 0.25.0 | 2026-09-28 | feat | Mesaj, okundu/tepki, bildirim, bildirim tercihi ve push aboneliği tabloları | 7 |
 | 0.24.2 | 2026-09-28 | docs | Faz 6 tamamlandı: PRD'ye veli geri alma (10 sn), notların veliye kapalı olması, yalnızca bugün için ev girişi, paylaşılan tavan ve tavan ayarı, veli paneli yapısı kararları; README güncellendi; güncel faz 7 | 6 |
 | 0.24.1 | 2026-09-28 | chore | Faz 6 seed: veli1 (Ada, Ali) ve veli2 (Ayşe) için son 5 güne yayılmış ev kayıtları; Ada için bir gün günlük tavanı aşıyor | 6 |
