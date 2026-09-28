@@ -9,6 +9,7 @@ import { requireRole } from "@/server/auth/session";
 import { ok, toActionError, type ActionResult } from "@/server/action-result";
 import { dispatchPush } from "@/server/push-dispatch";
 import { getRequestMeta } from "@/server/request";
+import { enforceRateLimit, MESSAGE_RATE_LIMIT } from "@/server/services/rate-limit";
 import { deleteMessage, getMessageClassId, sendMessage } from "@/server/services/message";
 import { messageSchema } from "@/server/validation/message";
 
@@ -19,6 +20,7 @@ export async function sendMessageAction(classId: string, payload: unknown): Prom
     const { user } = await requireRole("teacher");
     await assertTeacherOfClass(user, classId);
     const input = messageSchema.parse(payload);
+    await enforceRateLimit(db, `message:${user.id}`, MESSAGE_RATE_LIMIT);
     const { ip } = await getRequestMeta();
     const { messageId, notificationIds } = await sendMessage(db, user, classId, input, ip);
     dispatchPush(notificationIds);

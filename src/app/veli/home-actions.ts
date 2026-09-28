@@ -8,6 +8,7 @@ import { assertParentOfStudent } from "@/server/auth/guards";
 import { requireRole } from "@/server/auth/session";
 import { ok, toActionError, type ActionResult } from "@/server/action-result";
 import { getRequestMeta } from "@/server/request";
+import { enforceRateLimit, HOME_BEHAVIOR_RATE_LIMIT } from "@/server/services/rate-limit";
 import { undoBatch } from "@/server/services/behavior";
 import { getHomeBatchStudentId, giveHomeBehavior, type HomeGiveResult } from "@/server/services/home-behavior";
 import { giveHomeBehaviorSchema } from "@/server/validation/behavior";
@@ -19,6 +20,7 @@ export async function giveHomeBehaviorAction(studentId: string, payload: unknown
     const { user } = await requireRole("parent");
     await assertParentOfStudent(user, studentId);
     const input = giveHomeBehaviorSchema.parse(payload);
+    await enforceRateLimit(db, `home:${user.id}`, HOME_BEHAVIOR_RATE_LIMIT);
     const { ip } = await getRequestMeta();
     const result = await giveHomeBehavior(db, user, studentId, input, ip);
     refresh();
