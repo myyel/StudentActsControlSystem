@@ -13,6 +13,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -33,6 +34,7 @@ export const behaviorScope = pgEnum("behavior_scope", ["school", "home"]);
 export const eventDeleteReason = pgEnum("event_delete_reason", ["undo", "delete"]);
 export const progressStatus = pgEnum("progress_status", ["not_started", "in_progress", "completed"]);
 export const messageReaction = pgEnum("message_reaction", ["seen", "thanks"]);
+export const deletionRequestStatus = pgEnum("deletion_request_status", ["pending", "completed", "rejected"]);
 export const notificationType = pgEnum("notification_type", [
   "message",
   "positive_behavior",
@@ -47,6 +49,7 @@ export type BehaviorScope = (typeof behaviorScope.enumValues)[number];
 export type ProgressStatus = (typeof progressStatus.enumValues)[number];
 export type MessageReaction = (typeof messageReaction.enumValues)[number];
 export type NotificationType = (typeof notificationType.enumValues)[number];
+export type DeletionRequestStatus = (typeof deletionRequestStatus.enumValues)[number];
 
 export const school = pgTable("school", {
   id: uuid().primaryKey().defaultRandom(),
@@ -282,11 +285,11 @@ export const consentRecord = pgTable(
   "consent_record",
   {
     id: uuid().primaryKey().defaultRandom(),
-    userId: uuid()
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    // Kept as proof of consent after the account or child is deleted (phase 9 decision): the
+    // link is cut (null) and withdrawnAt is set when the account is deleted.
+    userId: uuid().references(() => user.id, { onDelete: "set null" }),
     // The child the consent covers; consent is collected per linked child.
-    studentId: uuid().references(() => student.id, { onDelete: "cascade" }),
+    studentId: uuid().references(() => student.id, { onDelete: "set null" }),
     kind: consentKind().notNull(),
     docVersion: text().notNull(),
     ip: text(),
@@ -297,7 +300,30 @@ export const consentRecord = pgTable(
   (t) => [index().on(t.userId)],
 );
 
-// Append-only.
+// A parent asks for a child's data to be deleted; a school admin exports and deletes it (or
+// rejects the request). Rows outlive the student as a record that the request was handled.
+export const deletionRequest = pgTable(
+  "deletion_request",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    schoolId: uuid().references(() => school.id, { onDelete: "set null" }),
+    studentId: uuid().references(() => student.id, { onDelete: "set null" }),
+    requestedById: uuid().references(() => user.id, { onDelete: "set null" }),
+    status: deletionRequestStatus().notNull().default("pending"),
+    note: text(),
+    resolvedById: uuid().references(() => user.id, { onDelete: "set null" }),
+    resolvedAt: timestamp({ withTimezone: true }),
+    rejectReason: text(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index().on(t.schoolId, t.status),
+    // One open request per child, whichever parent asked.
+    uniqueIndex("deletion_request_pending_student").on(t.studentId).where(sql`${t.status} = 'pending'`),
+  ],
+);
+
+// Append-only, except that deleting a student scrubs personal fields (scrubAuditForStudent).
 export const auditLog = pgTable(
   "audit_log",
   {

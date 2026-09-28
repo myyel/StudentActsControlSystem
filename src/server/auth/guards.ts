@@ -4,6 +4,7 @@ import { db } from "@/server/db";
 import {
   characterType,
   classTeacher,
+  deletionRequest,
   message,
   parentStudent,
   schoolClass,
@@ -46,6 +47,37 @@ export async function assertAdminOfCharacterType(user: AuthUser, characterTypeId
     .select({ id: characterType.id })
     .from(characterType)
     .where(and(eq(characterType.id, characterTypeId), eq(characterType.schoolId, user.schoolId)))
+    .limit(1);
+
+  if (!row) throw forbidden();
+}
+
+/** Admin of the school the student's class belongs to (deleted and archived students included). */
+export async function assertAdminOfStudent(user: AuthUser, studentId: string) {
+  assertRole(user, "admin");
+  assertUuid(studentId);
+  if (!user.schoolId) throw forbidden();
+
+  const [row] = await db
+    .select({ id: student.id })
+    .from(student)
+    .innerJoin(schoolClass, eq(schoolClass.id, student.classId))
+    .where(and(eq(student.id, studentId), eq(schoolClass.schoolId, user.schoolId)))
+    .limit(1);
+
+  if (!row) throw forbidden();
+}
+
+/** Admin of the school the deletion request belongs to. */
+export async function assertAdminOfDeletionRequest(user: AuthUser, requestId: string) {
+  assertRole(user, "admin");
+  assertUuid(requestId);
+  if (!user.schoolId) throw forbidden();
+
+  const [row] = await db
+    .select({ id: deletionRequest.id })
+    .from(deletionRequest)
+    .where(and(eq(deletionRequest.id, requestId), eq(deletionRequest.schoolId, user.schoolId)))
     .limit(1);
 
   if (!row) throw forbidden();

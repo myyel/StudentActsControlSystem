@@ -1,4 +1,5 @@
-import { hashPassword } from "better-auth/crypto";
+import { and, eq } from "drizzle-orm";
+import { hashPassword, verifyPassword } from "better-auth/crypto";
 import type { DbOrTx } from "@/server/db";
 import { account, user, type UserRole } from "@/server/db/schema";
 
@@ -38,4 +39,15 @@ export async function createCredentialUser(db: DbOrTx, input: NewCredentialUser)
   });
 
   return created;
+}
+
+/** Checks the user's email/password credential (re-authentication before destructive actions). */
+export async function verifyUserPassword(db: DbOrTx, userId: string, password: string) {
+  const [row] = await db
+    .select({ hash: account.password })
+    .from(account)
+    .where(and(eq(account.userId, userId), eq(account.providerId, "credential")))
+    .limit(1);
+  if (!row?.hash) return false;
+  return verifyPassword({ hash: row.hash, password });
 }

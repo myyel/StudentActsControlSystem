@@ -43,6 +43,13 @@
       "when": 1790593149418,
       "tag": "0005_messages_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790631371468,
+      "tag": "0006_privacy_deletion",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import type { Db } from "@/server/db";
-import { consumeRateLimit } from "@/server/services/rate-limit";
+import { consumeRateLimit, enforceRateLimit, RATE_LIMITED } from "@/server/services/rate-limit";
 import { createTestDb } from "../helpers/db";
 
 let db: Db;
@@ -33,5 +33,16 @@ describe("consumeRateLimit", () => {
       Array.from({ length: 15 }, () => consumeRateLimit(db, "invite:c", rule, now)),
     );
     expect(results.filter(Boolean)).toHaveLength(10);
+  });
+});
+
+describe("enforceRateLimit", () => {
+  it("throws a user-facing error once the key is over its limit, per key", async () => {
+    const small = { windowSeconds: 600, max: 2 };
+    await enforceRateLimit(db, "export:u1", small);
+    await enforceRateLimit(db, "export:u1", small);
+    await expect(enforceRateLimit(db, "export:u1", small)).rejects.toThrow(RATE_LIMITED);
+    // Another user is not affected.
+    await expect(enforceRateLimit(db, "export:u2", small)).resolves.toBeUndefined();
   });
 });

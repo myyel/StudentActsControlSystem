@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import type { DbOrTx } from "@/server/db";
+import { UserError } from "@/server/action-result";
 import { rateLimit } from "@/server/db/schema";
 
 export type RateLimitRule = { windowSeconds: number; max: number };
@@ -28,4 +29,22 @@ export async function consumeRateLimit(db: DbOrTx, key: string, rule: RateLimitR
     .returning({ count: rateLimit.count });
 
   return (row?.count ?? 1) <= rule.max;
+}
+
+/** Data exports are expensive and rarely needed more often. */
+export const EXPORT_RATE_LIMIT: RateLimitRule = { windowSeconds: 3600, max: 5 };
+/** Admins export on behalf of families, so more often. */
+export const ADMIN_EXPORT_RATE_LIMIT: RateLimitRule = { windowSeconds: 3600, max: 60 };
+/** Password re-entry before deleting an account (guessing protection). */
+export const PASSWORD_CONFIRM_RATE_LIMIT: RateLimitRule = { windowSeconds: 900, max: 5 };
+/** Abuse ceilings, far above normal use. */
+export const MESSAGE_RATE_LIMIT: RateLimitRule = { windowSeconds: 600, max: 30 };
+export const HOME_BEHAVIOR_RATE_LIMIT: RateLimitRule = { windowSeconds: 600, max: 60 };
+export const DELETION_REQUEST_RATE_LIMIT: RateLimitRule = { windowSeconds: 3600, max: 10 };
+
+export const RATE_LIMITED = "Çok fazla deneme yapıldı. Lütfen biraz bekleyip tekrar deneyin.";
+
+/** For actions: throws a user-facing error when the key is over its limit. */
+export async function enforceRateLimit(db: DbOrTx, key: string, rule: RateLimitRule) {
+  if (!(await consumeRateLimit(db, key, rule))) throw new UserError(RATE_LIMITED);
 }
