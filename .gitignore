@@ -48,3 +48,6 @@ next-env.d.ts
 
 # production backups (docker-compose.prod.yml)
 /backups/
+
+# generated from scripts/kilavuz/kilavuz.mjs
+/docs/kilavuz/kilavuz.html
