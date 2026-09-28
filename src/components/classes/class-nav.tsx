@@ -1,5 +1,6 @@
 import { Presentation } from "lucide-react";
 import Link from "next/link";
+import { BackLink } from "@/components/layout/back-link";
 import { cn } from "@/lib/utils";
 
 const TABS = [
@@ -16,9 +17,7 @@ export type ClassTab = (typeof TABS)[number]["key"];
 export function ClassNav({ classId, className, active }: { classId: string; className: string; active: ClassTab }) {
   return (
     <div className="flex flex-col gap-2 print:hidden">
-      <Link href="/ogretmen" className="text-sm text-muted-foreground hover:underline">
-        ← Sınıflarım
-      </Link>
+      <BackLink href="/ogretmen">Sınıflarım</BackLink>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">{className}</h1>
         <Link

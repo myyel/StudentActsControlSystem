@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { BackLink } from "@/components/layout/back-link";
 import { Roadmap } from "@/components/progress/roadmap";
 import { formatStudentName } from "@/lib/student-names";
 import { db } from "@/server/db";
@@ -19,9 +19,7 @@ export default async function RoadmapPage({ params }: PageProps<"/veli/[ogrenciI
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <div>
-        <Link href={`/veli/${child.id}`} className="text-sm text-muted-foreground hover:underline">
-          ← {formatStudentName(child)} paneli
-        </Link>
+        <BackLink href={`/veli/${child.id}`}>{formatStudentName(child)} paneli</BackLink>
         <h1 className="text-2xl font-semibold">{formatStudentName(child)} · Yol haritası</h1>
         <p className="text-muted-foreground">Derslerdeki durakları ve çocuğunuzun şu an nerede olduğunu gösterir.</p>
       </div>

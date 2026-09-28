@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { BackLink } from "@/components/layout/back-link";
 import { InviteCodeEntry } from "@/components/parents/invite-code-entry";
 import { Card, CardContent } from "@/components/ui/card";
 import { requirePageRole } from "@/server/auth/session";
@@ -12,9 +12,7 @@ export default async function AddChildPage() {
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
       <div>
-        <Link href="/veli" className="text-sm text-muted-foreground hover:underline">
-          ← Panele dön
-        </Link>
+        <BackLink href="/veli">Panele dön</BackLink>
         <h1 className="text-2xl font-semibold">Çocuk ekle</h1>
         <p className="text-muted-foreground">Öğretmenden aldığınız davet kodunu girin; çocuk hesabınıza eklenir.</p>
       </div>

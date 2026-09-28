@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { StudentCharacter } from "@/components/characters/student-character";
 import { StudentEditForm } from "@/components/classes/student-edit-form";
 import { StudentInvites } from "@/components/invites/student-invites";
+import { BackLink } from "@/components/layout/back-link";
 import { StudentTimeline } from "@/components/timeline/student-timeline";
 import { WeekChart } from "@/components/timeline/week-chart";
 import { buttonVariants } from "@/components/ui/button";
@@ -47,9 +48,7 @@ export default async function StudentPage({
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <div className="print:hidden">
-        <Link href={`/ogretmen/siniflar/${sinifId}`} className="text-sm text-muted-foreground hover:underline">
-          ← {student.className}
-        </Link>
+        <BackLink href={`/ogretmen/siniflar/${sinifId}`}>{student.className}</BackLink>
         <h1 className="text-2xl font-semibold">{formatStudentName(student)}</h1>
       </div>
 

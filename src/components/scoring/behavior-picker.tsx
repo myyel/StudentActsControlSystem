@@ -111,7 +111,7 @@ export function BehaviorPicker({ open, onOpenChange, title, detailHref, behavior
         )}
 
         {detailHref && (
-          <Link href={detailHref} className="text-sm font-medium underline underline-offset-2">
+          <Link href={detailHref} className="inline-flex min-h-11 w-fit items-center text-sm font-medium underline underline-offset-2">
             Öğrenci detayı ve zaman çizelgesi
           </Link>
         )}

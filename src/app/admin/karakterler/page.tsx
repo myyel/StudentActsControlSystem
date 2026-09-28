@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { CharacterTypeEditor } from "@/components/characters/character-type-editor";
 import { LevelThresholdsForm } from "@/components/characters/level-thresholds-form";
+import { BackLink } from "@/components/layout/back-link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/server/db";
 import { requirePageRole } from "@/server/auth/session";
@@ -20,9 +20,7 @@ export default async function AdminCharactersPage() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <Link href="/admin" className="text-sm text-muted-foreground hover:underline">
-          ← Yönetim paneli
-        </Link>
+        <BackLink href="/admin">Yönetim paneli</BackLink>
         <h1 className="text-2xl font-semibold">Karakterler</h1>
       </div>
 

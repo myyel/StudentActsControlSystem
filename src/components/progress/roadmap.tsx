@@ -41,7 +41,7 @@ export function Roadmap({ subjects }: { subjects: RoadmapSubject[] }) {
                   {t.stages.map((st) => (
                     <li
                       key={st.id}
-                      className={cn("relative flex min-h-11 items-center gap-3 py-1 pl-6", st.status === "not_started" && "opacity-55")}
+                      className="relative flex min-h-11 items-center gap-3 py-1 pl-6"
                     >
                       <span
                         aria-hidden
@@ -54,7 +54,16 @@ export function Roadmap({ subjects }: { subjects: RoadmapSubject[] }) {
                       >
                         {st.status === "completed" && "✓"}
                       </span>
-                      <span className={cn("min-w-0 flex-1", st.status === "in_progress" && "font-semibold")}>{st.name}</span>
+                      <span
+                        className={cn(
+                          "min-w-0 flex-1",
+                          st.status === "in_progress" && "font-semibold",
+                          // Muted text keeps AA contrast (opacity would not).
+                          st.status === "not_started" && "text-muted-foreground",
+                        )}
+                      >
+                        {st.name}
+                      </span>
                       {st.status === "in_progress" && (
                         <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-900 dark:text-amber-100">
                           Şu an burada
