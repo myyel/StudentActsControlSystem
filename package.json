@@ -15,7 +15,8 @@
     "db:seed": "tsx --env-file=.env src/server/db/seed.ts",
     "db:studio": "drizzle-kit studio",
     "db:reset": "tsx --env-file=.env src/server/db/seed.ts --reset",
-    "push:keys": "web-push generate-vapid-keys"
+    "push:keys": "web-push generate-vapid-keys",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -36,7 +37,9 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@electric-sql/pglite": "^0.5.8",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",

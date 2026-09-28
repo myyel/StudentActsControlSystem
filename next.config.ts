@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // e2e builds into their own folder so they do not clobber the dev server's .next.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   async headers() {
     return [
       {
