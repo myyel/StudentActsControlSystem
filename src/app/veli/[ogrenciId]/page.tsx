@@ -4,6 +4,8 @@ import Link from "next/link";
 import { CharacterImage } from "@/components/characters/character-image";
 import { LevelBar } from "@/components/characters/level-bar";
 import { ChildSwitcher } from "@/components/parents/child-switcher";
+import { ParentMessageList } from "@/components/messages/parent-message-list";
+import { IosInstallGuide } from "@/components/notifications/ios-install-guide";
 import { HomeEntry } from "@/components/parents/home-entry";
 import { RecentEvents } from "@/components/parents/recent-events";
 import { WeekChart } from "@/components/timeline/week-chart";
@@ -14,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { db } from "@/server/db";
 import { assertParentOfStudent } from "@/server/auth/guards";
 import { orNotFound, requirePageRole } from "@/server/auth/session";
+import { listParentMessages } from "@/server/services/message";
 import { listChildrenForParent } from "@/server/services/parent";
 import { getParentDashboard } from "@/server/services/parent-dashboard";
 
@@ -24,9 +27,10 @@ export default async function ParentDashboardPage({ params }: PageProps<"/veli/[
   const { user } = await requirePageRole("parent");
   // Another child's id renders 404; the service filters through parent_student as well.
   await orNotFound(assertParentOfStudent(user, ogrenciId));
-  const [dashboard, children] = await Promise.all([
+  const [dashboard, children, unread] = await Promise.all([
     orNotFound(getParentDashboard(db, user.id, ogrenciId)),
     listChildrenForParent(db, user.id),
+    listParentMessages(db, user.id, { studentId: ogrenciId, unreadOnly: true, limit: 3 }),
   ]);
   const { child, character, week, weekBalance, recent, subjects, home, timeZone } = dashboard;
   const name = formatStudentName(child);
@@ -34,6 +38,7 @@ export default async function ParentDashboardPage({ params }: PageProps<"/veli/[
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <ChildSwitcher items={children} currentId={child.id} />
+      <IosInstallGuide variant="banner" />
 
       <div>
         <h1 className="text-2xl font-semibold">{name}</h1>
@@ -159,13 +164,17 @@ export default async function ParentDashboardPage({ params }: PageProps<"/veli/[
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Mail className="size-5" aria-hidden />
-                Mesajlar
+                Okunmamış mesajlar
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Öğretmenin duyuruları ve {child.firstName} ile ilgili mesajlar yakında burada görünecek.
-              </p>
+            <CardContent className="flex flex-col gap-3">
+              <ParentMessageList items={unread} empty="Okunmamış mesaj yok." />
+              <Link
+                href={`/veli/mesajlar?cocuk=${child.id}`}
+                className={buttonVariants({ variant: "outline", className: "h-11 self-start" })}
+              >
+                Tüm mesajlar
+              </Link>
             </CardContent>
           </Card>
         </div>

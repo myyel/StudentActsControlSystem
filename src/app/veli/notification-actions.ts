@@ -5,7 +5,8 @@ import { db } from "@/server/db";
 import { requireRole } from "@/server/auth/session";
 import { ok, toActionError, type ActionResult } from "@/server/action-result";
 import { getRequestMeta } from "@/server/request";
-import { markAllNotificationsRead, setPreference } from "@/server/services/notification";
+import { countUnreadMessages } from "@/server/services/message";
+import { countUnreadNotifications, markAllNotificationsRead, setPreference } from "@/server/services/notification";
 import { hasSubscription, saveSubscription } from "@/server/services/push";
 import { endpointSchema, preferenceSchema, pushSubscriptionSchema } from "@/server/validation/notification";
 
@@ -52,6 +53,20 @@ export async function checkPushSubscriptionAction(endpoint: unknown): Promise<Ac
   try {
     const { user } = await requireRole("parent");
     return ok(await hasSubscription(db, user.id, endpointSchema.parse(endpoint)));
+  } catch (error) {
+    return toActionError(error);
+  }
+}
+
+/** Header badges; refreshed on navigation because layouts do not re-render. */
+export async function getParentBadgesAction(): Promise<ActionResult<{ notifications: number; messages: number }>> {
+  try {
+    const { user } = await requireRole("parent");
+    const [notifications, messages] = await Promise.all([
+      countUnreadNotifications(db, user.id),
+      countUnreadMessages(db, user.id),
+    ]);
+    return ok({ notifications, messages });
   } catch (error) {
     return toActionError(error);
   }
