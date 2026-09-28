@@ -1,0 +1,18 @@
+# HTTPS in front of the app (docs/DEPLOY.md). Caddy gets and renews a Let's Encrypt certificate
+# for DOMAIN on its own and redirects HTTP to HTTPS.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	# Caddy sets X-Forwarded-For to the real client address and ignores a client-sent one,
+	# so rate limits and audit IPs cannot be spoofed. The app is reachable only through here.
+	reverse_proxy app:3000
+}

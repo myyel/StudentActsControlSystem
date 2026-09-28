@@ -1,0 +1,105 @@
+# Production stack (docs/DEPLOY.md):
+#   docker compose -f docker-compose.prod.yml up -d --build
+# Settings come from .env next to this file (template: .env.production.example).
+
+name: gelisim
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env içinde tanımlanmalı}
+      POSTGRES_DB: ${POSTGRES_DB:-class_attitude}
+      TZ: Europe/Istanbul
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    # No published port: only the app, tools and backup reach the database.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Applies migrations on every start, then exits. Also runs the admin CLI:
+  #   docker compose -f docker-compose.prod.yml run --rm tools pnpm admin:cli ...
+  tools:
+    build:
+      context: .
+      target: tools
+    image: gelisim-tools
+    restart: "no"
+    command: ["pnpm", "db:migrate"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-class_attitude}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      target: app
+    image: gelisim-app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-class_attitude}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET .env içinde tanımlanmalı}
+      BETTER_AUTH_URL: https://${DOMAIN:?DOMAIN .env içinde tanımlanmalı}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      tools:
+        condition: service_completed_successfully
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL .env içinde tanımlanmalı}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
+  backup:
+    build: ./deploy/backup
+    image: gelisim-backup
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-app}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-class_attitude}
+      BACKUP_PASSPHRASE: ${BACKUP_PASSPHRASE:?BACKUP_PASSPHRASE .env içinde tanımlanmalı}
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-30 2 * * *}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      RCLONE_REMOTE: ${RCLONE_REMOTE:-}
+      # rclone reads remote settings from RCLONE_CONFIG_<AD>_* variables in .env.
+      RCLONE_CONFIG_UZAK_TYPE: ${RCLONE_CONFIG_UZAK_TYPE:-}
+      RCLONE_CONFIG_UZAK_PROVIDER: ${RCLONE_CONFIG_UZAK_PROVIDER:-}
+      RCLONE_CONFIG_UZAK_ENDPOINT: ${RCLONE_CONFIG_UZAK_ENDPOINT:-}
+      RCLONE_CONFIG_UZAK_ACCESS_KEY_ID: ${RCLONE_CONFIG_UZAK_ACCESS_KEY_ID:-}
+      RCLONE_CONFIG_UZAK_SECRET_ACCESS_KEY: ${RCLONE_CONFIG_UZAK_SECRET_ACCESS_KEY:-}
+      RCLONE_CONFIG_UZAK_REGION: ${RCLONE_CONFIG_UZAK_REGION:-}
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:
