@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.27.0 | 2026-09-28 | feat | Web Push altyapısı: service worker (`public/sw.js`, push + tıklayınca ilgili ekrana gitme), `/bildirim/[id]` (okundu yapıp yönlendirir), manifest + uygulama ikonları, VAPID ayarları ve `pnpm push:keys`; mesaj, okundu/tepki, bildirim tercihi ve abonelik action'ları; davranış push'u geri alma süresi dolunca, olay duruyorsa gönderilir | 7 |
 | 0.26.0 | 2026-09-28 | feat | Mesaj servisi (sınıf duyurusu ve öğrenciye özel mesaj, alıcılar anlık çözülür, okundu bilgisi ve hızlı tepki, öğretmene okundu/tepki özeti, soft delete + audit); bildirim servisi (tercihlere uyan oluşturma, okul davranışında olumlu/olumsuz ve seviye atlama bildirimleri aynı transaction'da, geri alma/silmede davranış bildirimi kaldırılır, ev girişleri bildirim üretmez); push servisi (web-push, abonelik kaydı/silme, bilinen push servisleriyle sınırlı endpoint, 404/410 ve 5 hatada abonelik silinir); veli mesaj guard'ı; yetki testleri | 7 |
 | 0.25.0 | 2026-09-28 | feat | Mesaj, okundu/tepki, bildirim, bildirim tercihi ve push aboneliği tabloları | 7 |
 | 0.24.2 | 2026-09-28 | docs | Faz 6 tamamlandı: PRD'ye veli geri alma (10 sn), notların veliye kapalı olması, yalnızca bugün için ev girişi, paylaşılan tavan ve tavan ayarı, veli paneli yapısı kararları; README güncellendi; güncel faz 7 | 6 |

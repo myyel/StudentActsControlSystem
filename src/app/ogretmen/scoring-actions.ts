@@ -1,12 +1,14 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { UNDO_WINDOW_MS } from "@/lib/behavior";
 import { z } from "@/lib/zod";
 import { db } from "@/server/db";
 import { forbidden } from "@/server/auth/errors";
 import { assertTeacherOfClass } from "@/server/auth/guards";
 import { requireRole } from "@/server/auth/session";
 import { ok, toActionError, type ActionResult } from "@/server/action-result";
+import { dispatchPush } from "@/server/push-dispatch";
 import { getRequestMeta } from "@/server/request";
 import {
   deleteEvent,
@@ -26,7 +28,9 @@ export async function giveBehaviorAction(classId: string, payload: unknown): Pro
     await assertTeacherOfClass(user, classId);
     const input = giveBehaviorSchema.parse(payload);
     const { ip } = await getRequestMeta();
-    const result = await giveBehavior(db, user, classId, input, ip);
+    const { notificationIds, ...result } = await giveBehavior(db, user, classId, input, ip);
+    // Parents get the push once the undo window is over, and only if the score still stands.
+    dispatchPush(notificationIds, { delayMs: UNDO_WINDOW_MS + 2_000 });
     refresh();
     return ok(result);
   } catch (error) {
