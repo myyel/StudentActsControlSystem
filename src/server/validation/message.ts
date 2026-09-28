@@ -1,8 +1,6 @@
 import { z } from "@/lib/zod";
+import { MESSAGE_BODY_MAX, MESSAGE_TITLE_MAX } from "@/lib/messages";
 import { messageReaction } from "@/server/db/schema";
-
-export const MESSAGE_TITLE_MAX = 120;
-export const MESSAGE_BODY_MAX = 2000;
 
 export const messageSchema = z.object({
   title: z

@@ -158,6 +158,14 @@ export default async function StudentPage({
               ))}
             </ul>
           )}
+          {student.parents.length > 0 && (
+            <Link
+              href={`/ogretmen/siniflar/${sinifId}/mesajlar?ogrenci=${student.id}`}
+              className="mt-3 inline-flex min-h-11 items-center rounded-md border px-3 text-sm font-medium hover:bg-accent"
+            >
+              Velilere mesaj gönder
+            </Link>
+          )}
         </CardContent>
       </Card>
 

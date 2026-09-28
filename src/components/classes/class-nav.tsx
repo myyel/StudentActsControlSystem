@@ -7,6 +7,7 @@ const TABS = [
   { key: "matris", label: "Matris", href: (id: string) => `/ogretmen/siniflar/${id}/matris` },
   { key: "davranislar", label: "Davranışlar", href: (id: string) => `/ogretmen/siniflar/${id}/davranislar` },
   { key: "duraklar", label: "Duraklar", href: (id: string) => `/ogretmen/siniflar/${id}/duraklar` },
+  { key: "mesajlar", label: "Mesajlar", href: (id: string) => `/ogretmen/siniflar/${id}/mesajlar` },
   { key: "davetler", label: "Veli davet kartları", href: (id: string) => `/ogretmen/siniflar/${id}/davetler` },
 ] as const;
 
