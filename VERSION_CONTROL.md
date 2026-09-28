@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.35.5 | 2026-09-29 | docs | Resimli kullanım kılavuzu (`docs/Kullanim-Kilavuzu.pdf`, 44 sayfa, 48 ekran görüntüsü): başlarken, öğretmen (sınıf, puanlama, öğrenci detayı, davet kodu, davranışlar, duraklar, matris, mesajlar, tahta modu), veli (kayıt, panel, ev davranışı, yol haritası, mesajlar, bildirimler, ayarlar, KVKK), yönetici (karakterler, silme talepleri, denetim kaydı), SSS ve gizlilik | Pilot |
 | 0.35.4 | 2026-09-29 | chore | Kullanım kılavuzunu yeniden üretme betikleri: `scripts/kilavuz/ekranlar.mjs` (örnek verili uygulamadan rol ve cihaz boyutuna göre ekran görüntüleri, önemli öğeler vurgulu) ve `scripts/kilavuz/kilavuz.mjs` (Chromium ile A4 PDF: kapak, içindekiler, sayfa numarası); ara HTML git dışı | Pilot |
 | 0.35.3 | 2026-09-29 | docs | Faz 9 tamamlandı: `docs/DEPLOY.md` (VPS, DNS, kurulum, hesaplar, güncelleme, yedek ve geri yükleme, güvenlik/KVKK notları, sorun giderme); PRD'ye silme, dışa aktarma, rıza saklama, audit temizleme, hız sınırları ve `DeletionRequest` modeli; README ve CLAUDE.md güncellendi; güncel faz: Pilot | 9 |
 | 0.35.2 | 2026-09-29 | test | e2e: KVKK akışı (veli JSON/CSV indirir ve silme talebi açar, yönetici indirir, yanlış/doğru adla siler, denetimde görür, veli hesabını siler), dışa aktarma yetkileri (403/400), yeni ekran taramaları; e2e artık üretimdeki gibi standalone sunucuyla çalışır; klavye sıralama testinde kayıt bitmeden yenileme yarışı giderildi | 9 |
