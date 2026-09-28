@@ -8,7 +8,7 @@
 
 Ürün gereksinimleri: [`docs/PRD.md`](docs/PRD.md) · Sürüm geçmişi: [`VERSION_CONTROL.md`](VERSION_CONTROL.md)
 
-> **Durum:** geliştirme aşamasında (MVP, Faz 9 / 9). Pilot kullanıma henüz hazır değildir.
+> **Durum:** MVP'nin tüm fazları tamamlandı; sıradaki adım okulda pilot kullanım. Pilot öncesi KVKK metinlerinin hukuken onaylı sürümleri eklenmelidir (bkz. [Önemli notlar](#önemli-notlar)).
 
 ## Özellikler
 
@@ -34,10 +34,13 @@
 | **Mesajlar** | Sınıf duyurusu veya öğrenciye özel mesaj. Veli okuyunca okundu bilgisi düşer; "Gördüm 👍" / "Teşekkürler 🙏" hızlı tepki. Öğretmen kimin okuduğunu görür. |
 | **PWA** | Ana ekrana yüklenebilir uygulama (Android, iOS 16.4+, masaüstü). Bağlantı yokken "İnternet bağlantısı yok" ekranı; çocuk verisi içeren sayfalar cihazda saklanmaz. |
 | **Erişilebilirlik** | WCAG 2 AA kontrast (açık/karanlık mod), dokunmatikte en az 44px (tahtada 80px) dokunma hedefleri, klavyeyle tam kullanım. Uçtan uca testlerle 4 ekran boyutunda denetlenir. |
+| **KVKK araçları** | Veli verilerini JSON/CSV indirir, çocuğunun verisinin silinmesini talep eder, kendi hesabını siler. Yönetici talepleri görür, verileri indirir, kalıcı olarak siler veya reddeder. Rıza kayıtları ispat için saklanır. |
+| **Denetim kaydı** | Yönetici kritik işlemleri (puan, ilerleme, veli bağlama, silme, dışa aktarma) kişi, işlem ve tarihe göre süzerek görür. |
+| **Güvenlik** | Giriş, davet kodu, dışa aktarma, silme onayı ve mesaj/ev girişi için hız sınırları; HTTPS (HSTS) ve güvenlik başlıkları. |
 | **Bildirimler** | Veli için bildirim merkezi ve Web Push (mesaj, olumlu/olumsuz davranış, seviye atlama; türe göre açılıp kapatılır). Bildirime dokununca ilgili ekran açılır. Davranış push'u 10 sn geri alma süresi bitince gider. iPhone/iPad için "Ana ekrana ekle" rehberi. |
 
 ### Sıradakiler
-Güvenlik sıkılaştırma, KVKK araçları (silme, dışa aktarma), Docker ile yayına alma, yedekleme ve pilot. Ayrıntılar: [Yol haritası](#yol-haritası).
+Okulda pilot kullanım. Sonraki sürümler için adaylar: uygulama içi şifre değiştirme, okul ve öğretmen hesabı yönetimi ekranı, yıl sonu sınıf geçişi (PRD §6–7).
 
 ## Teknoloji
 
@@ -109,6 +112,7 @@ Seed, veli kaydını denemek için kullanılabilir, iptal edilmiş ve süresi do
 | `pnpm db:reset` | Tüm tabloları boşaltıp seed'i yeniden çalıştır (yalnızca geliştirme) |
 | `pnpm db:studio` | Drizzle Studio |
 | `pnpm push:keys` | Web Push için VAPID anahtar çifti üret |
+| `pnpm admin:cli` | Yönetici/öğretmen hesabı aç, şifre sıfırla, okulları listele ([`docs/DEPLOY.md`](docs/DEPLOY.md)) |
 
 Bir değişikliği göndermeden önce: `pnpm lint && pnpm typecheck && pnpm test`
 
@@ -140,6 +144,9 @@ tests/
   unit/  integration/  helpers/     # Vitest
   e2e/                             # Playwright
 docs/PRD.md                        # ürün gereksinimleri
+docs/DEPLOY.md                     # üretime kurulum, güncelleme, yedek ve geri yükleme
+deploy/                            # Caddyfile, yedekleme imajı ve betikleri
+Dockerfile, docker-compose.prod.yml  # üretim imajı ve servisler
 ```
 
 ## Mimari ilkeler
@@ -181,7 +188,8 @@ Geliştirme kuralları ve kod kalıpları: [`CLAUDE.md`](CLAUDE.md).
 | 6 | Veli paneli, ev davranışları, günlük ev XP tavanı | ✅ |
 | 7 | Mesajlar, bildirim merkezi, Web Push, iOS rehberi | ✅ |
 | 8 | PWA, responsive uçtan uca testler, erişilebilirlik | ✅ |
-| 9 | Güvenlik, KVKK (silme/dışa aktarma), Docker ile yayına alma, yedekleme, pilot | ⏳ sıradaki |
+| 9 | Güvenlik, KVKK (silme/dışa aktarma), Docker ile yayına alma, yedekleme | ✅ |
+| — | Okulda pilot kullanım | ⏳ sıradaki |
 
 ## Sürümleme
 
@@ -190,8 +198,12 @@ Her commit [Conventional Commits](https://www.conventionalcommits.org/) biçimin
 - `feat` ortadaki sayıyı artırır,
 - diğer türler son sayıyı artırır.
 
+## Yayına alma
+
+Üretim kurulumu Docker Compose ile yapılır: Caddy (otomatik HTTPS), uygulama, PostgreSQL ve her gece şifreli yedek alan servis. Adım adım kurulum, güncelleme ve yedekten geri dönme: [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
 ## Önemli notlar
 
-- **KVKK metinleri taslaktır** (`src/content/kvkk.ts`). Pilot öncesi okulun hukuken onaylı metinleriyle değiştirilmelidir.
+- **KVKK metinleri taslaktır** (`src/content/kvkk.ts`). Pilot öncesi okulun hukuken onaylı metinleriyle değiştirilmelidir; silinen verinin şifreli yedeklerde 14 gün kalacağı da belirtilmelidir.
 - Karakter görselleri özgündür (`public/characters/`, şimdilik yer tutucu SVG); telifli karakter, logo veya görsel kullanılmaz.
 - Lisans henüz belirlenmedi.

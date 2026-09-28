@@ -64,6 +64,8 @@ pnpm db:migrate                # migration uygula
 pnpm db:seed                   # örnek veri (boş DB'de); şifre: Sifre1234!, davet kodlarını konsola yazar
 pnpm db:reset                  # tüm tabloları boşaltıp seed'i yeniden çalıştırır (yalnızca geliştirme)
 pnpm push:keys                 # VAPID anahtarları (.env: VAPID_PUBLIC_KEY/PRIVATE_KEY/SUBJECT; boşsa push kapalı)
+pnpm admin:cli                 # hesap aç / şifre sıfırla / okulları listele (üretimde tools servisiyle, docs/DEPLOY.md)
+docker compose -f docker-compose.prod.yml up -d --build   # üretim yığını: Caddy, app, db, tools, backup
 pnpm lint && pnpm typecheck
 pnpm test                      # Vitest — PGlite (bellek içi Postgres) kullanır, Docker gerekmez
 pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board projeleri); Postgres gerekir
@@ -78,9 +80,12 @@ pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board proj
 - **Servisler** `db` parametresi alır (`Db` veya `DbOrTx`), yetki kontrolü yapmaz; çağıran action/sayfa önce guard'ı çalıştırır. Birlikte atomik olması gereken servisler aynı `tx` ile çağrılır.
 - **Action'lar** `ActionResult` döner (`src/server/action-result.ts`): beklenen hatalar `AuthError`/`UserError`/`ZodError` → `toActionError`; kullanıcıya gösterilecek iş hataları `UserError` ile fırlatılır. Değişiklikten sonra `refresh()` (`next/cache`).
 - **Sayfalar** sahiplik hatasında 404 verir: `await orNotFound(assertTeacherOfClass(user, id))`.
-- **Audit**: kritik işlemler `writeAudit(tx, …)` ile aynı transaction içinde yazılır.
+- **Audit**: kritik işlemler `writeAudit(tx, …)` ile aynı transaction içinde yazılır. `data`'ya kişisel veri koyan yeni bir anahtar `PERSONAL_AUDIT_KEYS`'e (`src/server/services/privacy.ts`) eklenir, yoksa öğrenci silinince temizlenmez. Yeni işlem türüne `src/lib/audit-labels.ts`'de Türkçe etiket verilir.
+- **Silme**: öğrenciye bağlı yeni tablo `student`'a `onDelete: "cascade"` ile bağlanır; öğrenciyle cascade olmayan veri (ör. bildirim payload'u) `completeDeletionRequest`'te ayrıca silinir. Yeni veri dışa aktarmaya da (`src/server/services/export.ts`) eklenir.
+- **Rate limit**: action'da Zod'dan sonra, servisten önce `enforceRateLimit(db, "<ad>:<kullanıcı|ip>", KURAL)` (`src/server/services/rate-limit.ts`).
+- **Dosya indirme**: route handler + `download()`/`downloadError()` (`src/server/download.ts`); bağlantısı `<Link>` değil düz `<a>` (prefetch dosyayı üretip limiti harcamasın).
 - **Bildirimler**: servis, işlemle aynı transaction'da `createNotifications` (tercihlere uyar) çağırır ve id'leri döner; action commit'ten sonra `dispatchPush(ids)` (`src/server/push-dispatch.ts`) ile gönderir. Id'ler istemciye dönmez. Service worker `public/sw.js` (push + çevrimdışı ekran); oturum açılmış sayfaları asla önbelleğe alma.
-- IP/tarayıcı bilgisi `getRequestMeta()`; üretimde reverse proxy `x-forwarded-for`'u doğru ayarlamalı (Faz 9).
+- IP/tarayıcı bilgisi `getRequestMeta()`; üretimde Caddy `x-forwarded-for`'u gerçek istemci IP'siyle yazar (`deploy/Caddyfile`). Uygulama Caddy'yi atlayarak yayına açılmaz.
 
 ## Çalışma şekli
 - Her iş için önce plan çıkar, onay al, sonra uygula.
@@ -104,4 +109,4 @@ pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board proj
 8. PWA + responsive e2e testleri + erişilebilirlik
 9. Güvenlik, KVKK (silme/dışa aktarma, audit), Docker deploy, yedekleme, pilot
 
-Güncel faz: **9**
+Güncel faz: **Pilot** (Faz 0–9 tamamlandı; sıradaki iş okulda pilot kullanım ve pilottan gelen düzeltmeler)

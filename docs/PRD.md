@@ -147,9 +147,16 @@
 
 - Her sunucu işleminde **rol + sahiplik** kontrolü (öğretmen yalnızca kendi sınıfı, veli yalnızca bağlı öğrencisi).
 - Aydınlatma metni + açık rıza kaydı (`ConsentRecord`: kullanıcı, metin sürümü, tarih).
-- Veli hesabını ve çocuğa ait veriyi silme talebi; veri dışa aktarma (JSON/CSV).
-- `AuditLog`: puan verme/silme, durum değişikliği, veli bağlama/kaldırma, silme işlemleri.
-- Rate limiting (giriş, davet kodu doğrulama).
+- **Veri silme (Faz 9 kararları):**
+  - Veli, çocuğunun verisinin silinmesini **talep eder** (Ayarlar); **okul yöneticisi** talebi görür, isterse verileri indirir, sonra kalıcı siler ya da gerekçesiyle reddeder. Çocuk başına tek açık talep olur.
+  - Silme **kalıcıdır** (hard delete): öğrenci ve bağlı tüm kayıtlar (puanlar, ilerleme, davet kodları, veli bağlantıları, çocuğa özel mesajlar, çocukla ilgili bildirimler) silinir. `AuditLog` satırları kalır ama içlerindeki kişisel alanlar (ad, baş harf, mesaj başlığı, not) temizlenir; kimlik (uuid) ve işlem türü durur. Onay için yönetici öğrencinin adını yazar.
+  - Veli **kendi hesabını** şifresiyle hemen silebilir; isterse aynı adımda çocukları için silme talebi açar. Talep yoksa çocuğun okul kayıtları okulda kalır. Velinin audit kayıtlarındaki IP silinir.
+  - **Rıza kayıtları** hesap ya da öğrenci silinse de ispat için saklanır: kişiyle bağı koparılır (`userId`/`studentId` null), hesap silinince `withdrawnAt` işlenir.
+  - Silinen veri, yedek saklama süresi (14 gün) dolana kadar şifreli yedeklerde kalır; aydınlatma metninde belirtilmelidir.
+- **Veri dışa aktarma:** veli, kendi hesabının ve çocuklarının verisini JSON (tamamı) ve CSV (davranış geçmişi, Excel için `;` ayraçlı) olarak indirir; yalnızca uygulamada zaten gördüklerini içerir (öğretmen notu ve puanı kimin verdiği yok). Yönetici bir öğrencinin tam kaydını (notlar ve bağlı veliler dahil) indirebilir.
+- `AuditLog`: puan verme/silme, durum değişikliği, veli bağlama/kaldırma, silme talebi/silme/reddetme, hesap silme, dışa aktarma. Yönetici kendi okulunun kayıtlarını işlem, kişi ve tarihe göre süzerek görür (`/admin/denetim`).
+- Rate limiting: giriş (5/dk), davet kodu ve veli kaydı (10/dk), dışa aktarma (veli 5/saat), silme onayı şifresi (5/15 dk), silme talebi (10/saat); kötüye kullanım tavanı: mesaj gönderme (30/10 dk), ev davranışı (60/10 dk). İstemci IP'si reverse proxy'nin (Caddy) yazdığı `X-Forwarded-For`'dan alınır.
+- Hesaplar: açık kayıt yok; yönetici ve öğretmen hesapları sunucuda komutla açılır, unutulan şifre aynı komutla sıfırlanır (`docs/DEPLOY.md`). Uygulama içi şifre değiştirme henüz yok.
 - Barındırma: Türkiye'de VPS, günlük şifreli veritabanı yedeği, HTTPS zorunlu.
 
 ## 6. Veri modeli (Faz 0'da onaylandı)
@@ -193,8 +200,13 @@ MessageRead(messageId, parentId, readAt, reaction?)                PK(messageId,
 Notification(id, userId, type, payload jsonb, url, readAt?, createdAt)
 NotificationPreference(userId, type, enabled)                      PK(userId, type); kayıt yoksa açık
 PushSubscription(id, userId, endpoint unique, p256dh, auth, userAgent, failureCount, lastSuccessAt?, createdAt)
-ConsentRecord(id, userId, studentId?, kind, docVersion, ip, userAgent, acceptedAt, withdrawnAt?)
-AuditLog(id, schoolId?, actorId?, action, entity, entityId, data jsonb, ip?, createdAt)  -- yalnızca ekleme
+ConsentRecord(id, userId?, studentId?, kind, docVersion, ip, userAgent, acceptedAt, withdrawnAt?)
+  -- kullanıcı/öğrenci silinince SET NULL: ispat için saklanır (Faz 9)
+DeletionRequest(id, schoolId?, studentId?, requestedById?, status(pending|completed|rejected), note?,
+                resolvedById?, resolvedAt?, rejectReason?, createdAt)
+  -- öğrenci başına tek pending talep (kısmi unique index); öğrenci silinince studentId null olur
+AuditLog(id, schoolId?, actorId?, action, entity, entityId, data jsonb, ip?, createdAt)
+  -- yalnızca ekleme; istisna: öğrenci silinince kişisel alanlar, veli silinince IP'si temizlenir
 ```
 
 **Türetilmiş alanlar ve puanlama kuralları**
@@ -205,7 +217,7 @@ AuditLog(id, schoolId?, actorId?, action, entity, entityId, data jsonb, ip?, cre
 
 **Silme davranışları:** öğrenciye ait tablolar öğrenci silinince `CASCADE`; `givenById`, `authorId`, `actorId`, `updatedById` gibi aktör kolonları kullanıcı silinince `SET NULL`.
 
-**İleride karar verilecek:** yıl sonu sınıf geçişi, KVKK silmede hard delete / anonimleştirme (Faz 9).
+**İleride karar verilecek:** yıl sonu sınıf geçişi. (KVKK silme Faz 9'da kararlaştırıldı: kalıcı silme, bkz. §5.)
 
 ## 7. MVP kapsamı dışı (sonraki sürümler)
 - Veli ↔ öğretmen serbest sohbet
