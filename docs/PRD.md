@@ -86,7 +86,7 @@
   - Toplu işaretleme durak başlığından yapılır: tüm sınıf veya seçili öğrenciler için Tamamlandı / Devam ediyor / Başlamadı. Zaten tamamlanmış hücrelerin yıldızı korunur.
 - Veli görünümü: çocuğun her ders için ilerlediği "yol haritası" görseli.
   - Tüm duraklar görünür: tamamlananlar renkli + yıldız, devam eden "şu an burada" vurgulu, gelecek duraklar soluk. Ders başına ilerleme çubuğu var. Başka öğrenciyle kıyas yoktur.
-- İlerleme değişiklikleri veliye bildirim göndermez (bildirimler Faz 7).
+- İlerleme değişiklikleri veliye bildirim göndermez.
 
 ### 4.6 Karakterler
 - Birden fazla karakter türü (ejderha, baykuş, robot, tohum→ağaç).
@@ -115,11 +115,22 @@
 - Uygulama içi bildirim merkezi + **Web Push** (VAPID). Bildirime tıklayınca ilgili ekran açılır.
 - iOS için "Ana ekrana ekle" rehberi.
 - Veli bildirim tercihleri: mesajlar, olumlu davranışlar, olumsuz davranışlar, seviye atlama.
+  - Kapatılan tür için ne uygulama içi bildirim ne push oluşur; mesajlar yine Mesajlar sayfasında görünür. Kayıt yoksa tür açıktır.
+- Kararlar (Faz 7):
+  - Mesajı yalnızca sınıfın öğretmeni gönderir ve siler (soft delete, audit). Başlık en fazla 120, gövde en fazla 2000 karakter.
+  - Öğretmen her mesajda "okuyan / toplam veli" sayısını, tepki sayılarını ve veli bazında okundu/tepki listesini görür (alıcılar o anki bağlı velilerdir).
+  - Tepki değiştirilebilir veya kaldırılabilir; tepki vermek okundu sayılır. Mesaj açılınca ilgili bildirim de okundu olur.
+  - Bildirim merkezi ve push **yalnızca veliler** içindir. Bildirim yalnızca bildirim anında bağlı velilere gider; sonradan bağlanan veli eski mesajları listede görür ama bildirim almaz.
+  - Okul davranışı bildirimleri puanlamayla aynı transaction'da oluşur; geri alınan veya silinen olayın bildirimi kaldırılır. Push, 10 sn geri alma süresi bitince, olay hâlâ duruyorsa gönderilir (sunucu tam o anda yeniden başlarsa push kaybolabilir, uygulama içi bildirim kalır).
+  - Ev davranışı girişleri bildirim üretmez. Seviye atlama bildirimi, seviye düşmediği için geri almada kaldırılmaz.
+  - Bildirimde öğretmenin notu ve puanı kimin verdiği yer almaz.
+  - Push her cihazda ayrıca açılır (Ayarlar). Çıkış yapılınca o cihazın aboneliği silinir; aynı tarayıcıda başka kullanıcı girip bildirimi açarsa abonelik ona geçer. Sunucu yalnızca bilinen push servislerine (Google, Mozilla, Apple, Microsoft) istek atar.
+  - iOS/iPadOS'ta push yalnızca ana ekrana eklenmiş uygulamada çalışır (16.4+); Ayarlar'da adım adım rehber, iOS tarayıcısında panelde kapatılabilir bant gösterilir.
 
 ### 4.9 Veli paneli
 - `/veli` ilk çocuğun paneline (`/veli/[ogrenciId]`) yönlendirir; çocuk yoksa davet kodu girişi gösterilir. Davetle bağlanan çocuğun paneli açılır.
 - Çocuk seçici (birden fazla çocuk varsa) ve "Çocuk ekle" bağlantısı.
-- Kartlar: karakter + XP ilerleme çubuğu, haftalık davranış dengesi (son 7 gün grafiği), "Evde bugün" (ev davranışı girişi ve günlük tavan göstergesi), son 10 olay (okul/ev), akademik yol haritası özeti (ders başına tamamlanan durak ve "şu an"), okunmamış mesajlar (Faz 7'ye kadar yer tutucu).
+- Kartlar: karakter + XP ilerleme çubuğu, haftalık davranış dengesi (son 7 gün grafiği), "Evde bugün" (ev davranışı girişi ve günlük tavan göstergesi), son 10 olay (okul/ev), akademik yol haritası özeti (ders başına tamamlanan durak ve "şu an"), okunmamış mesajlar (çocuğa ait en fazla 3 okunmamış mesaj ve "Tüm mesajlar" bağlantısı).
 - Son olaylarda öğretmenin **notları ve puanı kimin verdiği gösterilmez**; not öğretmene özeldir.
 - Veli başka hiçbir öğrenciye ait veri göremez (isim listesi dahil).
 

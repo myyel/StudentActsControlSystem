@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.29.2 | 2026-09-28 | docs | Faz 7 tamamlandı: PRD'ye mesaj/okundu/tepki, yalnızca veliye bildirim, gecikmeli davranış push'u, ev girişlerinin bildirim üretmemesi, tercih ve cihaz aboneliği kararları; README ve CLAUDE.md (push:keys, bildirim kalıbı) güncellendi; güncel faz 8 | 7 |
 | 0.29.1 | 2026-09-28 | chore | Faz 7 seed: 2-A için iki duyuru ve Ada Y. / Ayşe D. için özel mesaj, 2-B duyurusu; okundu ve tepki kayıtları; puan geçmişinden gelen bildirimler geriye tarihlendi, 1 günden eskiler okundu | 7 |
 | 0.29.0 | 2026-09-28 | feat | Veli arayüzü: üst çubukta okunmamış sayılı Mesajlar/Bildirimler/Ayarlar, mesaj listesi (çocuğa göre filtre) ve detay (açınca okundu, Gördüm 👍 / Teşekkürler 🙏 hızlı tepki), bildirim merkezi (tümünü okundu yap), Ayarlar: 4 bildirim tercihi, bu cihazda anlık bildirim aç/kapat, iOS Ana ekrana ekle rehberi; panelde okunmamış mesajlar kartı ve iOS'ta kapatılabilir rehber bandı; çıkışta cihazın push aboneliği silinir | 7 |
 | 0.28.0 | 2026-09-28 | feat | Öğretmen Mesajlar sekmesi: sınıf duyurusu veya öğrenciye özel mesaj yazma, gönderilenlerde okundu sayısı ve tepkiler, açılır veli listesi (okudu/okumadı, tepki), onaylı silme; öğrenci detayından velilere mesaj bağlantısı | 7 |

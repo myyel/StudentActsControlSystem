@@ -63,6 +63,7 @@ pnpm db:generate               # migration üret
 pnpm db:migrate                # migration uygula
 pnpm db:seed                   # örnek veri (boş DB'de); şifre: Sifre1234!, davet kodlarını konsola yazar
 pnpm db:reset                  # tüm tabloları boşaltıp seed'i yeniden çalıştırır (yalnızca geliştirme)
+pnpm push:keys                 # VAPID anahtarları (.env: VAPID_PUBLIC_KEY/PRIVATE_KEY/SUBJECT; boşsa push kapalı)
 pnpm lint && pnpm typecheck
 pnpm test                      # Vitest — PGlite (bellek içi Postgres) kullanır, Docker gerekmez
 pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board projeleri) — Faz 8
@@ -77,6 +78,7 @@ pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board proj
 - **Action'lar** `ActionResult` döner (`src/server/action-result.ts`): beklenen hatalar `AuthError`/`UserError`/`ZodError` → `toActionError`; kullanıcıya gösterilecek iş hataları `UserError` ile fırlatılır. Değişiklikten sonra `refresh()` (`next/cache`).
 - **Sayfalar** sahiplik hatasında 404 verir: `await orNotFound(assertTeacherOfClass(user, id))`.
 - **Audit**: kritik işlemler `writeAudit(tx, …)` ile aynı transaction içinde yazılır.
+- **Bildirimler**: servis, işlemle aynı transaction'da `createNotifications` (tercihlere uyar) çağırır ve id'leri döner; action commit'ten sonra `dispatchPush(ids)` (`src/server/push-dispatch.ts`) ile gönderir. Id'ler istemciye dönmez. Service worker şimdilik elle yazılmış `public/sw.js` (Faz 8'de serwist'e taşınacak).
 - IP/tarayıcı bilgisi `getRequestMeta()`; üretimde reverse proxy `x-forwarded-for`'u doğru ayarlamalı (Faz 9).
 
 ## Çalışma şekli
@@ -101,4 +103,4 @@ pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board proj
 8. PWA + responsive e2e testleri + erişilebilirlik
 9. Güvenlik, KVKK (silme/dışa aktarma, audit), Docker deploy, yedekleme, pilot
 
-Güncel faz: **7**
+Güncel faz: **8**

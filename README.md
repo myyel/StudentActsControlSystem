@@ -8,7 +8,7 @@
 
 Ürün gereksinimleri: [`docs/PRD.md`](docs/PRD.md) · Sürüm geçmişi: [`VERSION_CONTROL.md`](VERSION_CONTROL.md)
 
-> **Durum:** geliştirme aşamasında (MVP, Faz 7 / 9). Pilot kullanıma henüz hazır değildir.
+> **Durum:** geliştirme aşamasında (MVP, Faz 8 / 9). Pilot kullanıma henüz hazır değildir.
 
 ## Özellikler
 
@@ -28,12 +28,14 @@
 | **Veli yol haritası** | Çocuğun her dersteki ilerlemesi: tamamlanan duraklar, "şu an burada", gelecek duraklar. |
 | **Karakterler** | 4 özgün tür × 5 evrim aşaması. XP ile seviye atlama (seviye asla düşmez), animasyonlu kutlama. Öğretmen öğrencinin türünü değiştirir. |
 | **Karakter yönetimi** | Yönetici seviye eşiklerini, tür ve aşama adlarını ayarlar, türleri aktif/pasif yapar. |
-| **Veli paneli** | Çocuk seçici, karakter, haftalık denge, son olaylar, akademik harita özeti; mesaj kartı Faz 7'de dolacak. |
+| **Veli paneli** | Çocuk seçici, karakter, haftalık denge, son olaylar, akademik harita özeti, okunmamış mesajlar. |
 | **Ev davranışları** | Veli bugün evde yapılanları işaretler; günlük ev XP tavanı (öğretmen ayarlar) yalnızca XP'yi sınırlar; 10 sn geri alma. |
 | **Tahta modu** | Akıllı tahtada tam ekran: büyük karakter kartları, yalnızca olumlu puan, tüm sınıfa puan; XP, denge ve sıralama yok. |
+| **Mesajlar** | Sınıf duyurusu veya öğrenciye özel mesaj. Veli okuyunca okundu bilgisi düşer; "Gördüm 👍" / "Teşekkürler 🙏" hızlı tepki. Öğretmen kimin okuduğunu görür. |
+| **Bildirimler** | Veli için bildirim merkezi ve Web Push (mesaj, olumlu/olumsuz davranış, seviye atlama; türe göre açılıp kapatılır). Bildirime dokununca ilgili ekran açılır. Davranış push'u 10 sn geri alma süresi bitince gider. iPhone/iPad için "Ana ekrana ekle" rehberi. |
 
 ### Sıradakiler
-Mesajlar ve Web Push bildirimleri → PWA ve uçtan uca testler → güvenlik, KVKK araçları ve yayına alma. Ayrıntılar: [Yol haritası](#yol-haritası).
+PWA (çevrimdışı) ve uçtan uca testler → güvenlik, KVKK araçları ve yayına alma. Ayrıntılar: [Yol haritası](#yol-haritası).
 
 ## Teknoloji
 
@@ -41,6 +43,7 @@ Mesajlar ve Web Push bildirimleri → PWA ve uçtan uca testler → güvenlik, K
 - **Arayüz:** Tailwind CSS 4, shadcn/ui (Radix), `@dnd-kit` (sürükle-bırak)
 - **Veri:** PostgreSQL 17, Drizzle ORM (migration'lar `drizzle/` altında)
 - **Kimlik doğrulama:** Better Auth (e-posta/şifre, rol: `admin | teacher | parent`)
+- **Bildirim:** Web Push (VAPID, `web-push`), service worker (`public/sw.js`)
 - **Doğrulama ve test:** Zod (Türkçe hata mesajları), Vitest + PGlite (testler için Docker gerekmez)
 - **Geliştirme ortamı:** Docker Compose (Postgres)
 
@@ -61,6 +64,7 @@ cp .env.example .env            # BETTER_AUTH_SECRET'ı rastgele 32+ karakterle 
 docker compose up -d db         # Postgres 17
 pnpm db:migrate                 # tabloları oluştur
 pnpm db:seed                    # örnek veri
+pnpm push:keys                  # isteğe bağlı: VAPID anahtarları → .env'deki VAPID_* alanlarına
 pnpm dev                        # http://localhost:3000
 ```
 
@@ -68,6 +72,8 @@ pnpm dev                        # http://localhost:3000
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
+
+VAPID anahtarları boşsa anlık bildirimler kapalıdır; uygulama içi bildirimler yine çalışır. Push aboneliği tarayıcıda HTTPS (veya `localhost`) ister; iPhone/iPad'de yalnızca ana ekrana eklenmiş uygulamada çalışır (iOS 16.4+).
 
 ### Örnek hesaplar
 `pnpm db:seed` ve `pnpm db:reset` aşağıdaki verileri oluşturur. Tüm hesapların şifresi `Sifre1234!`.
@@ -77,7 +83,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 | `admin@ornek.okul` | Yönetici | Karakter türleri ve seviye eşikleri (demo için düşük: 0/4/8/12/16 XP) |
 | `ogretmen@ornek.okul` | Öğretmen | 2-A: 20 öğrenci, davranış geçmişi, 3 ders ve ilerleme |
 | `ogretmen2@ornek.okul` | Öğretmen | 2-B: 8 öğrenci, 1 ders |
-| `veli1@ornek.okul` | Veli | Ada Y. ve Ali K. (2-A), son 5 günün ev kayıtları |
+| `veli1@ornek.okul` | Veli | Ada Y. ve Ali K. (2-A), son 5 günün ev kayıtları, okunmamış mesaj ve bildirimler |
 | `veli2` … `veli5@ornek.okul` | Veli | Birer çocuk (2-A) |
 | `veli6@ornek.okul` | Veli | Arda C. (2-B) |
 
@@ -99,6 +105,7 @@ Seed, veli kaydını denemek için kullanılabilir, iptal edilmiş ve süresi do
 | `pnpm db:seed` | Boş veritabanına örnek veri |
 | `pnpm db:reset` | Tüm tabloları boşaltıp seed'i yeniden çalıştır (yalnızca geliştirme) |
 | `pnpm db:studio` | Drizzle Studio |
+| `pnpm push:keys` | Web Push için VAPID anahtar çifti üret |
 
 Bir değişikliği göndermeden önce: `pnpm lint && pnpm typecheck && pnpm test`
 
@@ -108,8 +115,9 @@ Bir değişikliği göndermeden önce: `pnpm lint && pnpm typecheck && pnpm test
 src/
   app/
     (auth)/giris, davet/[kod]      # giriş, davet koduyla veli kaydı
-    ogretmen/                      # öğretmen: sınıflar, puanlama, matris, duraklar, davranışlar, davetler
-    veli/                          # veli: panel, ev davranışları, yol haritası, çocuk ekleme
+    ogretmen/                      # öğretmen: sınıflar, puanlama, matris, duraklar, davranışlar, mesajlar, davetler
+    veli/                          # veli: panel, ev davranışları, yol haritası, mesajlar, bildirimler, ayarlar
+    bildirim/[id]                  # bildirime dokununca: okundu yapar, ilgili ekrana yönlendirir
     admin/                         # yönetici: karakterler ve seviye eşikleri
     tahta/[sinifId]                # tam ekran tahta modu
     kvkk/[belge]                   # aydınlatma ve açık rıza metinleri
@@ -144,7 +152,7 @@ Geliştirme kuralları ve kod kalıpları: [`CLAUDE.md`](CLAUDE.md).
 
 `pnpm test` bellek içi PostgreSQL (PGlite) üzerinde gerçek migration'larla çalışır; Docker gerekmez. Her özellik için yetki testleri zorunludur, özellikle:
 
-- **Veli izolasyonu:** "veli A, öğrenci B'nin verisine erişemez" (liste, detay, yol haritası),
+- **Veli izolasyonu:** "veli A, öğrenci B'nin verisine erişemez" (liste, detay, yol haritası, mesajlar, bildirimler),
 - **Sınıf izolasyonu:** "öğretmen başka sınıfı değiştiremez" (öğrenci, puan, davranış tipi, müfredat, matris),
 - **Sayaç tutarlılığı:** XP ve denge her senaryoda silinmemiş olayların toplamına eşittir.
 
@@ -159,8 +167,8 @@ Geliştirme kuralları ve kod kalıpları: [`CLAUDE.md`](CLAUDE.md).
 | 4 | Akademik duraklar, sınıf matrisi, veli yol haritası | ✅ |
 | 5 | Karakter sistemi, seviye atlama, tahta modu | ✅ |
 | 6 | Veli paneli, ev davranışları, günlük ev XP tavanı | ✅ |
-| 7 | Mesajlar, bildirim merkezi, Web Push, iOS rehberi | ⏳ sıradaki |
-| 8 | PWA, responsive uçtan uca testler, erişilebilirlik | |
+| 7 | Mesajlar, bildirim merkezi, Web Push, iOS rehberi | ✅ |
+| 8 | PWA, responsive uçtan uca testler, erişilebilirlik | ⏳ sıradaki |
 | 9 | Güvenlik, KVKK (silme/dışa aktarma), Docker ile yayına alma, yedekleme, pilot | |
 
 ## Sürümleme
