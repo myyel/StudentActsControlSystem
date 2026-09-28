@@ -26,3 +26,9 @@ export function vapidKeyToBytes(base64Url: string) {
   for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
   return bytes;
 }
+
+/** Registers (or reuses) the service worker for the whole app: push and the offline screen. */
+export async function registerServiceWorker() {
+  await navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" });
+  return navigator.serviceWorker.ready;
+}

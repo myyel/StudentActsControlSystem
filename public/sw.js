@@ -1,12 +1,77 @@
-// Service worker: Web Push only for now (phase 7). Phase 8 moves this into @serwist/next
-// together with offline caching. Payload shape: PushMessage in src/server/services/push.ts.
+// Service worker: Web Push and the offline screen. Hand-written on purpose (phase 8 decision):
+// pages are never cached, since they carry children's data and devices are shared. Only the
+// static offline page and the files it needs are stored. Push payload: PushMessage in
+// src/server/services/push.ts.
 
-self.addEventListener("install", () => {
-  self.skipWaiting();
+const OFFLINE_CACHE = "offline-v1";
+const OFFLINE_URL = "/cevrimdisi";
+
+/** Stores the offline page with its CSS/JS/fonts and the icon, replacing the previous set. */
+async function cacheOfflinePage() {
+  const response = await fetch(OFFLINE_URL, { cache: "no-store" });
+  if (!response.ok) throw new Error(`offline page: ${response.status}`);
+  const html = await response.clone().text();
+  const assets = new Set(["/icon/192"]);
+  for (const [, url] of html.matchAll(/(?:href|src)="(\/_next\/static\/[^"]+)"/g)) assets.add(url);
+
+  const cache = await caches.open(OFFLINE_CACHE);
+  // Hashed file names never change content, so only missing ones are fetched.
+  await Promise.all(
+    [...assets].map(async (url) => {
+      if (!(await cache.match(url))) await cache.add(url);
+    }),
+  );
+  await cache.put(OFFLINE_URL, response);
+  for (const request of await cache.keys()) {
+    const path = new URL(request.url).pathname;
+    if (path !== OFFLINE_URL && !assets.has(path)) await cache.delete(request);
+  }
+}
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(cacheOfflinePage().then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    (async () => {
+      for (const key of await caches.keys()) if (key !== OFFLINE_CACHE) await caches.delete(key);
+      await self.clients.claim();
+    })(),
+  );
+});
+
+// A deploy changes the offline page's asset hashes without changing this file, so the stored
+// copy is refreshed once each time the worker starts.
+let refreshed = false;
+
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin || request.method !== "GET") return;
+
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request).then(
+        (response) => {
+          if (!refreshed) {
+            refreshed = true;
+            event.waitUntil(cacheOfflinePage().catch(() => {}));
+          }
+          return response;
+        },
+        async () => (await caches.match(OFFLINE_URL)) ?? Response.error(),
+      ),
+    );
+    return;
+  }
+
+  // The offline page's own files: network first, the stored copy when offline.
+  if (url.pathname.startsWith("/_next/static/") || url.pathname === "/icon/192") {
+    event.respondWith(
+      fetch(request).catch(async () => (await caches.match(request, { cacheName: OFFLINE_CACHE })) ?? Response.error()),
+    );
+  }
 });
 
 self.addEventListener("push", (event) => {
@@ -21,7 +86,7 @@ self.addEventListener("push", (event) => {
       body: data.body,
       tag: data.tag,
       icon: "/icon/192",
-      badge: "/icon/192",
+      badge: "/badge",
       lang: "tr",
       data: { url: data.url },
     }),

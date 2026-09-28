@@ -4,14 +4,9 @@ import { useEffect, useState } from "react";
 import { removePushSubscriptionAction } from "@/app/push-actions";
 import { checkPushSubscriptionAction, savePushSubscriptionAction } from "@/app/veli/notification-actions";
 import { Button } from "@/components/ui/button";
-import { isIos, isPushSupported, isStandalone, vapidKeyToBytes } from "@/lib/pwa";
+import { isIos, isPushSupported, isStandalone, registerServiceWorker, vapidKeyToBytes } from "@/lib/pwa";
 
 type State = "checking" | "on" | "off" | "denied" | "unsupported" | "ios-install" | "not-configured";
-
-async function register() {
-  await navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" });
-  return navigator.serviceWorker.ready;
-}
 
 function sameKey(sub: PushSubscription, key: Uint8Array) {
   const current = sub.options.applicationServerKey;
@@ -32,7 +27,7 @@ export function PushToggle({ publicKey }: { publicKey: string | null }) {
       if (!isPushSupported()) return isIos() && !isStandalone() ? "ios-install" : "unsupported";
       if (!publicKey) return "not-configured";
       if (Notification.permission === "denied") return "denied";
-      const registration = await register();
+      const registration = await registerServiceWorker();
       const sub = await registration.pushManager.getSubscription();
       if (!sub) return "off";
       // The browser may hold another user's subscription (shared device).
@@ -60,7 +55,7 @@ export function PushToggle({ publicKey }: { publicKey: string | null }) {
         setState(permission === "denied" ? "denied" : "off");
         return;
       }
-      const registration = await register();
+      const registration = await registerServiceWorker();
       const key = vapidKeyToBytes(publicKey);
       let sub = await registration.pushManager.getSubscription();
       if (sub && !sameKey(sub, key)) {
