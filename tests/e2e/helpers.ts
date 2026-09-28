@@ -6,11 +6,15 @@ import { E2E_DATABASE_URL } from "./env";
 
 export const PASSWORD = "Sifre1234!";
 
-/** Seed accounts (src/server/db/seed.ts). veli1 has Ada Y. and Ali K. in 2-A. */
+/**
+ * Seed accounts (src/server/db/seed.ts). veli1 has Ada Y. and Ali K. in 2-A; veli2 has Ayşe D.
+ * (used and deleted by privacy.spec.ts). Sign-in is limited to 5/min: 4 here + keyboard.spec.ts.
+ */
 export const ACCOUNTS = {
   admin: "admin@ornek.okul",
   teacher: "ogretmen@ornek.okul",
   parent: "veli1@ornek.okul",
+  parent2: "veli2@ornek.okul",
 } as const;
 
 export type Role = keyof typeof ACCOUNTS;
@@ -66,7 +70,8 @@ export async function smallTargets(page: Page, min: number, scope = "body") {
         const rect = el.getBoundingClientRect();
         if (rect.width === 0 && rect.height === 0) continue;
         // Inline links inside running text are exempt (WCAG 2.5.8 "inline" exception).
-        if (el.tagName === "A" && style.display === "inline" && el.closest("p, li")) continue;
+        const parentText = el.parentElement?.textContent?.trim().length ?? 0;
+        if (el.tagName === "A" && style.display === "inline" && parentText > (el.textContent?.trim().length ?? 0)) continue;
         // A small control with a big enough invisible hit area (label wrapping it) passes.
         const hit = el.closest("label") ?? el;
         const hitRect = hit.getBoundingClientRect();

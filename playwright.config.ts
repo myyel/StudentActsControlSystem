@@ -25,13 +25,13 @@ export default defineConfig({
     {
       name: "mobile",
       dependencies: ["setup"],
-      testIgnore: /keyboard\.spec\.ts/, // keyboard checks run on desktop only
+      testIgnore: /(keyboard|privacy)\.spec\.ts/, // desktop only: keyboard checks, data deletion
       use: { ...devices["Desktop Chrome"], viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
     },
     {
       name: "tablet",
       dependencies: ["setup"],
-      testIgnore: /keyboard\.spec\.ts/, // keyboard checks run on desktop only
+      testIgnore: /(keyboard|privacy)\.spec\.ts/, // desktop only: keyboard checks, data deletion
       use: { ...devices["Desktop Chrome"], viewport: { width: 768, height: 1024 }, hasTouch: true },
     },
     {
@@ -42,12 +42,12 @@ export default defineConfig({
     {
       name: "board",
       dependencies: ["setup"],
-      testIgnore: /keyboard\.spec\.ts/, // keyboard checks run on desktop only
+      testIgnore: /(keyboard|privacy)\.spec\.ts/, // desktop only: keyboard checks, data deletion
       use: { ...devices["Desktop Chrome"], viewport: { width: 1920, height: 1080 }, hasTouch: true },
     },
   ],
   webServer: {
-    command: `pnpm build && pnpm start -p ${E2E_PORT}`,
+    command: "pnpm build && node tests/e2e/start-server.mjs",
     url: `${E2E_BASE_URL}/giris`,
     reuseExistingServer: !process.env.CI,
     timeout: 300_000,
@@ -55,6 +55,8 @@ export default defineConfig({
     stderr: "pipe",
     env: {
       NEXT_DIST_DIR: ".next-e2e",
+      PORT: String(E2E_PORT),
+      HOSTNAME: "localhost",
       DATABASE_URL: E2E_DATABASE_URL,
       BETTER_AUTH_URL: E2E_BASE_URL,
       BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "e2e-secret-e2e-secret-e2e-secret-123456",

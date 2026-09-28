@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.35.2 | 2026-09-29 | test | e2e: KVKK akışı (veli JSON/CSV indirir ve silme talebi açar, yönetici indirir, yanlış/doğru adla siler, denetimde görür, veli hesabını siler), dışa aktarma yetkileri (403/400), yeni ekran taramaları; e2e artık üretimdeki gibi standalone sunucuyla çalışır; klavye sıralama testinde kayıt bitmeden yenileme yarışı giderildi | 9 |
 | 0.35.1 | 2026-09-29 | build | Üretim: çok aşamalı `Dockerfile` (Next standalone, root olmayan kullanıcı, healthcheck; `tools` hedefi migration ve yönetim komutları), `docker-compose.prod.yml` (db dışarı kapalı, tools migration'dan sonra app), Caddy ile otomatik HTTPS + HSTS, gece gpg AES-256 şifreli `pg_dump` yedeği (14 gün, isteğe bağlı rclone uzak kopya) ve `restore.sh`, `.env.production.example`; uygulamaya güvenlik başlıkları | 9 |
 | 0.35.0 | 2026-09-29 | feat | Üretimde hesap yönetimi: `pnpm admin:cli` (kullanici-olustur: geçici şifre üretir, okul yoksa karakter türleriyle oluşturur; sifre-sifirla: oturumları kapatır; okullar); okul kurulumu `createSchool` servisine taşındı, seed de bunu kullanır | 9 |
 | 0.34.0 | 2026-09-29 | feat | Kötüye kullanım tavanları: öğretmen mesaj gönderme 30/10 dk, veli ev davranışı girişi 60/10 dk (kullanıcı başına) | 9 |

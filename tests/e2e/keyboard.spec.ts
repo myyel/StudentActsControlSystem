@@ -21,7 +21,7 @@ test("signs in with the keyboard only", async ({ page }) => {
   await page.keyboard.press("Tab");
   await expect(page.getByLabel("E-posta")).toBeFocused();
   await expectVisibleFocus(page);
-  await page.keyboard.type("veli2@ornek.okul");
+  await page.keyboard.type("veli3@ornek.okul");
   await page.keyboard.press("Tab");
   await expect(page.getByLabel("Şifre")).toBeFocused();
   await page.keyboard.type(PASSWORD);
@@ -82,7 +82,8 @@ test.describe("teacher", () => {
 
     await move("Türkçe", "ArrowDown", 2);
     await expect.poll(order).toEqual(["Matematik", "Türkçe", "Hayat Bilgisi"]);
-    // The new order is saved on the server.
+    // The new order is saved on the server (wait for the save before reloading).
+    await page.waitForLoadState("networkidle");
     await page.reload();
     await expect.poll(order).toEqual(["Matematik", "Türkçe", "Hayat Bilgisi"]);
 

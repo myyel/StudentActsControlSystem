@@ -16,7 +16,7 @@ import {
 
 type Screen = { name: string; path: () => Promise<string>; board?: boolean };
 
-const SCREENS: Record<Role | "guest", Screen[]> = {
+const SCREENS: Partial<Record<Role | "guest", Screen[]>> = {
   guest: [
     { name: "giriş", path: async () => "/giris" },
     { name: "KVKK aydınlatma", path: async () => "/kvkk/aydinlatma" },
@@ -50,10 +50,13 @@ const SCREENS: Record<Role | "guest", Screen[]> = {
     { name: "bildirimler", path: async () => "/veli/bildirimler" },
     { name: "ayarlar", path: async () => "/veli/ayarlar" },
     { name: "çocuk ekle", path: async () => "/veli/cocuk-ekle" },
+    { name: "hesabı sil", path: async () => "/veli/hesabi-sil" },
   ],
   admin: [
     { name: "yönetim", path: async () => "/admin" },
     { name: "karakterler", path: async () => "/admin/karakterler" },
+    { name: "silme talepleri", path: async () => "/admin/silme-talepleri" },
+    { name: "denetim kaydı", path: async () => "/admin/denetim" },
   ],
 };
 
@@ -61,7 +64,7 @@ for (const [role, screens] of Object.entries(SCREENS)) {
   test.describe(role, () => {
     if (role !== "guest") test.use({ storageState: storageStatePath(role as Role) });
 
-    for (const screen of screens) {
+    for (const screen of screens ?? []) {
       test(screen.name, async ({ page }, testInfo) => {
         await page.goto(await screen.path());
         await expect(page.locator("main")).toBeVisible();
