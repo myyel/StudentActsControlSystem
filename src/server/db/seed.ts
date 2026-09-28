@@ -8,10 +8,11 @@ import { giveBehavior } from "@/server/services/behavior";
 import { giveHomeBehavior } from "@/server/services/home-behavior";
 import { listBehaviorTypes, seedDefaultBehaviorTypes } from "@/server/services/behavior-type";
 import { createNode } from "@/server/services/curriculum";
+import { markMessageRead, sendMessage, setMessageReaction } from "@/server/services/message";
 import { createInviteCodes, hashInviteCode, inviteUrl, redeemInviteCode, revokeInviteCode } from "@/server/services/invite";
 import { createDb, type Tx } from "./index";
 import * as schema from "./schema";
-import { behaviorEvent, characterLevel, characterStage, characterType, studentProgress, classTeacher, inviteCode, school, schoolClass, student, type ParentRelation } from "./schema";
+import { behaviorEvent, message, messageRead, notification, characterLevel, characterStage, characterType, studentProgress, classTeacher, inviteCode, school, schoolClass, student, type ParentRelation } from "./schema";
 
 const DEV_PASSWORD = "Sifre1234!";
 // Lower than the defaults (0/20/50/100/200) so ten days of history already show every stage.
@@ -84,6 +85,7 @@ async function seedBehaviorHistory(tx: Tx, teacher: { id: string; role: "teacher
       const batchId = newUuid();
       await giveBehavior(tx, teacher, classId, { studentIds: score.ids, behaviorTypeId: score.typeId, note: null, batchId }, SEED_IP);
       await tx.update(behaviorEvent).set({ createdAt: score.at }).where(eq(behaviorEvent.batchId, batchId));
+      await tx.update(notification).set({ createdAt: score.at }).where(sql`${notification.payload}->>'batchId' = ${batchId}`);
       count += score.ids.length;
     }
   }
@@ -113,6 +115,39 @@ async function seedHomeHistory(tx: Tx, entries: { parent: { id: string }; studen
     }
   }
   return count;
+}
+
+type SeedMessage = {
+  teacher: TeacherActor;
+  classId: string;
+  studentId?: string;
+  title: string;
+  body: string;
+  hoursAgo: number;
+  reads: { parent: { id: string }; reaction?: "seen" | "thanks" }[];
+};
+
+/**
+ * Announcements and student messages through the real service (which notifies the parents),
+ * moved back in time, with some read receipts and reactions. Behavior notifications older
+ * than a day are marked read, and history level-ups (all created "now") are dropped.
+ */
+async function seedMessages(tx: Tx, messages: SeedMessage[]) {
+  await tx.delete(notification).where(eq(notification.type, "level_up"));
+  await tx.update(notification).set({ readAt: sql`${notification.createdAt}` }).where(sql`${notification.createdAt} < now() - interval '1 day'`);
+
+  for (const m of messages) {
+    const at = new Date(Date.now() - m.hoursAgo * 3_600_000);
+    const { messageId } = await sendMessage(tx, m.teacher, m.classId, { title: m.title, body: m.body, studentId: m.studentId ?? null }, SEED_IP);
+    await tx.update(message).set({ createdAt: at }).where(eq(message.id, messageId));
+    await tx.update(notification).set({ createdAt: at }).where(sql`${notification.payload}->>'messageId' = ${messageId}`);
+    for (const { parent, reaction } of m.reads) {
+      if (reaction) await setMessageReaction(tx, parent.id, messageId, reaction);
+      else await markMessageRead(tx, parent.id, messageId);
+      await tx.update(messageRead).set({ readAt: new Date(at.getTime() + 3_600_000) }).where(eq(messageRead.messageId, messageId));
+    }
+  }
+  return messages.length;
 }
 
 type Curriculum = [subject: string, topics: [topic: string, stages: string[]][]][];
@@ -263,6 +298,52 @@ async function main() {
         { parent: parents[1]!, studentId: a.students[2]!.id, classId: a.cls.id },
       ]);
 
+      const teacherA = { id: teacher.id, role: "teacher" as const, schoolId };
+      const messageCount = await seedMessages(tx, [
+        {
+          teacher: teacherA,
+          classId: a.cls.id,
+          title: "Veli toplantısı",
+          body: "Sevgili veliler, 3 Ekim Cuma saat 17.00'de sınıfımızda veli toplantısı yapacağız. Katılımınızı rica ederim.",
+          hoursAgo: 72,
+          reads: [{ parent: parents[0]!, reaction: "seen" }, { parent: parents[1]!, reaction: "thanks" }, { parent: parents[2]! }],
+        },
+        {
+          teacher: teacherA,
+          classId: a.cls.id,
+          studentId: a.students[2]!.id,
+          title: "Ayşe'nin okuma çalışması",
+          body: "Ayşe bu hafta okuma hızında çok gelişti. Evde her akşam 10 dakika sesli okumaya devam edelim.",
+          hoursAgo: 48,
+          reads: [{ parent: parents[1]!, reaction: "thanks" }],
+        },
+        {
+          teacher: teacherA,
+          classId: a.cls.id,
+          title: "Yarın müze gezisi",
+          body: "Yarın Çocuk Müzesi'ne gidiyoruz. Öğrencilerimizin rahat ayakkabı giymesi ve yanlarında su getirmesi yeterli.",
+          hoursAgo: 20,
+          reads: [{ parent: parents[3]! }],
+        },
+        {
+          teacher: teacherA,
+          classId: a.cls.id,
+          studentId: a.students[0]!.id,
+          title: "Ada'nın sunumu",
+          body: "Ada bugün Hayat Bilgisi dersinde ailesini anlatan çok güzel bir sunum yaptı. Tebrik ederim!",
+          hoursAgo: 3,
+          reads: [],
+        },
+        {
+          teacher: { id: teacher2.id, role: "teacher", schoolId },
+          classId: b.cls.id,
+          title: "Kitap okuma haftası",
+          body: "Bu hafta her öğrencimiz evden bir hikâye kitabı getirsin, sınıf kitaplığımızda paylaşacağız.",
+          hoursAgo: 30,
+          reads: [],
+        },
+      ]);
+
       // Codes to try the invite flow with (2-A students without parents).
       const invite = async (index: number, options: { singleUse: boolean; validDays: number | null }) => {
         const s = a.students[index]!;
@@ -283,7 +364,7 @@ async function main() {
       const expired = await invite(11, { singleUse: true, validDays: 7 });
       await tx.update(inviteCode).set({ expiresAt: new Date(Date.now() - 60_000) }).where(eq(inviteCode.codeHash, hashInviteCode(expired.code)));
 
-      return { active, revoked, expired, eventCount, homeCount, progressCount };
+      return { active, revoked, expired, eventCount, homeCount, progressCount, messageCount };
     });
 
     if (!printed) {
@@ -303,6 +384,8 @@ async function main() {
     console.log(`Müfredat: 2-A için Türkçe, Matematik, Hayat Bilgisi (${printed.progressCount} ilerleme kaydı); 2-B için Matematik.`);
     console.log(`Karakterler: ${CHARACTER_TEMPLATES.map((t) => t.name).join(", ")}; demo seviye eşikleri ${DEMO_LEVEL_THRESHOLDS.join("/")} XP.`);
     console.log(`Davranış geçmişi: 2-A için son 10 güne yayılmış ${printed.eventCount} puan kaydı; velilerden ${printed.homeCount} ev kaydı (Ada Y. için bir gün tavanı aşıyor).
+`);
+    console.log(`Mesajlar: ${printed.messageCount} mesaj (2-A duyuruları, Ada Y. ve Ayşe D. için özel mesaj, 2-B duyurusu); bazıları okundu/tepkili. veli1'in okunmamış mesajı ve bildirimleri var.
 `);
     console.log("Kullanılabilir davet kodları (2-A):");
     for (const c of printed.active) console.log(`  ${line(c)}  (${c.note})`);

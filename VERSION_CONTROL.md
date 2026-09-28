@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.29.1 | 2026-09-28 | chore | Faz 7 seed: 2-A için iki duyuru ve Ada Y. / Ayşe D. için özel mesaj, 2-B duyurusu; okundu ve tepki kayıtları; puan geçmişinden gelen bildirimler geriye tarihlendi, 1 günden eskiler okundu | 7 |
 | 0.29.0 | 2026-09-28 | feat | Veli arayüzü: üst çubukta okunmamış sayılı Mesajlar/Bildirimler/Ayarlar, mesaj listesi (çocuğa göre filtre) ve detay (açınca okundu, Gördüm 👍 / Teşekkürler 🙏 hızlı tepki), bildirim merkezi (tümünü okundu yap), Ayarlar: 4 bildirim tercihi, bu cihazda anlık bildirim aç/kapat, iOS Ana ekrana ekle rehberi; panelde okunmamış mesajlar kartı ve iOS'ta kapatılabilir rehber bandı; çıkışta cihazın push aboneliği silinir | 7 |
 | 0.28.0 | 2026-09-28 | feat | Öğretmen Mesajlar sekmesi: sınıf duyurusu veya öğrenciye özel mesaj yazma, gönderilenlerde okundu sayısı ve tepkiler, açılır veli listesi (okudu/okumadı, tepki), onaylı silme; öğrenci detayından velilere mesaj bağlantısı | 7 |
 | 0.27.0 | 2026-09-28 | feat | Web Push altyapısı: service worker (`public/sw.js`, push + tıklayınca ilgili ekrana gitme), `/bildirim/[id]` (okundu yapıp yönlendirir), manifest + uygulama ikonları, VAPID ayarları ve `pnpm push:keys`; mesaj, okundu/tepki, bildirim tercihi ve abonelik action'ları; davranış push'u geri alma süresi dolunca, olay duruyorsa gönderilir | 7 |
