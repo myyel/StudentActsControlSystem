@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.30.2 | 2026-09-29 | fix | Türkçe 404 ("Sayfa bulunamadı"; başkasına ait kayıtlarda da aynı metin, var olduğu belli olmaz) ve hata sayfası ("Bir sorun oluştu", bağlantı kopunca da gösterilir, Tekrar dene); Next'in İngilizce varsayılan sayfalarının yerine | 8 |
 | 0.30.1 | 2026-09-29 | fix | Erişilebilirlik: dokunmatik ekranlarda düğme ve girişler en az 44px (`pointer-coarse:min-h-11`; tahta modunun 80px'i korunur), `←` geri bağlantıları ortak `BackLink` ile 44px, davranış penceresindeki öğrenci detayı bağlantısı 44px, pencere kapatma düğmesi 44px ve Türkçe ("Kapat"), pencere kapanınca odak açan öğeye (ör. öğrenci kartı) döner, yol haritasında başlanmamış duraklar opaklık yerine AA kontrastlı soluk renkte, tahta moduna `main` bölgesi | 8 |
 | 0.30.0 | 2026-09-29 | feat | PWA: çevrimdışı açılış ekranı (`/cevrimdisi`; service worker yalnızca bu sayfayı ve dosyalarını saklar, oturum açılmış sayfalar asla önbelleğe alınmaz, sayfa açılamazsa bu ekran gösterilir, Tekrar dene), service worker artık her sayfada kaydedilir (push açılmasa da), manifest'e `id`/`orientation`/`categories`, Android için tek renkli bildirim rozeti (`/badge`) | 8 |
 | 0.29.2 | 2026-09-28 | docs | Faz 7 tamamlandı: PRD'ye mesaj/okundu/tepki, yalnızca veliye bildirim, gecikmeli davranış push'u, ev girişlerinin bildirim üretmemesi, tercih ve cihaz aboneliği kararları; README ve CLAUDE.md (push:keys, bildirim kalıbı) güncellendi; güncel faz 8 | 7 |
