@@ -12,6 +12,9 @@
 - Hedef ortamlar: Pardus (Firefox/Chromium), Windows, Android (Chrome), iOS/iPadOS 16.4+ (Safari, ana ekrana eklenmiş).
 - Kırılım noktaları: telefon (≥360px), tablet (≥768px), masaüstü (≥1280px), akıllı tahta (1920px, dokunmatik).
 - İleride Capacitor ile mağaza uygulamasına paketlenebilecek şekilde tasarlanır (native-özel API kullanılmaz).
+- **Çevrimdışı (Faz 8 kararı):** oturum açılmış sayfalar cihazda **saklanmaz** (çocuk verisi, paylaşılan cihazlar). Bağlantı yokken açılamayan sayfa yerine "İnternet bağlantısı yok" ekranı (`/cevrimdisi`, "Tekrar dene") gösterilir; puan, mesaj gibi işlemler yalnızca bağlantı varken kaydedilir, çevrimdışı kuyruk yoktur.
+- **Erişilebilirlik:** WCAG 2 AA kontrast (açık ve karanlık mod); dokunmatik ekranlarda dokunma hedefleri en az 44px (tahta modunda 80px), fare ile kullanımda kompakt boyutlar korunur (en az 24px); tüm işlemler klavyeyle yapılabilir, odak görünür, pencereler kapanınca odak açan öğeye döner.
+- Yetkisiz veya olmayan kayıtlar için Türkçe "Sayfa bulunamadı" (404) gösterilir; metin kaydın var olup olmadığını belli etmez.
 
 ## 3. Roller
 

@@ -8,7 +8,7 @@
 
 Ürün gereksinimleri: [`docs/PRD.md`](docs/PRD.md) · Sürüm geçmişi: [`VERSION_CONTROL.md`](VERSION_CONTROL.md)
 
-> **Durum:** geliştirme aşamasında (MVP, Faz 8 / 9). Pilot kullanıma henüz hazır değildir.
+> **Durum:** geliştirme aşamasında (MVP, Faz 9 / 9). Pilot kullanıma henüz hazır değildir.
 
 ## Özellikler
 
@@ -32,10 +32,12 @@
 | **Ev davranışları** | Veli bugün evde yapılanları işaretler; günlük ev XP tavanı (öğretmen ayarlar) yalnızca XP'yi sınırlar; 10 sn geri alma. |
 | **Tahta modu** | Akıllı tahtada tam ekran: büyük karakter kartları, yalnızca olumlu puan, tüm sınıfa puan; XP, denge ve sıralama yok. |
 | **Mesajlar** | Sınıf duyurusu veya öğrenciye özel mesaj. Veli okuyunca okundu bilgisi düşer; "Gördüm 👍" / "Teşekkürler 🙏" hızlı tepki. Öğretmen kimin okuduğunu görür. |
+| **PWA** | Ana ekrana yüklenebilir uygulama (Android, iOS 16.4+, masaüstü). Bağlantı yokken "İnternet bağlantısı yok" ekranı; çocuk verisi içeren sayfalar cihazda saklanmaz. |
+| **Erişilebilirlik** | WCAG 2 AA kontrast (açık/karanlık mod), dokunmatikte en az 44px (tahtada 80px) dokunma hedefleri, klavyeyle tam kullanım. Uçtan uca testlerle 4 ekran boyutunda denetlenir. |
 | **Bildirimler** | Veli için bildirim merkezi ve Web Push (mesaj, olumlu/olumsuz davranış, seviye atlama; türe göre açılıp kapatılır). Bildirime dokununca ilgili ekran açılır. Davranış push'u 10 sn geri alma süresi bitince gider. iPhone/iPad için "Ana ekrana ekle" rehberi. |
 
 ### Sıradakiler
-PWA (çevrimdışı) ve uçtan uca testler → güvenlik, KVKK araçları ve yayına alma. Ayrıntılar: [Yol haritası](#yol-haritası).
+Güvenlik sıkılaştırma, KVKK araçları (silme, dışa aktarma), Docker ile yayına alma, yedekleme ve pilot. Ayrıntılar: [Yol haritası](#yol-haritası).
 
 ## Teknoloji
 
@@ -44,7 +46,7 @@ PWA (çevrimdışı) ve uçtan uca testler → güvenlik, KVKK araçları ve yay
 - **Veri:** PostgreSQL 17, Drizzle ORM (migration'lar `drizzle/` altında)
 - **Kimlik doğrulama:** Better Auth (e-posta/şifre, rol: `admin | teacher | parent`)
 - **Bildirim:** Web Push (VAPID, `web-push`), service worker (`public/sw.js`)
-- **Doğrulama ve test:** Zod (Türkçe hata mesajları), Vitest + PGlite (testler için Docker gerekmez)
+- **Doğrulama ve test:** Zod (Türkçe hata mesajları), Vitest + PGlite (birim/entegrasyon, Docker gerekmez), Playwright + axe-core (uçtan uca, erişilebilirlik)
 - **Geliştirme ortamı:** Docker Compose (Postgres)
 
 ## Kurulum
@@ -100,6 +102,7 @@ Seed, veli kaydını denemek için kullanılabilir, iptal edilmiş ve süresi do
 | `pnpm lint` | ESLint |
 | `pnpm typecheck` | Route tiplerini üretip `tsc --noEmit` |
 | `pnpm test` | Vitest (birim + entegrasyon, PGlite ile) |
+| `pnpm test:e2e` | Playwright: 4 ekran boyutunda uçtan uca + erişilebilirlik (Postgres gerekir) |
 | `pnpm db:generate` | Şema değişikliğinden migration üret |
 | `pnpm db:migrate` | Migration'ları uygula |
 | `pnpm db:seed` | Boş veritabanına örnek veri |
@@ -121,6 +124,7 @@ src/
     admin/                         # yönetici: karakterler ve seviye eşikleri
     tahta/[sinifId]                # tam ekran tahta modu
     kvkk/[belge]                   # aydınlatma ve açık rıza metinleri
+    cevrimdisi                     # bağlantı yokken gösterilen ekran (service worker saklar)
     api/auth/[...all]              # Better Auth uç noktaları
   components/                      # arayüz bileşenleri (ui/ = shadcn)
   content/                         # varsayılan davranışlar, KVKK metinleri
@@ -133,7 +137,8 @@ src/
   proxy.ts                         # oturum çerezine göre iyimser yönlendirme
 drizzle/                           # SQL migration'lar
 tests/
-  unit/  integration/  helpers/
+  unit/  integration/  helpers/     # Vitest
+  e2e/                             # Playwright
 docs/PRD.md                        # ürün gereksinimleri
 ```
 
@@ -156,6 +161,13 @@ Geliştirme kuralları ve kod kalıpları: [`CLAUDE.md`](CLAUDE.md).
 - **Sınıf izolasyonu:** "öğretmen başka sınıfı değiştiremez" (öğrenci, puan, davranış tipi, müfredat, matris),
 - **Sayaç tutarlılığı:** XP ve denge her senaryoda silinmemiş olayların toplamına eşittir.
 
+`pnpm test:e2e` (Playwright) uygulamanın üretim derlemesini ayrı bir `class_attitude_e2e` veritabanına karşı çalıştırır; her çalıştırmada veritabanı sıfırlanıp seed edilir. Önce `docker compose up -d db`; ilk seferde `pnpm exec playwright install chromium`. Testler 4 projede koşar — **mobile** 360px, **tablet** 768px, **desktop** 1280px, **board** 1920px (dokunmatik) — ve şunları denetler:
+
+- Anahtar ekranlarda yatay kaydırma olmaması, dokunma hedefi boyutları, axe ile WCAG 2 AA (kontrast dahil, açık ve karanlık mod),
+- Puan verme/geri alma, tahtada olumsuz puan ve XP görünmemesi, ev davranışı, mesaj tepkisi,
+- Yetki: başka sınıf veya başka ailenin çocuğu → 404,
+- PWA: manifest, ikonlar, çevrimdışı ekran; klavye: giriş, pencere odak tuzağı, sürükle-bırak sıralama.
+
 ## Yol haritası
 
 | Faz | Kapsam | Durum |
@@ -168,8 +180,8 @@ Geliştirme kuralları ve kod kalıpları: [`CLAUDE.md`](CLAUDE.md).
 | 5 | Karakter sistemi, seviye atlama, tahta modu | ✅ |
 | 6 | Veli paneli, ev davranışları, günlük ev XP tavanı | ✅ |
 | 7 | Mesajlar, bildirim merkezi, Web Push, iOS rehberi | ✅ |
-| 8 | PWA, responsive uçtan uca testler, erişilebilirlik | ⏳ sıradaki |
-| 9 | Güvenlik, KVKK (silme/dışa aktarma), Docker ile yayına alma, yedekleme, pilot | |
+| 8 | PWA, responsive uçtan uca testler, erişilebilirlik | ✅ |
+| 9 | Güvenlik, KVKK (silme/dışa aktarma), Docker ile yayına alma, yedekleme, pilot | ⏳ sıradaki |
 
 ## Sürümleme
 

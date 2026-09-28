@@ -9,9 +9,9 @@ Bu proje, ilkokul (6–10 yaş) sınıfları için öğretmen–veli davranış 
 - Tailwind CSS + shadcn/ui
 - PostgreSQL + Drizzle ORM (migration'lar `drizzle/` altında)
 - Better Auth (e-posta/şifre, rol alanı: `admin | teacher | parent`)
-- Web Push (VAPID) + Service Worker, PWA (`@serwist/next`)
+- Web Push (VAPID) + Service Worker, PWA (elle yazılmış `public/sw.js`; serwist kullanılmıyor — Faz 8 kararı)
 - Zod (tüm girdi doğrulaması)
-- Vitest (birim/entegrasyon), Playwright (e2e + responsive)
+- Vitest (birim/entegrasyon), Playwright + `@axe-core/playwright` (e2e, responsive, erişilebilirlik)
 - Docker Compose (geliştirme ve üretim)
 
 ## Klasör yapısı
@@ -50,7 +50,7 @@ docs/PRD.md
 ## UI kuralları
 - Tüm arayüz metinleri **Türkçe**; kod, değişken ve commit mesajları İngilizce.
 - Mobil öncelikli. Kırılımlar: 360 / 768 / 1280 / 1920px. Yatay kaydırma yok.
-- Dokunma hedefleri en az 44×44px; tahta modunda en az 80px.
+- Dokunma hedefleri en az 44×44px; tahta modunda en az 80px. shadcn `Button`/`Input` dokunmatikte (`pointer-coarse:`) kendiliğinden 44px olur; özel düğme ve bağlantılarda `min-h-11` kullan, geri bağlantıları için `BackLink`. Soluk metin için `opacity` değil `text-muted-foreground` (kontrast).
 - Renk kontrastı WCAG AA. Karanlık mod desteklenir.
 - Çocuk dostu, sıcak ama sade görünüm; öğretmen ekranları hızlı ve az dokunuşlu.
 
@@ -66,11 +66,12 @@ pnpm db:reset                  # tüm tabloları boşaltıp seed'i yeniden çal�
 pnpm push:keys                 # VAPID anahtarları (.env: VAPID_PUBLIC_KEY/PRIVATE_KEY/SUBJECT; boşsa push kapalı)
 pnpm lint && pnpm typecheck
 pnpm test                      # Vitest — PGlite (bellek içi Postgres) kullanır, Docker gerekmez
-pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board projeleri) — Faz 8
+pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board projeleri); Postgres gerekir
 ```
 
 - Testlerde veritabanı: `tests/helpers/db.ts` → `createTestDb()` (migration'lar uygulanmış PGlite). `@/server/db`'yi kullanan kodu test ederken `vi.mock("@/server/db", …)` ile bu örneğe yönlendir (örnek: `tests/integration/guards.test.ts`).
 - Better Auth örneği `createAuth(db, options)` ile üretilir; testte `{ nextjs: false }` geç.
+- **e2e:** `playwright.config.ts` üretim derlemesini `.next-e2e`'ye alır ve 3100 portunda `class_attitude_e2e` veritabanıyla çalıştırır (`tests/e2e/env.ts`). `setup` projesi DB'yi oluşturur, migration + `seed --reset` uygular, her rol bir kez giriş yapıp `tests/e2e/.auth/`'a kaydeder (üretimde giriş 5/dk ile sınırlı; testlerde yeniden giriş yapma, `storageState` kullan). Veri değiştiren testler kendi değişikliğini geri alır ve her projede farklı öğrenci kullanır. Yeni ekranı `tests/e2e/pages.spec.ts`'deki listeye ekle (yatay kaydırma, dokunma hedefi, axe açık/karanlık).
 
 ## Kod kalıpları
 - **Zod**'u her zaman `@/lib/zod`'dan import et (`"zod"`dan değil): Türkçe hata mesajları orada ayarlı.
@@ -78,7 +79,7 @@ pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board proj
 - **Action'lar** `ActionResult` döner (`src/server/action-result.ts`): beklenen hatalar `AuthError`/`UserError`/`ZodError` → `toActionError`; kullanıcıya gösterilecek iş hataları `UserError` ile fırlatılır. Değişiklikten sonra `refresh()` (`next/cache`).
 - **Sayfalar** sahiplik hatasında 404 verir: `await orNotFound(assertTeacherOfClass(user, id))`.
 - **Audit**: kritik işlemler `writeAudit(tx, …)` ile aynı transaction içinde yazılır.
-- **Bildirimler**: servis, işlemle aynı transaction'da `createNotifications` (tercihlere uyar) çağırır ve id'leri döner; action commit'ten sonra `dispatchPush(ids)` (`src/server/push-dispatch.ts`) ile gönderir. Id'ler istemciye dönmez. Service worker şimdilik elle yazılmış `public/sw.js` (Faz 8'de serwist'e taşınacak).
+- **Bildirimler**: servis, işlemle aynı transaction'da `createNotifications` (tercihlere uyar) çağırır ve id'leri döner; action commit'ten sonra `dispatchPush(ids)` (`src/server/push-dispatch.ts`) ile gönderir. Id'ler istemciye dönmez. Service worker `public/sw.js` (push + çevrimdışı ekran); oturum açılmış sayfaları asla önbelleğe alma.
 - IP/tarayıcı bilgisi `getRequestMeta()`; üretimde reverse proxy `x-forwarded-for`'u doğru ayarlamalı (Faz 9).
 
 ## Çalışma şekli
@@ -103,4 +104,4 @@ pnpm test:e2e                  # Playwright (mobile, tablet, desktop, board proj
 8. PWA + responsive e2e testleri + erişilebilirlik
 9. Güvenlik, KVKK (silme/dışa aktarma, audit), Docker deploy, yedekleme, pilot
 
-Güncel faz: **8**
+Güncel faz: **9**
