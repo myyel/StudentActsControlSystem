@@ -1,12 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Baloo_2, Nunito } from "next/font/google";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin", "latin-ext"],
-});
+// Rounded, child-friendly faces with full Turkish support; self-hosted by next/font.
+const nunito = Nunito({ variable: "--font-nunito", subsets: ["latin", "latin-ext"] });
+const baloo = Baloo_2({ variable: "--font-baloo", subsets: ["latin", "latin-ext"], weight: ["600", "800"] });
 
 export const metadata: Metadata = {
   title: "Öğrenci Davranış ve Gelişim Sistemi",
@@ -23,7 +22,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="tr" className={`${geistSans.variable} h-full antialiased`}>
+    <html lang="tr" className={`${nunito.variable} ${baloo.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         {children}
         <ServiceWorkerRegistration />

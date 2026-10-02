@@ -13,7 +13,7 @@ import { createSchool } from "@/server/services/school";
 import { createInviteCodes, hashInviteCode, inviteUrl, redeemInviteCode, revokeInviteCode } from "@/server/services/invite";
 import { createDb, type Tx } from "./index";
 import * as schema from "./schema";
-import { behaviorEvent, message, messageRead, notification, characterLevel, studentProgress, classTeacher, inviteCode, school, schoolClass, student, type ParentRelation } from "./schema";
+import { behaviorEvent, classGoal, message, messageRead, notification, characterLevel, studentProgress, classTeacher, inviteCode, school, schoolClass, student, type ParentRelation } from "./schema";
 
 const DEV_PASSWORD = "Sifre1234!";
 // Lower than the defaults (0/20/50/100/200) so ten days of history already show every stage.
@@ -282,6 +282,14 @@ async function main() {
         a.cls.id,
         a.students.map((s) => s.id),
       );
+      // Shared class goal, started with the history so the board shows a half-full bar.
+      await tx.insert(classGoal).values({
+        classId: a.cls.id,
+        title: "Bahçe oyunu",
+        target: 100,
+        startedAt: new Date(Date.now() - 4 * 86_400_000),
+        createdById: teacher.id,
+      });
       // veli1 → Ada and Ali, veli2 → Ayşe (2-A).
       const homeCount = await seedHomeHistory(tx, [
         { parent: parents[0]!, studentId: a.students[0]!.id, classId: a.cls.id },

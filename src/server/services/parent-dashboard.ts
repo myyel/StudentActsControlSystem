@@ -1,11 +1,11 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, gt, gte, isNull, sql } from "drizzle-orm";
 import type { Db } from "@/server/db";
 import { behaviorEvent, parentStudent, school, schoolClass, student } from "@/server/db/schema";
 import { levelProgress, MAX_LEVEL } from "@/lib/character";
 import { forbidden } from "@/server/auth/errors";
 import { listBehaviorTypes } from "./behavior-type";
-import { getLevelThresholds, withStages } from "./character";
-import { homeXpToday } from "./home-behavior";
+import { getLevelThresholds, getStageMap, stageOf } from "./character";
+import { homeCountsToday, homeXpToday } from "./home-behavior";
 import { getRoadmapForParent } from "./progress";
 import { getLast7Days } from "./timeline";
 
@@ -39,9 +39,9 @@ export async function getParentDashboard(db: Db, parentId: string, studentId: st
     .where(and(eq(parentStudent.parentId, parentId), eq(parentStudent.studentId, studentId), isNull(student.deletedAt)));
   if (!child) throw forbidden();
 
-  const [thresholds, [withStage], week, recent, roadmap, homeTypes, todayHomeXp] = await Promise.all([
+  const [thresholds, stageMap, week, recent, roadmap, homeTypes, todayHomeXp, todayCounts, [top]] = await Promise.all([
     getLevelThresholds(db, child.schoolId),
-    withStages(db, [child]),
+    getStageMap(db, [child.characterTypeId]),
     getLast7Days(db, studentId, child.timeZone, now),
     db
       .select({
@@ -59,6 +59,22 @@ export async function getParentDashboard(db: Db, parentId: string, studentId: st
     getRoadmapForParent(db, parentId, studentId),
     listBehaviorTypes(db, child.classId, { scope: "home", activeOnly: true }),
     homeXpToday(db, studentId, child.timeZone, now),
+    homeCountsToday(db, studentId, child.timeZone, now),
+    // "En çok: 🤝 Yardımlaştı (8 kez)": the most frequent positive behavior of the last 7 days.
+    db
+      .select({ name: behaviorEvent.nameSnapshot, icon: behaviorEvent.iconSnapshot, count: sql<number>`count(*)::int` })
+      .from(behaviorEvent)
+      .where(
+        and(
+          eq(behaviorEvent.studentId, studentId),
+          isNull(behaviorEvent.deletedAt),
+          gt(behaviorEvent.pointsSnapshot, 0),
+          gte(behaviorEvent.createdAt, new Date(now.getTime() - 7 * 86_400_000)),
+        ),
+      )
+      .groupBy(behaviorEvent.nameSnapshot, behaviorEvent.iconSnapshot)
+      .orderBy(desc(sql`count(*)`), behaviorEvent.nameSnapshot)
+      .limit(1),
   ]);
 
   const level = child.characterLevel;
@@ -74,12 +90,15 @@ export async function getParentDashboard(db: Db, parentId: string, studentId: st
     character: {
       level,
       xp: child.xp,
-      stage: withStage!.stage,
+      stage: stageOf(stageMap, child.characterTypeId, level),
+      nextStageName: level < MAX_LEVEL ? stageOf(stageMap, child.characterTypeId, level + 1).name : null,
       progress: levelProgress(thresholds, level, child.xp),
       nextThreshold: level < MAX_LEVEL ? thresholds[level]! : null,
     },
     week,
     weekBalance: week.reduce((sum, d) => sum + d.positive - d.negative, 0),
+    weekPositive: week.reduce((sum, d) => sum + d.positive, 0),
+    weekTop: top ?? null,
     recent,
     subjects: roadmap.subjects.map((s) => {
       const stages = s.topics.flatMap((t) => t.stages);
@@ -94,6 +113,7 @@ export async function getParentDashboard(db: Db, parentId: string, studentId: st
     home: {
       types: homeTypes.map(({ id, name, icon, points }) => ({ id, name, icon, points })),
       todayXp: todayHomeXp,
+      todayCounts,
       cap: child.homeDailyXpCap,
     },
   };

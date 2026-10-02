@@ -310,14 +310,17 @@ export async function listBoardStudents(db: Db, classId: string) {
       .from(student)
       .where(and(eq(student.classId, classId), eq(student.active, true), isNull(student.deletedAt))),
   ]);
-  const withStage = await withStages(db, rows);
-  return withStage
+  const map = await getStageMap(db, rows.map((r) => r.characterTypeId));
+  return rows
     .map((s) => ({
       id: s.id,
       firstName: s.firstName,
       lastInitial: s.lastInitial,
+      characterTypeId: s.characterTypeId,
       level: s.characterLevel,
-      stage: s.stage,
+      stage: stageOf(map, s.characterTypeId, s.characterLevel),
+      // "Fidan olmaya çok az kaldı!" on the board: a name, not a number.
+      nextStageName: s.characterLevel < MAX_LEVEL ? stageOf(map, s.characterTypeId, s.characterLevel + 1).name : null,
       progress: levelProgress(thresholds, s.characterLevel, s.xp),
     }))
     .sort(byName);

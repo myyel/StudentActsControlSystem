@@ -18,6 +18,12 @@ async function studentXp(firstName: string, lastInitial: string) {
   return xp;
 }
 
+/** The low demo thresholds can level a student up; the celebration stays until "Harika!". */
+async function dismissCelebration(page: Page) {
+  const celebration = page.getByRole("dialog", { name: /büyüdü/ });
+  if (await celebration.count()) await celebration.getByRole("button", { name: /Harika|Sıradaki/ }).click();
+}
+
 async function expectTargetsInDialog(page: Page, min: number) {
   expect(await smallTargets(page, min, '[role="dialog"]'), "dialog touch targets").toEqual([]);
 }
@@ -41,6 +47,7 @@ test.describe("teacher", () => {
     const undo = page.getByRole("button", { name: /Geri al/ });
     await expect(page.getByRole("status").filter({ hasText: name })).toBeVisible();
     await expect.poll(() => studentXp(firstName, lastInitial)).toBeGreaterThan(xpBefore);
+    await dismissCelebration(page);
 
     await undo.click();
     await expect(page.getByText("Geri alındı.")).toBeVisible();
@@ -53,7 +60,7 @@ test.describe("teacher", () => {
     await expect(page.getByText(/XP|denge|Denge/)).toHaveCount(0);
 
     await page.getByRole("button", { name: /^Ada Y\./ }).click();
-    const dialog = page.getByRole("dialog", { name: "Ada Y." });
+    const dialog = page.getByRole("dialog", { name: "Ada ne yaptı?" });
     await expect(dialog).toBeVisible();
     expect(await smallTargets(page, 80, '[role="dialog"]'), "board dialog targets").toEqual([]);
     await expect(dialog.getByText(/[-−]\d/)).toHaveCount(0);
@@ -68,7 +75,7 @@ test.describe("teacher", () => {
     for (const path of [`/ogretmen/siniflar/${other}`, `/ogretmen/siniflar/${other}/matris`, `/tahta/${other}`]) {
       const response = await page.goto(path);
       expect(response?.status(), path).toBe(404);
-      await expect(page.getByRole("heading", { name: "Sayfa bulunamadı" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Bu sayfayı bulamadık" })).toBeVisible();
     }
   });
 
@@ -86,7 +93,7 @@ test.describe("parent", () => {
     for (const path of [`/veli/${other}`, `/veli/${other}/yol-haritasi`]) {
       const response = await page.goto(path);
       expect(response?.status(), path).toBe(404);
-      await expect(page.getByRole("heading", { name: "Sayfa bulunamadı" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Bu sayfayı bulamadık" })).toBeVisible();
       await expect(page.getByText("Arda")).toHaveCount(0);
     }
   });
@@ -101,6 +108,7 @@ test.describe("parent", () => {
     const home = page.getByRole("listitem").getByRole("button", { name: /Kitap okudu/ });
     await home.first().click();
     await expect(page.getByRole("status").filter({ hasText: "kaydedildi" })).toBeVisible();
+    await dismissCelebration(page);
     await page.getByRole("button", { name: /Geri al/ }).click();
     await expect(page.getByText("Geri alındı.")).toBeVisible();
   });

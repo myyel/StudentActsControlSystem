@@ -340,6 +340,30 @@ export const auditLog = pgTable(
   (t) => [index().on(t.entity, t.entityId), index().on(t.schoolId, t.createdAt)],
 );
 
+/**
+ * Shared class goal ("100 ⭐ = bahçe oyunu"): every positive school point since `startedAt` fills
+ * it; negatives never lower it. The count is derived from behavior_event, so undo and delete need
+ * no extra bookkeeping. One open goal per class; ended goals are kept.
+ */
+export const classGoal = pgTable(
+  "class_goal",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    classId: uuid()
+      .notNull()
+      .references(() => schoolClass.id, { onDelete: "cascade" }),
+    title: varchar({ length: 60 }).notNull(),
+    target: integer().notNull(),
+    startedAt: createdAt(),
+    endedAt: timestamp({ withTimezone: true }),
+    createdById: uuid().references(() => user.id, { onDelete: "set null" }),
+  },
+  (t) => [
+    uniqueIndex("class_goal_open_class").on(t.classId).where(sql`${t.endedAt} is null`),
+    check("class_goal_target_check", sql`${t.target} between 5 and 1000`),
+  ],
+);
+
 export const behaviorType = pgTable(
   "behavior_type",
   {

@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { formatPoints } from "@/lib/behavior";
 import { cn } from "@/lib/utils";
 import type { BehaviorScope } from "@/server/db/schema";
@@ -12,28 +11,32 @@ export function RecentEvents({ items, timeZone }: { items: Item[]; timeZone: str
 
   return (
     <ul className="flex flex-col divide-y">
-      {items.map((e) => (
-        <li key={e.id} className="flex items-center gap-3 py-2">
-          <span className="text-2xl" aria-hidden>
-            {e.icon}
-          </span>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <span className="flex flex-wrap items-center gap-2 font-medium">
-              {e.name}
-              <Badge variant={e.source === "home" ? "secondary" : "outline"}>{e.source === "home" ? "Ev" : "Okul"}</Badge>
+      {items.map((e) => {
+        const home = e.source === "home";
+        return (
+          <li key={e.id} className="flex items-center gap-3 py-2">
+            {/* School / home by icon and colour, and in words for screen readers. */}
+            <span
+              className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl text-xl", home ? "bg-sun-soft" : "bg-sky-soft")}
+              aria-hidden
+            >
+              {home ? "🏠" : "🏫"}
             </span>
-            <span className="text-sm text-muted-foreground">{when.format(e.createdAt)}</span>
-          </div>
-          <span
-            className={cn(
-              "font-semibold",
-              e.points > 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400",
-            )}
-          >
-            {formatPoints(e.points)}
-          </span>
-        </li>
-      ))}
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="font-semibold">
+                <span aria-hidden>{e.icon} </span>
+                {e.name}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {home ? "Ev" : "Okul"} · {when.format(e.createdAt)}
+              </span>
+            </div>
+            <span className={cn("font-extrabold", e.points > 0 ? "text-grass-strong" : "text-coral-ink")}>
+              {formatPoints(e.points)}
+            </span>
+          </li>
+        );
+      })}
     </ul>
   );
 }

@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { BackLink } from "@/components/layout/back-link";
-import { Roadmap } from "@/components/progress/roadmap";
-import { formatStudentName } from "@/lib/student-names";
+import { AdventureMap } from "@/components/progress/adventure-map";
+import { formatStudentName, possessiveName } from "@/lib/student-names";
 import { db } from "@/server/db";
 import { assertParentOfStudent } from "@/server/auth/guards";
 import { orNotFound, requirePageRole } from "@/server/auth/session";
 import { getRoadmapForParent } from "@/server/services/progress";
 
-export const metadata: Metadata = { title: "Yol haritası" };
+export const metadata: Metadata = { title: "Macera haritası" };
 
 export default async function RoadmapPage({ params }: PageProps<"/veli/[ogrenciId]/yol-haritasi">) {
   const { ogrenciId } = await params;
@@ -20,10 +20,10 @@ export default async function RoadmapPage({ params }: PageProps<"/veli/[ogrenciI
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <div>
         <BackLink href={`/veli/${child.id}`}>{formatStudentName(child)} paneli</BackLink>
-        <h1 className="text-2xl font-semibold">{formatStudentName(child)} · Yol haritası</h1>
-        <p className="text-muted-foreground">Derslerdeki durakları ve çocuğunuzun şu an nerede olduğunu gösterir.</p>
+        <h1 className="font-display text-3xl font-extrabold">{possessiveName(child.firstName)} macera haritası</h1>
+        <p className="text-muted-foreground">Derslerdeki duraklar ve {child.firstName} şu an nerede.</p>
       </div>
-      <Roadmap subjects={subjects} />
+      <AdventureMap subjects={subjects} stage={child.stage} childName={child.firstName} />
     </div>
   );
 }

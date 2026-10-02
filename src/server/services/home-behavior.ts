@@ -40,6 +40,24 @@ export async function homeXpToday(db: DbOrTx, studentId: string, timeZone: strin
   return row?.used ?? 0;
 }
 
+/** How many times each home behavior was marked today (all parents), for the ✓ ×2 stickers. */
+export async function homeCountsToday(db: DbOrTx, studentId: string, timeZone: string, now = new Date()) {
+  const rows = await db
+    .select({ typeId: behaviorEvent.behaviorTypeId, count: sql<number>`count(*)::int` })
+    .from(behaviorEvent)
+    .where(
+      and(
+        eq(behaviorEvent.studentId, studentId),
+        eq(behaviorEvent.source, "home"),
+        isNull(behaviorEvent.deletedAt),
+        gte(behaviorEvent.createdAt, new Date(now.getTime() - 2 * 86_400_000)),
+        sql`to_char(${behaviorEvent.createdAt} at time zone ${timeZone}, 'YYYY-MM-DD') = ${localDay(now, timeZone)}`,
+      ),
+    )
+    .groupBy(behaviorEvent.behaviorTypeId);
+  return Object.fromEntries(rows.filter((r) => r.typeId).map((r) => [r.typeId!, r.count])) as Record<string, number>;
+}
+
 async function studentContext(db: DbOrTx, studentId: string, lock: boolean) {
   const query = db
     .select({

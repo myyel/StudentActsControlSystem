@@ -1,8 +1,9 @@
 import { Mail } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CharacterImage } from "@/components/characters/character-image";
-import { LevelBar } from "@/components/characters/level-bar";
+import { CharacterAvatar } from "@/components/characters/character-avatar";
+import { primaryAction } from "@/components/layout/character-message";
+import { CharacterHero } from "@/components/parents/character-hero";
 import { ChildSwitcher } from "@/components/parents/child-switcher";
 import { ParentMessageList } from "@/components/messages/parent-message-list";
 import { IosInstallGuide } from "@/components/notifications/ios-install-guide";
@@ -11,19 +12,23 @@ import { RecentEvents } from "@/components/parents/recent-events";
 import { WeekChart } from "@/components/timeline/week-chart";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatStudentName } from "@/lib/student-names";
+import { characterNoun } from "@/lib/character";
+import { formatStudentName, possessiveName } from "@/lib/student-names";
 import { cn } from "@/lib/utils";
 import { db } from "@/server/db";
 import { assertParentOfStudent } from "@/server/auth/guards";
 import { orNotFound, requirePageRole } from "@/server/auth/session";
 import { listParentMessages } from "@/server/services/message";
 import { listChildrenForParent } from "@/server/services/parent";
+import { withStages } from "@/server/services/character";
 import { getParentDashboard } from "@/server/services/parent-dashboard";
 
 export const metadata: Metadata = { title: "Veli paneli" };
 
-export default async function ParentDashboardPage({ params }: PageProps<"/veli/[ogrenciId]">) {
+export default async function ParentDashboardPage({ params, searchParams }: PageProps<"/veli/[ogrenciId]">) {
   const { ogrenciId } = await params;
+  // Set once by the invite redirect: a welcome in place of the dashboard.
+  const { hosgeldin } = await searchParams;
   const { user } = await requirePageRole("parent");
   // Another child's id renders 404; the service filters through parent_student as well.
   await orNotFound(assertParentOfStudent(user, ogrenciId));
@@ -32,78 +37,90 @@ export default async function ParentDashboardPage({ params }: PageProps<"/veli/[
     listChildrenForParent(db, user.id),
     listParentMessages(db, user.id, { studentId: ogrenciId, unreadOnly: true, limit: 3 }),
   ]);
-  const { child, character, week, weekBalance, recent, subjects, home, timeZone } = dashboard;
+  const { child, character, week, weekBalance, weekPositive, weekTop, recent, subjects, home, timeZone } = dashboard;
   const name = formatStudentName(child);
+  // Characters in the child switcher tell siblings apart at a glance.
+  const switcher = await withStages(db, children);
+
+  if (hosgeldin) {
+    return (
+      <div className="mx-auto flex max-w-md flex-1 flex-col justify-center py-10">
+        <div className="flex flex-col items-center gap-3 rounded-[2rem] bg-card p-8 text-center shadow-[0_4px_0_var(--kid-shadow)]">
+          <CharacterAvatar stage={character.stage} size={160} />
+          <h1 className="font-display text-3xl font-extrabold">{possessiveName(child.firstName)} bahçesine hoş geldiniz!</h1>
+          <p className="text-muted-foreground">
+            Hesabınız hazır. {possessiveName(child.firstName)} karakteri her olumlu davranışla büyüyecek.
+          </p>
+          <Link href={`/veli/${child.id}`} className={primaryAction}>
+            Panele git
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
-      <ChildSwitcher items={children} currentId={child.id} />
+      <ChildSwitcher items={switcher} currentId={child.id} />
       <IosInstallGuide variant="banner" />
 
-      <div>
-        <h1 className="text-2xl font-semibold">{name}</h1>
-        <p className="text-muted-foreground">{child.className}</p>
-      </div>
+      <h1 className="font-display text-3xl font-extrabold">{name}</h1>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Karakter</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center gap-4">
-            <CharacterImage stage={character.stage} size={128} />
-            <div className="flex w-full min-w-0 flex-col gap-2">
-              <p className="text-lg font-semibold">{character.stage.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {character.level}. seviye · {character.xp} XP
-              </p>
-              <LevelBar level={character.level} progress={character.progress} />
-              <p className="text-sm text-muted-foreground">
-                {character.nextThreshold === null
-                  ? "Son seviyeye ulaştı!"
-                  : `Sonraki seviye ${character.nextThreshold} XP'de.`}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <CharacterHero childName={name} className={child.className} character={character} />
 
         <Card>
           <CardHeader>
-            <CardTitle>Bu hafta</CardTitle>
+            <CardTitle className="flex items-center justify-between gap-2">
+              Bu hafta
+              {weekPositive > 0 && (
+                <span className="rounded-full bg-grass-soft px-3 py-1 text-sm font-extrabold text-grass-strong">
+                  +{weekPositive} olumlu
+                </span>
+              )}
+            </CardTitle>
             <CardDescription>
               Son 7 günün davranış dengesi:{" "}
-              <span
-                className={cn(
-                  "font-semibold",
-                  weekBalance >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400",
-                )}
-              >
+              <span className={cn("font-semibold", weekBalance >= 0 ? "text-grass-strong" : "text-coral-ink")}>
                 {weekBalance > 0 ? `+${weekBalance}` : weekBalance}
               </span>
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-3">
             <WeekChart days={week} />
+            {weekTop && (
+              <p className="rounded-xl bg-sun-soft px-3 py-2 text-sm">
+                En çok:{" "}
+                <strong>
+                  <span aria-hidden>{weekTop.icon} </span>
+                  {weekTop.name}
+                </strong>{" "}
+                ({weekTop.count} kez)
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Evde bugün</CardTitle>
-          <CardDescription>{name} bugün evde neler yaptı? Dokunun, hemen kaydedilir.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <HomeEntry
-            studentId={child.id}
-            childName={name}
-            types={home.types}
-            todayXp={home.todayXp}
-            cap={home.cap}
-            disabled={!child.active}
-          />
-        </CardContent>
-      </Card>
+      <section aria-labelledby="home-title" className="flex flex-col gap-3">
+        <div>
+          <h2 id="home-title" className="font-display text-2xl font-extrabold">
+            Evde bugün
+          </h2>
+          <p className="text-muted-foreground">
+            {child.firstName} ile birlikte dokunun — {characterNoun(character.stage.assetUrl)} sevinsin! Hemen kaydedilir.
+          </p>
+        </div>
+        <HomeEntry
+          studentId={child.id}
+          childName={child.firstName}
+          types={home.types}
+          todayXp={home.todayXp}
+          cap={home.cap}
+          todayCounts={home.todayCounts}
+          disabled={!child.active}
+        />
+      </section>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -118,7 +135,7 @@ export default async function ParentDashboardPage({ params }: PageProps<"/veli/[
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Akademik yol haritası</CardTitle>
+              <CardTitle>Macera haritası</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {subjects.length === 0 ? (
@@ -142,7 +159,7 @@ export default async function ParentDashboardPage({ params }: PageProps<"/veli/[
                         className="h-2 overflow-hidden rounded-full bg-muted"
                       >
                         <div
-                          className="h-full rounded-full bg-emerald-500"
+                          className="h-full rounded-full bg-grass"
                           style={{ width: `${s.total ? (s.completed / s.total) * 100 : 0}%` }}
                         />
                       </div>
@@ -155,7 +172,7 @@ export default async function ParentDashboardPage({ params }: PageProps<"/veli/[
                 href={`/veli/${child.id}/yol-haritasi`}
                 className={buttonVariants({ variant: "outline", className: "h-11 self-start" })}
               >
-                Yol haritasını aç
+                Macera haritasını aç
               </Link>
             </CardContent>
           </Card>
@@ -164,7 +181,7 @@ export default async function ParentDashboardPage({ params }: PageProps<"/veli/[
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Mail className="size-5" aria-hidden />
-                Okunmamış mesajlar
+                Öğretmenden
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">

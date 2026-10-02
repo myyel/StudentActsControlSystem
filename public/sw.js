@@ -3,16 +3,16 @@
 // static offline page and the files it needs are stored. Push payload: PushMessage in
 // src/server/services/push.ts.
 
-const OFFLINE_CACHE = "offline-v1";
+const OFFLINE_CACHE = "offline-v2";
 const OFFLINE_URL = "/cevrimdisi";
 
-/** Stores the offline page with its CSS/JS/fonts and the icon, replacing the previous set. */
+/** Stores the offline page with its CSS/JS/fonts, character picture and icon, replacing the previous set. */
 async function cacheOfflinePage() {
   const response = await fetch(OFFLINE_URL, { cache: "no-store" });
   if (!response.ok) throw new Error(`offline page: ${response.status}`);
   const html = await response.clone().text();
   const assets = new Set(["/icon/192"]);
-  for (const [, url] of html.matchAll(/(?:href|src)="(\/_next\/static\/[^"]+)"/g)) assets.add(url);
+  for (const [, url] of html.matchAll(/(?:href|src)="(\/(?:_next\/static|characters)\/[^"]+)"/g)) assets.add(url);
 
   const cache = await caches.open(OFFLINE_CACHE);
   // Hashed file names never change content, so only missing ones are fetched.
@@ -67,7 +67,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // The offline page's own files: network first, the stored copy when offline.
-  if (url.pathname.startsWith("/_next/static/") || url.pathname === "/icon/192") {
+  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/characters/") || url.pathname === "/icon/192") {
     event.respondWith(
       fetch(request).catch(async () => (await caches.match(request, { cacheName: OFFLINE_CACHE })) ?? Response.error()),
     );

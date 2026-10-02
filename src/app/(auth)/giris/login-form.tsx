@@ -40,7 +40,7 @@ export function LoginForm({ next }: { next: string | null }) {
       setPending(false);
       setError(
         signInError.status === 429
-          ? "Çok fazla deneme yapıldı. Lütfen biraz bekleyip tekrar deneyin."
+          ? "Biraz mola verelim — 1 dakika sonra tekrar deneyin."
           : "E-posta veya şifre hatalı.",
       );
       return;

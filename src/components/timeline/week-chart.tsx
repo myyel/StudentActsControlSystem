@@ -18,11 +18,11 @@ export function WeekChart({ days }: { days: DaySummary[] }) {
             <div className="flex h-full w-full items-end justify-center gap-1">
               <div className="flex h-full w-1/2 max-w-6 flex-col justify-end">
                 {d.positive > 0 && <span className="text-center text-xs">{d.positive}</span>}
-                <div className="rounded-t bg-emerald-500" style={{ height: height(d.positive) }} />
+                <div className="rounded-t bg-grass" style={{ height: height(d.positive) }} />
               </div>
               <div className="flex h-full w-1/2 max-w-6 flex-col justify-end">
                 {d.negative > 0 && <span className="text-center text-xs">{d.negative}</span>}
-                <div className="rounded-t bg-red-500" style={{ height: height(d.negative) }} />
+                <div className="rounded-t bar-negative" style={{ height: height(d.negative) }} />
               </div>
             </div>
             <span className="text-xs text-muted-foreground">{weekday(d.day)}</span>
@@ -31,10 +31,10 @@ export function WeekChart({ days }: { days: DaySummary[] }) {
       </div>
       <figcaption className="flex flex-wrap gap-4 text-sm">
         <span className="flex items-center gap-1">
-          <span className="size-3 rounded-sm bg-emerald-500" aria-hidden /> Olumlu: +{totalPositive}
+          <span className="size-3 rounded-sm bg-grass" aria-hidden /> Olumlu: +{totalPositive}
         </span>
         <span className="flex items-center gap-1">
-          <span className="size-3 rounded-sm bg-red-500" aria-hidden /> Olumsuz: −{totalNegative}
+          <span className="size-3 rounded-sm bar-negative" aria-hidden /> Olumsuz: −{totalNegative}
         </span>
       </figcaption>
       {/* Tables ignore sr-only sizing and can widen the page; the wrapper clips it. */}

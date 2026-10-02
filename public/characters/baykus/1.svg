@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Baykuş: Benekli yumurta">
 <title>Baykuş: Benekli yumurta</title>
-<circle cx="100" cy="100" r="98" fill="#fff3e0"/>
-<ellipse cx="100" cy="178" rx="56" ry="8" fill="#000" opacity=".08"/>
-<path d="M100 44 C132 44 150 96 150 124 C150 156 128 172 100 172 C72 172 50 156 50 124 C50 96 68 44 100 44Z" fill="#ffe0b2"/><circle cx="82" cy="96" r="8" fill="#ffb74d"/><circle cx="118" cy="120" r="10" fill="#ffb74d"/><circle cx="88" cy="146" r="6" fill="#ffb74d"/><circle cx="124" cy="84" r="5" fill="#ffb74d"/>
+<circle cx="100" cy="100" r="98" fill="#fceedc"/>
+<ellipse cx="100" cy="180" rx="44" ry="7" fill="#000" opacity=".08"/><ellipse cx="100" cy="112" rx="50" ry="64" fill="#f6e4c8" stroke="#d4a373" stroke-width="4"/><path d="M62 104 L74 94 L86 106 L98 94 L110 106 L122 94 L138 104" fill="none" stroke="#b07a4f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="112" cy="140" r="7" fill="#b07a4f"/><circle cx="88" cy="152" r="5" fill="#b07a4f"/><circle cx="84" cy="74" r="4" fill="#b07a4f"/>
 </svg>

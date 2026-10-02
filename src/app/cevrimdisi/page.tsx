@@ -1,5 +1,5 @@
-import { WifiOff } from "lucide-react";
 import type { Metadata } from "next";
+import { CharacterMessage } from "@/components/layout/character-message";
 import { RetryButton } from "./retry-button";
 
 export const metadata: Metadata = { title: "Bağlantı yok" };
@@ -10,14 +10,19 @@ export const dynamic = "force-static";
 
 export default function OfflinePage() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
-      <WifiOff className="size-16 text-muted-foreground" aria-hidden />
-      <h1 className="text-2xl font-semibold">İnternet bağlantısı yok</h1>
-      <p className="max-w-sm text-muted-foreground">
-        Bu sayfa şu anda açılamıyor. Bağlantınız geri geldiğinde tekrar deneyin; verdiğiniz puanlar ve
-        mesajlar ancak bağlantı varken kaydedilir.
-      </p>
-      <RetryButton />
+    <main className="flex flex-1 flex-col items-center justify-center p-6">
+      <CharacterMessage
+        character={["robot", 2]}
+        title="İnternet uykuya daldı"
+        action={<RetryButton />}
+        extra={
+          <span aria-hidden className="absolute -top-1 right-0 font-display text-2xl font-extrabold text-sky-ink">
+            z z z
+          </span>
+        }
+      >
+        Bağlantı gelince tekrar dene. Puanlar ve mesajlar yalnızca bağlantı varken kaydedilir.
+      </CharacterMessage>
     </main>
   );
 }

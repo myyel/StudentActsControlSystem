@@ -3,7 +3,7 @@
 import { Check } from "lucide-react";
 import { useCallback, useState, useTransition } from "react";
 import { giveBehaviorAction } from "@/app/ogretmen/scoring-actions";
-import { CharacterImage } from "@/components/characters/character-image";
+import { CharacterAvatar } from "@/components/characters/character-avatar";
 import { LevelUpCelebration, type Celebration } from "@/components/characters/level-up-celebration";
 import { Button } from "@/components/ui/button";
 import { formatPoints, UNDO_WINDOW_MS } from "@/lib/behavior";
@@ -18,6 +18,7 @@ type Student = {
   firstName: string;
   lastInitial: string | null;
   xp: number;
+  level: number;
   stage: { name: string; assetUrl: string };
 };
 
@@ -71,13 +72,18 @@ export function ScoringBoard({ classId, students, behaviors }: Props) {
       setSelectMode(false);
       // The server window started when the event was written; stay a second inside it.
       const expiresAt = Date.now() + UNDO_WINDOW_MS - 1000;
-      setLastScore({ batchId, label: `${who} · ${name} ${formatPoints(points)}`, expiresAt });
+      setLastScore({
+        batchId,
+        label: `${who} · ${name} ${formatPoints(points)}`,
+        expiresAt,
+        stage: count === 1 ? byId.get(studentIds[0]!)!.stage : undefined,
+      });
       setFlash(new Set(studentIds));
       setTimeout(() => setFlash(new Set()), 900);
       if (levelUps.length > 0) {
         setCelebrations({
           key: `level-up-${batchId}`,
-          items: levelUps.map((levelUp) => ({ studentName: formatStudentName(byId.get(levelUp.studentId)!), levelUp })),
+          items: levelUps.map((levelUp) => ({ studentName: byId.get(levelUp.studentId)!.firstName, levelUp })),
         });
       }
     });
@@ -92,7 +98,7 @@ export function ScoringBoard({ classId, students, behaviors }: Props) {
       <div className="flex flex-wrap items-center gap-2">
         <Button
           variant={selectMode ? "default" : "outline"}
-          className="h-11"
+          className="h-11 rounded-xl"
           aria-pressed={selectMode}
           onClick={() => {
             setSelectMode(!selectMode);
@@ -103,11 +109,11 @@ export function ScoringBoard({ classId, students, behaviors }: Props) {
         </Button>
         {selectMode && (
           <>
-            <Button variant="outline" className="h-11" onClick={() => setSelected(new Set(students.map((s) => s.id)))}>
+            <Button variant="outline" className="h-11 rounded-xl" onClick={() => setSelected(new Set(students.map((s) => s.id)))}>
               Tümünü seç
             </Button>
             <Button
-              className="h-11"
+              className="h-11 rounded-xl bg-grass-strong text-white hover:bg-grass-strong/90 dark:text-ink"
               disabled={selected.size === 0}
               onClick={() => {
                 setError(null);
@@ -130,18 +136,22 @@ export function ScoringBoard({ classId, students, behaviors }: Props) {
                 onClick={() => onCardClick(s.id)}
                 aria-pressed={selectMode ? isSelected : undefined}
                 className={cn(
-                  "relative flex min-h-24 w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors hover:bg-accent",
-                  isSelected && "border-primary bg-primary/10",
-                  flash.has(s.id) && "motion-safe:animate-pulse border-emerald-500",
+                  "relative flex min-h-20 w-full items-center gap-3 rounded-2xl border-2 bg-card p-3 text-left transition-colors hover:bg-accent",
+                  isSelected ? "border-sky bg-sky-soft" : "border-transparent shadow-[0_1px_0_var(--line)]",
+                  flash.has(s.id) && "border-grass motion-safe:animate-pulse",
                 )}
               >
-                <CharacterImage stage={s.stage} size={56} decorative />
-                <span className="flex min-w-0 flex-col gap-1">
-                  <span className="truncate text-lg font-semibold">{formatStudentName(s)}</span>
-                  <span className="text-sm text-muted-foreground">{s.xp} XP</span>
+                <CharacterAvatar stage={s.stage} size={52} className="rounded-full bg-muted" />
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="truncate text-lg font-bold">{formatStudentName(s)}</span>
+                  <span className="text-sm text-muted-foreground">
+                    Sv {s.level} · {s.xp} XP
+                  </span>
                 </span>
                 {isSelected && (
-                  <Check className="absolute top-2 right-2 size-5 text-primary" aria-hidden />
+                  <span className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-sky-ink text-white dark:text-ink">
+                    <Check className="size-4" strokeWidth={3} aria-hidden />
+                  </span>
                 )}
               </button>
             </li>
@@ -153,6 +163,7 @@ export function ScoringBoard({ classId, students, behaviors }: Props) {
         open={targets !== null}
         onOpenChange={(open) => !open && setTargets(null)}
         title={title}
+        stage={targets?.length === 1 ? byId.get(targets[0]!)?.stage : undefined}
         detailHref={
           targets?.length === 1 ? `/ogretmen/siniflar/${classId}/ogrenciler/${targets[0]}` : undefined
         }

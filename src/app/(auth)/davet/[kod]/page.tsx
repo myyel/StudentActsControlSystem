@@ -36,8 +36,8 @@ export default async function InvitePage({ params }: PageProps<"/davet/[kod]">) 
   // Code lookups are rate limited per IP so codes cannot be guessed.
   if (!(await consumeRateLimit(db, `invite:${ip ?? "unknown"}`, INVITE_RATE_LIMIT))) {
     return (
-      <Shell title="Çok fazla deneme">
-        <p>Lütfen bir dakika bekleyip sayfayı yenileyin.</p>
+      <Shell title="Biraz mola verelim">
+        <p>1 dakika sonra sayfayı yenileyip tekrar deneyin.</p>
       </Shell>
     );
   }

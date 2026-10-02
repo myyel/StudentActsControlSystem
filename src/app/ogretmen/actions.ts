@@ -13,6 +13,7 @@ import { formatInviteCode } from "@/lib/invite-code";
 import { formatStudentName } from "@/lib/student-names";
 import { setStudentCharacterType } from "@/server/services/character";
 import { createClass, updateHomeDailyXpCap } from "@/server/services/class";
+import { endClassGoal, setClassGoal } from "@/server/services/class-goal";
 import {
   createInviteCodes,
   getInviteStudentId,
@@ -21,7 +22,7 @@ import {
   revokeInviteCode,
 } from "@/server/services/invite";
 import { addStudents, listStudentsForClass, updateStudent } from "@/server/services/student";
-import { createClassSchema, homeDailyXpCapSchema } from "@/server/validation/class";
+import { classGoalSchema, createClassSchema, homeDailyXpCapSchema } from "@/server/validation/class";
 import { classInviteSchema, inviteOptionsSchema } from "@/server/validation/invite";
 import { studentCharacterSchema } from "@/server/validation/character";
 import { bulkStudentsSchema, studentNameSchema } from "@/server/validation/student";
@@ -60,6 +61,37 @@ export async function updateHomeDailyXpCapAction(
     await updateHomeDailyXpCap(db, user, classId, homeDailyXpCap, ip);
     refresh();
     return ok(undefined, "Kaydedildi.");
+  } catch (error) {
+    return toActionError(error);
+  }
+}
+
+export async function setClassGoalAction(
+  classId: string,
+  _: unknown,
+  formData: FormData,
+): Promise<ActionResult<undefined>> {
+  try {
+    const { user } = await requireRole("teacher");
+    await assertTeacherOfClass(user, classId);
+    const input = classGoalSchema.parse({ title: formData.get("title"), target: formData.get("target") });
+    const { ip } = await getRequestMeta();
+    await setClassGoal(db, user, classId, input, ip);
+    refresh();
+    return ok(undefined, "Sınıf hedefi konuldu.");
+  } catch (error) {
+    return toActionError(error);
+  }
+}
+
+export async function endClassGoalAction(classId: string): Promise<ActionResult<undefined>> {
+  try {
+    const { user } = await requireRole("teacher");
+    await assertTeacherOfClass(user, classId);
+    const { ip } = await getRequestMeta();
+    await endClassGoal(db, user, classId, ip);
+    refresh();
+    return ok(undefined, "Sınıf hedefi bitirildi.");
   } catch (error) {
     return toActionError(error);
   }

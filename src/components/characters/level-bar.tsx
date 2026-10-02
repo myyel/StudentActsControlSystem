@@ -17,7 +17,7 @@ export function LevelBar({ level, progress, className, label }: Props) {
       className={cn("h-3 w-full overflow-hidden rounded-full bg-muted", className)}
     >
       <div
-        className="h-full rounded-full bg-emerald-500 transition-[width] duration-700 dark:bg-emerald-400"
+        className="h-full rounded-full bg-grass transition-[width] duration-700 motion-reduce:transition-none"
         style={{ width: `${percent}%` }}
       />
     </div>

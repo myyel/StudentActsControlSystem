@@ -21,6 +21,7 @@ const SCREENS: Partial<Record<Role | "guest", Screen[]>> = {
     { name: "giriş", path: async () => "/giris" },
     { name: "KVKK aydınlatma", path: async () => "/kvkk/aydinlatma" },
     { name: "çevrimdışı", path: async () => "/cevrimdisi" },
+    { name: "bulunamadı", path: async () => "/yok-boyle-bir-sayfa" },
   ],
   teacher: [
     { name: "sınıflarım", path: async () => "/ogretmen" },
@@ -35,10 +36,16 @@ const SCREENS: Partial<Record<Role | "guest", Screen[]>> = {
       path: async () => `/ogretmen/siniflar/${await classId("2-A")}/ogrenciler/${await studentId("Ada", "Y")}`,
     },
     { name: "tahta", path: async () => `/tahta/${await classId("2-A")}`, board: true },
+    {
+      name: "tahtada karakter seçimi",
+      path: async () => `/tahta/${await classId("2-A")}?karakter=${await studentId("Ada", "Y")}`,
+      board: true,
+    },
   ],
   parent: [
     { name: "veli paneli", path: async () => `/veli/${await studentId("Ada", "Y")}` },
-    { name: "yol haritası", path: async () => `/veli/${await studentId("Ada", "Y")}/yol-haritasi` },
+    { name: "macera haritası", path: async () => `/veli/${await studentId("Ada", "Y")}/yol-haritasi` },
+    { name: "hoş geldiniz", path: async () => `/veli/${await studentId("Ada", "Y")}?hosgeldin=1` },
     { name: "mesajlar", path: async () => "/veli/mesajlar" },
     {
       name: "mesaj detayı",

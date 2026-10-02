@@ -51,3 +51,14 @@ export function parseStudentLines(text: string): ParsedLine[] {
 
 export const formatStudentName = ({ firstName, lastInitial }: StudentName) =>
   lastInitial ? `${firstName} ${lastInitial}.` : firstName;
+
+const BACK_VOWELS: Record<string, string> = { a: "ı", ı: "ı", o: "u", u: "u", e: "i", i: "i", ö: "ü", ü: "ü" };
+
+/** Genitive with Turkish vowel harmony: Deniz'in, Ada'nın, Umut'un, Göktuğ'un, Ali'nin. */
+export function possessiveName(name: string) {
+  const lower = name.toLocaleLowerCase("tr");
+  const vowels = [...lower].filter((ch) => ch in BACK_VOWELS);
+  const vowel = BACK_VOWELS[vowels.at(-1) ?? "e"]!;
+  const endsWithVowel = (lower.at(-1) ?? "") in BACK_VOWELS;
+  return `${name}'${endsWithVowel ? "n" : ""}${vowel}n`;
+}

@@ -12,7 +12,7 @@ import { registerParentWithInvite } from "@/server/services/parent";
 import { consumeRateLimit, INVITE_RATE_LIMIT } from "@/server/services/rate-limit";
 import { linkChildSchema, registerParentSchema } from "@/server/validation/parent";
 
-const TOO_MANY = "Çok fazla deneme yapıldı. Lütfen bir dakika bekleyip tekrar deneyin.";
+const TOO_MANY = "Biraz mola verelim — 1 dakika sonra tekrar deneyin.";
 
 async function assertInviteRateLimit(ip: string | null) {
   if (!(await consumeRateLimit(db, `invite:${ip ?? "unknown"}`, INVITE_RATE_LIMIT))) {
@@ -36,7 +36,7 @@ export async function registerParentAction(_: unknown, formData: FormData): Prom
   } catch (error) {
     return toActionError(error);
   }
-  redirect(`/veli/${studentId}`);
+  redirect(`/veli/${studentId}?hosgeldin=1`);
 }
 
 /** Signed-in parent adds another child with a code. */
@@ -51,5 +51,5 @@ export async function linkChildAction(_: unknown, formData: FormData): Promise<A
   } catch (error) {
     return toActionError(error);
   }
-  redirect(`/veli/${studentId}`);
+  redirect(`/veli/${studentId}?hosgeldin=1`);
 }

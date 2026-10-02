@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Tohum: Filiz">
 <title>Tohum: Filiz</title>
-<circle cx="100" cy="100" r="98" fill="#f1f8e9"/>
-<ellipse cx="100" cy="178" rx="56" ry="8" fill="#000" opacity=".08"/>
-<path d="M40 170 C60 150 140 150 160 170Z" fill="#8d6e63"/><path d="M100 160 C100 140 100 120 100 100" stroke="#388e3c" stroke-width="6" stroke-linecap="round" fill="none"/><ellipse cx="84" cy="98" rx="20.8" ry="10.4" fill="#66bb6a" transform="rotate(-30 84 98)"/><ellipse cx="116" cy="98" rx="20.8" ry="10.4" fill="#66bb6a" transform="rotate(30 116 98)"/><circle cx="91" cy="132" r="6" fill="#fff"/><circle cx="91.9" cy="132.6" r="3.5999999999999996" fill="#2b2b3a"/><circle cx="93.1" cy="130.5" r="1.32" fill="#fff"/><circle cx="109" cy="132" r="6" fill="#fff"/><circle cx="109.9" cy="132.6" r="3.5999999999999996" fill="#2b2b3a"/><circle cx="111.1" cy="130.5" r="1.32" fill="#fff"/><path d="M95 144 Q100 148 105 144" fill="none" stroke="#2b2b3a" stroke-width="3" stroke-linecap="round"/>
+<circle cx="100" cy="100" r="98" fill="#eaf6df"/>
+<ellipse cx="100" cy="172" rx="64" ry="13" fill="#b07a4f"/><ellipse cx="100" cy="168" rx="60" ry="9" fill="#c68b5b"/><path d="M100 168 C98 148 102 130 100 114" fill="none" stroke="#3fa34d" stroke-width="6" stroke-linecap="round"/><path d="M100 116 C116 96 140 100 146 116 C132 126 112 124 100 116Z" fill="#6cc46a" stroke="#3fa34d" stroke-width="2" transform="rotate(200 100 116)"/><path d="M100 116 C116 96 140 100 146 116 C132 126 112 124 100 116Z" fill="#6cc46a" stroke="#3fa34d" stroke-width="2" transform="rotate(-20 100 116)"/>
 </svg>

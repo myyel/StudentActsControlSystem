@@ -6,6 +6,7 @@ import type { AuthUser } from "@/server/auth/guards";
 import { forbidden } from "@/server/auth/errors";
 import type { BulkSetProgressInput, SetProgressInput } from "@/server/validation/progress";
 import { writeAudit } from "./audit";
+import { withStages } from "./character";
 import { getCurriculum, type SubjectNode } from "./curriculum";
 
 /** The stage must be live (it and its parents not archived) and belong to the class. */
@@ -173,7 +174,14 @@ export type RoadmapSubject = Omit<SubjectNode, "topics"> & {
  */
 export async function getRoadmapForParent(db: Db, parentId: string, studentId: string) {
   const [child] = await db
-    .select({ id: student.id, firstName: student.firstName, lastInitial: student.lastInitial, classId: student.classId })
+    .select({
+      id: student.id,
+      firstName: student.firstName,
+      lastInitial: student.lastInitial,
+      classId: student.classId,
+      characterTypeId: student.characterTypeId,
+      characterLevel: student.characterLevel,
+    })
     .from(parentStudent)
     .innerJoin(student, eq(student.id, parentStudent.studentId))
     .where(and(eq(parentStudent.parentId, parentId), eq(parentStudent.studentId, studentId), isNull(student.deletedAt)));
@@ -196,5 +204,7 @@ export async function getRoadmapForParent(db: Db, parentId: string, studentId: s
     return { id: s.id, name: s.name, topics, completed: all.filter((x) => x.status === "completed").length, total: all.length };
   });
 
-  return { child: { id: child.id, firstName: child.firstName, lastInitial: child.lastInitial }, subjects };
+  // The child's character stands on the "şu an burada" stop of the adventure map.
+  const [withStage] = await withStages(db, [child]);
+  return { child: { id: child.id, firstName: child.firstName, lastInitial: child.lastInitial, stage: withStage!.stage }, subjects };
 }

@@ -68,7 +68,11 @@ export default async function StudentPage({
           <CardTitle>Karakter</CardTitle>
         </CardHeader>
         <CardContent>
-          <StudentCharacter studentId={student.id} character={character} />
+          <StudentCharacter
+            studentId={student.id}
+            boardHref={`/tahta/${sinifId}?karakter=${student.id}`}
+            character={character}
+          />
         </CardContent>
       </Card>
 

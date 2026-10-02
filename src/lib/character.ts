@@ -25,3 +25,22 @@ export function levelProgress(thresholds: readonly number[], level: number, xp: 
   const to = thresholds[level]!;
   return Math.min(Math.max((xp - from) / (to - from), 0), 1);
 }
+
+/**
+ * A sentence instead of a number for children ("Fidan olmaya çok az kaldı!"). Next stage name is
+ * null on the last level.
+ */
+export function nextStageSentence(progress: number, nextStageName: string | null) {
+  if (nextStageName === null) return "En yüksek seviyede!";
+  if (progress >= 0.66) return `${nextStageName} olmaya çok az kaldı!`;
+  if (progress >= 0.33) return `${nextStageName} olma yolunda!`;
+  return `Sırada: ${nextStageName}`;
+}
+
+// "Deniz'in ejderhası büyüdü!": the built-in type (slug in the asset url) with its possessive suffix.
+const TYPE_NOUNS: Record<string, string> = { ejderha: "ejderhası", baykus: "baykuşu", robot: "robotu", tohum: "tohumu" };
+
+export function characterNoun(assetUrl: string) {
+  const slug = /\/characters\/([^/]+)\//.exec(assetUrl)?.[1] ?? "";
+  return TYPE_NOUNS[slug] ?? "karakteri";
+}

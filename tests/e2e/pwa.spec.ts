@@ -34,7 +34,7 @@ test.describe("offline", () => {
 
     await context.setOffline(true);
     await page.goto("/veli/mesajlar");
-    await expect(page.getByRole("heading", { name: "İnternet bağlantısı yok" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "İnternet uykuya daldı" })).toBeVisible();
     // The offline screen is styled (CSS came from the worker's cache) and never shows user data.
     await expect(page.getByRole("button", { name: "Tekrar dene" })).toHaveCSS("height", "44px");
     await expect(page.getByText("Ada")).toHaveCount(0);

@@ -57,6 +57,8 @@ const childColumns = {
   lastInitial: student.lastInitial,
   className: schoolClass.name,
   relation: parentStudent.relation,
+  characterTypeId: student.characterTypeId,
+  characterLevel: student.characterLevel,
 };
 
 /** Only the parent's own, non-deleted children. Every parent query goes through parent_student. */

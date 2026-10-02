@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useOptimistic, useState, useTransition } from "react";
+import { Fragment, useOptimistic, useRef, useState, useTransition } from "react";
 import { bulkSetProgressAction, setProgressAction } from "@/app/ogretmen/progress-actions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -16,10 +16,13 @@ import { formatStudentName } from "@/lib/student-names";
 import { cn } from "@/lib/utils";
 import type { ProgressStatus } from "@/server/db/schema";
 import type { SubjectNode } from "@/server/services/curriculum";
-import { StatusIcon, StatusLegend } from "./status-icon";
+import { Stars, StatusIcon, StatusLegend } from "./status-icon";
 
 type Student = { id: string; firstName: string; lastInitial: string | null };
 type Update = { keys: string[]; value: (current: ProgressState) => ProgressState };
+type Cell = { student: Student; stage: { id: string; name: string } };
+
+const LONG_PRESS_MS = 500;
 
 type Props = {
   classId: string;
@@ -40,11 +43,41 @@ export function ClassMatrix({ classId, subject, students, progress }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkStage, setBulkStage] = useState<{ id: string; name: string } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  // Long press (or right click) on a cell: "Tamamlandı + yıldız" in one step.
+  const [starCell, setStarCell] = useState<Cell | null>(null);
+  const press = useRef<{ timer: ReturnType<typeof setTimeout> | null; fired: boolean }>({ timer: null, fired: false });
 
   const stages = subject.topics.flatMap((t) => t.stages);
   const state = (studentId: string, stageId: string) => optimistic[progressKey(studentId, stageId)] ?? NOT_STARTED;
 
+  function save(s: Student, stage: { id: string; name: string }, next: ProgressState) {
+    setMessage(null);
+    start(async () => {
+      applyOptimistic({ keys: [progressKey(s.id, stage.id)], value: () => next });
+      const result = await setProgressAction(classId, { studentId: s.id, stageId: stage.id, ...next });
+      if (!result.ok) setMessage(result.error);
+    });
+  }
+
+  function pressStart(cell: Cell) {
+    press.current.fired = false;
+    press.current.timer = setTimeout(() => {
+      press.current.fired = true;
+      setStarCell(cell);
+    }, LONG_PRESS_MS);
+  }
+
+  function pressEnd() {
+    if (press.current.timer) clearTimeout(press.current.timer);
+    press.current.timer = null;
+  }
+
   function onCell(s: Student, stage: { id: string; name: string }) {
+    // The click that ends a long press must not also cycle the status.
+    if (press.current.fired) {
+      press.current.fired = false;
+      return;
+    }
     const current = state(s.id, stage.id);
     let next: ProgressState;
     if (starMode) {
@@ -56,12 +89,7 @@ export function ClassMatrix({ classId, subject, students, progress }: Props) {
     } else {
       next = { status: nextStatus(current.status), stars: null };
     }
-    setMessage(null);
-    start(async () => {
-      applyOptimistic({ keys: [progressKey(s.id, stage.id)], value: () => next });
-      const result = await setProgressAction(classId, { studentId: s.id, stageId: stage.id, ...next });
-      if (!result.ok) setMessage(result.error);
-    });
+    save(s, stage, next);
   }
 
   function onBulk(status: ProgressStatus, target: "all" | "selected") {
@@ -117,7 +145,7 @@ export function ClassMatrix({ classId, subject, students, progress }: Props) {
       <p className="text-sm text-muted-foreground">
         {starMode
           ? "Tamamlanmış bir hücreye dokunarak 0–3 yıldız verin."
-          : "Hücreye dokunun: Başlamadı → Devam ediyor → Tamamlandı. Toplu işaretlemek için durak başlığına dokunun."}
+          : "Hücreye dokunun: Başlamadı → Devam ediyor → Tamamlandı. Uzun basınca (ya da sağ tıklayınca) tamamlandı + yıldız seçilir. Toplu işaretlemek için durak başlığına dokunun."}
       </p>
       {message && (
         <p role="status" className="text-sm">
@@ -193,8 +221,17 @@ export function ClassMatrix({ classId, subject, students, progress }: Props) {
                           <button
                             type="button"
                             onClick={() => onCell(s, stage)}
+                            onPointerDown={() => pressStart({ student: s, stage })}
+                            onPointerUp={pressEnd}
+                            onPointerLeave={pressEnd}
+                            onPointerCancel={pressEnd}
+                            onContextMenu={(e) => {
+                              e.preventDefault();
+                              pressEnd();
+                              setStarCell({ student: s, stage });
+                            }}
                             aria-label={`${name} · ${stage.name} · ${STATUS_LABEL[cell.status]}${cell.stars ? ` · ${cell.stars} yıldız` : ""}`}
-                            className="flex size-12 items-center justify-center hover:bg-accent"
+                            className="flex size-12 touch-manipulation items-center justify-center select-none hover:bg-accent [-webkit-touch-callout:none]"
                           >
                             <StatusIcon state={cell} />
                           </button>
@@ -224,6 +261,32 @@ export function ClassMatrix({ classId, subject, students, progress }: Props) {
           </tfoot>
         </table>
       </div>
+
+      <Dialog open={starCell !== null} onOpenChange={(open) => !open && setStarCell(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{starCell && `${formatStudentName(starCell.student)} · ${starCell.stage.name}`}</DialogTitle>
+            <DialogDescription>Tamamlandı olarak işaretle ve yıldız ver.</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {[0, 1, 2, 3].map((stars) => (
+              <Button
+                key={stars}
+                variant="outline"
+                className="h-14 flex-col gap-1"
+                onClick={() => {
+                  const cell = starCell!;
+                  setStarCell(null);
+                  save(cell.student, cell.stage, { status: "completed", stars: stars || null });
+                }}
+              >
+                {stars === 0 ? "Yıldızsız" : `${stars} yıldız`}
+                {stars > 0 && <Stars count={stars} />}
+              </Button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={bulkStage !== null} onOpenChange={(open) => !open && setBulkStage(null)}>
         <DialogContent>

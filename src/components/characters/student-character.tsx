@@ -1,15 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { setStudentCharacterTypeAction } from "@/app/ogretmen/actions";
 import { FormMessage } from "@/components/form-message";
 import { cn } from "@/lib/utils";
 import type { ActionResult } from "@/server/action-result";
+import { CharacterAvatar } from "./character-avatar";
 import { CharacterImage } from "./character-image";
 import { LevelBar } from "./level-bar";
 
 type Props = {
   studentId: string;
+  /** Board link that opens "hangisi seninle büyüsün?" for this student. */
+  boardHref: string;
   character: {
     characterTypeId: string;
     level: number;
@@ -22,7 +26,7 @@ type Props = {
 };
 
 /** Teacher view of a student's character; the type can be changed, the level stays. */
-export function StudentCharacter({ studentId, character }: Props) {
+export function StudentCharacter({ studentId, boardHref, character }: Props) {
   const [pending, start] = useTransition();
   const [state, setState] = useState<ActionResult<undefined> | null>(null);
   const { level, xp, nextThreshold, stage, progress, types, characterTypeId } = character;
@@ -35,7 +39,7 @@ export function StudentCharacter({ studentId, character }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col items-center gap-4 sm:flex-row">
-        <CharacterImage stage={stage} size={144} />
+        <CharacterAvatar stage={stage} level={level} progress={progress} size={152} label={`${stage.name}, ${level}. seviye`} />
         <div className="flex w-full flex-col gap-2">
           <p className="text-xl font-semibold">{stage.name}</p>
           <p className="text-muted-foreground">{level}. seviye</p>
@@ -50,6 +54,12 @@ export function StudentCharacter({ studentId, character }: Props) {
 
       <fieldset className="flex flex-col gap-2" disabled={pending}>
         <legend className="mb-2 text-sm font-medium">Karakter türü (seviye korunur)</legend>
+        <p className="mb-2 text-sm text-muted-foreground">
+          Çocuk isterse türü tahtada birlikte seçin:{" "}
+          <Link href={boardHref} className="inline-flex min-h-11 items-center font-semibold underline underline-offset-2">
+            Tahtada birlikte seç
+          </Link>
+        </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {types.map((t) => (
             <button

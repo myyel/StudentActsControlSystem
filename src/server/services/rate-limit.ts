@@ -42,7 +42,7 @@ export const MESSAGE_RATE_LIMIT: RateLimitRule = { windowSeconds: 600, max: 30 }
 export const HOME_BEHAVIOR_RATE_LIMIT: RateLimitRule = { windowSeconds: 600, max: 60 };
 export const DELETION_REQUEST_RATE_LIMIT: RateLimitRule = { windowSeconds: 3600, max: 10 };
 
-export const RATE_LIMITED = "Çok fazla deneme yapıldı. Lütfen biraz bekleyip tekrar deneyin.";
+export const RATE_LIMITED = "Biraz mola verelim — biraz sonra tekrar deneyin.";
 
 /** For actions: throws a user-facing error when the key is over its limit. */
 export async function enforceRateLimit(db: DbOrTx, key: string, rule: RateLimitRule) {

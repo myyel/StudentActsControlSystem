@@ -2,6 +2,8 @@
 export const AUDIT_ACTION_LABEL: Record<string, string> = {
   "class.create": "Sınıf oluşturuldu",
   "class.update": "Sınıf güncellendi",
+  "class_goal.set": "Sınıf hedefi konuldu",
+  "class_goal.end": "Sınıf hedefi bitirildi",
   "student.create": "Öğrenci eklendi",
   "student.update": "Öğrenci güncellendi",
   "student.character_change": "Karakter türü değişti",

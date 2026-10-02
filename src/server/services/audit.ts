@@ -5,6 +5,8 @@ import { auditLog, user } from "@/server/db/schema";
 export type AuditAction =
   | "class.create"
   | "class.update"
+  | "class_goal.set"
+  | "class_goal.end"
   | "student.create"
   | "student.update"
   | "invite.create"

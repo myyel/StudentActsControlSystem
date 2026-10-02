@@ -28,3 +28,14 @@ export const homeDailyXpCapSchema = z.object({
     .min(0, "Tavan negatif olamaz.")
     .max(MAX_HOME_DAILY_XP_CAP, `Tavan en fazla ${MAX_HOME_DAILY_XP_CAP} olabilir.`),
 });
+
+export const classGoalSchema = z.object({
+  title: z.string().trim().min(1, "Hedefin adını girin (ör. Bahçe oyunu).").max(60, "Hedef adı en fazla 60 karakter olabilir."),
+  target: z.coerce
+    .number({ message: "Kaç yıldız gerektiğini girin." })
+    .int("Yıldız sayısı tam sayı olmalı.")
+    .min(5, "Hedef en az 5 yıldız olmalı.")
+    .max(1000, "Hedef en fazla 1000 yıldız olabilir."),
+});
+
+export type ClassGoalInput = z.infer<typeof classGoalSchema>;
