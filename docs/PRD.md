@@ -12,9 +12,10 @@
 - Hedef ortamlar: Pardus (Firefox/Chromium), Windows, Android (Chrome), iOS/iPadOS 16.4+ (Safari, ana ekrana eklenmiş).
 - Kırılım noktaları: telefon (≥360px), tablet (≥768px), masaüstü (≥1280px), akıllı tahta (1920px, dokunmatik).
 - İleride Capacitor ile mağaza uygulamasına paketlenebilecek şekilde tasarlanır (native-özel API kullanılmaz).
-- **Çevrimdışı (Faz 8 kararı):** oturum açılmış sayfalar cihazda **saklanmaz** (çocuk verisi, paylaşılan cihazlar). Bağlantı yokken açılamayan sayfa yerine "İnternet bağlantısı yok" ekranı (`/cevrimdisi`, "Tekrar dene") gösterilir; puan, mesaj gibi işlemler yalnızca bağlantı varken kaydedilir, çevrimdışı kuyruk yoktur.
+- **Çevrimdışı (Faz 8 kararı):** oturum açılmış sayfalar cihazda **saklanmaz** (çocuk verisi, paylaşılan cihazlar). Bağlantı yokken açılamayan sayfa yerine "İnternet uykuya daldı" ekranı (`/cevrimdisi`, "Tekrar dene") gösterilir; puan, mesaj gibi işlemler yalnızca bağlantı varken kaydedilir, çevrimdışı kuyruk yoktur.
 - **Erişilebilirlik:** WCAG 2 AA kontrast (açık ve karanlık mod); dokunmatik ekranlarda dokunma hedefleri en az 44px (tahta modunda 80px), fare ile kullanımda kompakt boyutlar korunur (en az 24px); tüm işlemler klavyeyle yapılabilir, odak görünür, pencereler kapanınca odak açan öğeye döner.
-- Yetkisiz veya olmayan kayıtlar için Türkçe "Sayfa bulunamadı" (404) gösterilir; metin kaydın var olup olmadığını belli etmez.
+- Yetkisiz veya olmayan kayıtlar için Türkçe "Bu sayfayı bulamadık" (404) gösterilir; metin kaydın var olup olmadığını belli etmez.
+- **Görsel dil (2026-10-03, `docs/Cocuk-Odakli-Arayuz-Onerileri.pdf`):** iki katman. Çocuk yüzeyleri (tahta, kutlama, karakter seçimi, veli panelindeki karakter kartı ve macera haritası) büyük, yuvarlak ve oyunsu; yetişkin yüzeyleri sakin ve hızlı. Palet: çimen, güneş, gökyüzü, lavanta, mercan (yalnız yetişkin ekranında olumsuz), krem zemin, mürekkep metin; yazı Baloo 2 (başlık) + Nunito (metin). Hata ve boş ekranlar karakterle konuşur ("İnternet uykuya daldı", "Bu sayfayı bulamadık"); hata metinlerinde suçlama ve teknik terim yoktur.
 
 ## 3. Roller
 
@@ -57,7 +58,9 @@
 - Kullanılmış davranış tipi silinmez, pasif yapılır.
 - Öğretmen: öğrenci kartına dokun → davranış seç. Çoklu öğrenci seçip toplu puanlama. İsteğe bağlı not.
   - Öğretmen yalnızca **okul** kapsamlı davranışlarla puan verir; ev davranışlarını veli girer.
-  - Sınıf ekranındaki kartlarda yalnızca **ad + XP** görünür; ekran tahtaya yansıtılabileceği için denge ve olumsuz puanlar yalnızca öğrenci detayındadır.
+  - Sınıf ekranındaki kartlarda yalnızca **ad + seviye + XP** görünür; ekran tahtaya yansıtılabileceği için denge ve olumsuz puanlar (bugünkü +/− rozetleri dahil) yalnızca öğrenci detayındadır (arayüz önerisi kararı, 2026-10-03).
+  - Davranış penceresinde olumlu davranışlar önde; olumsuzlar ayrı bir "Gelişim alanı · yalnızca siz ve veli görür" bölümünde. Not alanı "veliye gösterilmez" diye işaretlidir. Geri alma çubuğu kalan süreyi halka + sayı ile ve öğrencinin karakteriyle gösterir.
+  - Aynı davranış her ekranda aynı simge ve pastel renkle görünür (renk simgeden türetilir, `behaviorTone`).
 - Son işlem **10 saniye** içinde geri alınabilir (yalnızca puanı veren öğretmen); sonrasında sınıfın herhangi bir öğretmeni kaydı zaman çizelgesinden silebilir (audit log'a düşer).
 - Her olay (`BehaviorEvent`) puanın **anlık kopyasını** saklar; tipin puanı değişirse geçmiş değişmez.
 - İki sayaç:
@@ -86,9 +89,11 @@
 - Öğretmen görünümü: sınıf matrisi (satır öğrenci, sütun durak), hücreye dokunarak durum değiştirme, toplu işaretleme.
   - Matris ders ders gösterilir; sütunlar konu başlıkları altında gruplanır.
   - Dokunuş durumu döndürür: Başlamadı → Devam ediyor → Tamamlandı → Başlamadı. "Yıldız modu" açıkken tamamlanmış hücreye dokunmak yıldızı 0→1→2→3→0 yapar.
+  - Hücreye **uzun basmak** (fareyle sağ tık) doğrudan "Tamamlandı + 0–3 yıldız" seçicisini açar; Yıldız modu da kalır.
+  - Durumlar biçimle de ayrılır (renk körlüğü): başlamadı kesikli halka, devam ediyor yarı dolu daire, tamamlandı dolu tik; yıldızlar hücrenin altında.
   - Toplu işaretleme durak başlığından yapılır: tüm sınıf veya seçili öğrenciler için Tamamlandı / Devam ediyor / Başlamadı. Zaten tamamlanmış hücrelerin yıldızı korunur.
-- Veli görünümü: çocuğun her ders için ilerlediği "yol haritası" görseli.
-  - Tüm duraklar görünür: tamamlananlar renkli + yıldız, devam eden "şu an burada" vurgulu, gelecek duraklar soluk. Ders başına ilerleme çubuğu var. Başka öğrenciyle kıyas yoktur.
+- Veli görünümü: çocuğun her ders için ilerlediği "macera haritası" (`/veli/[ogrenciId]/yol-haritasi`).
+  - Ders sekmeleri (tamamlanan/toplam), konular "ada", duraklar kesikli bir yol üzerinde. Tamamlananlar yeşil ✓ + yıldız; devam eden durakta çocuğun kendi karakteri ve "Şu an burada"; gelecek duraklar bulutlu (kilit simgesi yok). Liste görünümü de vardır. Başka öğrenciyle kıyas yoktur.
 - İlerleme değişiklikleri veliye bildirim göndermez.
 
 ### 4.6 Karakterler
@@ -99,14 +104,19 @@
 - Her tür, her seviye için kendi görselini ve adını (evrim aşaması) sağlar; tür değişse de seviye aynı kalır.
   - Admin okulunun türlerini adlandırır, aşama adlarını değiştirir, aktif/pasif yapar. En az bir tür aktif kalmalıdır. Pasif tür yeni seçimlerde görünmez; kullanan öğrencinin karakteri değişmez. Genel (okula ait olmayan) türler salt okunurdur.
   - Yeni tür ekleme ve görsel yükleme henüz yoktur; görseller kodla gelir (`public/characters/<tür>/<seviye>.svg`).
-- Seviye atlandığında animasyonlu kutlama (evrim + konfeti; hareket azaltma tercihinde sade geçiş). Hem öğretmen puanlama ekranında hem tahta modunda gösterilir.
+- Seviye atlandığında animasyonlu kutlama: üç sahne (eski form titrer ve parlar → ışık patlaması ve yeni formun beyaz silueti → yeni form + konfeti), başlık "Deniz'in ejderhası büyüdü!" ve altında "3. seviye · Yavru ejderha". Pencere "Harika!"ya basılana kadar açık kalır (alkış zamanı); birden çok seviye atlama sırayla gösterilir. Hareket azaltma tercihinde sade çapraz geçiş. Öğretmen puanlama ekranında, tahta modunda ve veli ev girişinde gösterilir.
+  - Ses efektleri ve sesli okuma henüz yoktur (kayıtlı Türkçe ses gerekir).
 - Karakter **hiçbir koşulda geri gitmez**.
-- Görseller özgündür (telifli karakter kullanılmaz); SVG veya Lottie. MVP'de yer tutucu SVG kullanılır.
+- Görseller özgündür (telifli karakter kullanılmaz); SVG veya Lottie. Yerleşik 4 tür × 5 seviye SVG `scripts/characters/generate.mjs` ile çizilir: her seviye bir öncekinden bir bakışta ayırt edilir (yeni parça: kanat, kitap, kalp, çiçek), 5. seviye yıldızlarla çevrilidir.
+  - Aşama adları (v0.36): Ejderha: Gizemli yumurta, Çatlayan yumurta, Yavru ejderha, Kanatlı ejderha, Bilge ejderha · Baykuş: Benekli yumurta, Pofuduk yavru, Meraklı baykuş, Kitapsever baykuş, Bilge baykuş · Robot: Parça kutusu, Mini robot, Yardımcı robot, Kalpli robot, Süper robot · Tohum: Tohum, Filiz, Fidan, Genç ağaç, Çiçekli ağaç. Mevcut okullarda yöneticinin değiştirmediği eski varsayılan adlar migration ile yenilenir.
+- Tahtada karakter seçimi: öğrenci detayındaki "Tahtada birlikte seç" bağlantısı tahtayı `?karakter=<öğrenci>` ile açar; "Deniz, hangisi seninle büyüsün?" ekranı dört türü çocuğun **kendi seviyesindeki** formuyla gösterir, seçim iki adımlıdır (karta dokun → "Bunu seçiyorum!").
 
 ### 4.7 Tahta modu
 - Öğretmen sınıfı tam ekran açar (`/tahta/[sinifId]`): büyük karakter kartları, dokunarak olumlu puan verme.
   - **Oturum:** öğretmenin normal oturumu ve aynı yetki kontrolleri; ayrı tahta bağlantısı/kodu yoktur.
-  - Kartta karakter, ad ve bir sonraki seviyeye ilerleme çubuğu bulunur; **XP sayısı gösterilmez** (kıyas olmasın). Kartlar ada göre sıralıdır.
+  - Kartta karakter, ad, karakteri saran **ilerleme halkası** (bir sonraki seviyeye) ve seviye yıldızları bulunur; **XP sayısı gösterilmez** (kıyas olmasın). Son seviyede halka altın renktir. Kartlar ada göre sıralıdır.
+  - Davranış penceresi: solda çocuğun karakteri ve sayı yerine bir cümle ("Fidan olmaya çok az kaldı!"), başlıkta "Elif ne yaptı?", büyük pastel davranış kartları (puan sayı yerine yıldız). Puan verilince kartın üstünde 1,5 sn "+1 ⭐ Yardımlaştı" balonu çıkar, karakter zıplar.
+  - Arka plan yumuşak bir manzaradır (gökyüzü → krem, alttaki tepe); 1280×720'de 20 öğrenci kaydırmadan sığar.
   - Yalnızca olumlu davranışlar listelenir; tek öğrenciye veya "Tüm sınıf"a puan verilir. Not alanı yoktur. 10 saniyelik geri alma burada da vardır.
   - Dokunma hedefleri en az 80px; tam ekran düğmesi ve sınıfa dönüş bağlantısı vardır.
 - Tahta modunda **negatif puanlar ve denge gösterilmez**, sıralama/liderlik tablosu yoktur. Sunucu bu ekrana XP, denge veya olumsuz olay verisi göndermez.
@@ -133,11 +143,19 @@
 ### 4.9 Veli paneli
 - `/veli` ilk çocuğun paneline (`/veli/[ogrenciId]`) yönlendirir; çocuk yoksa davet kodu girişi gösterilir. Davetle bağlanan çocuğun paneli açılır.
 - Çocuk seçici (birden fazla çocuk varsa) ve "Çocuk ekle" bağlantısı.
-- Kartlar: karakter + XP ilerleme çubuğu, haftalık davranış dengesi (son 7 gün grafiği), "Evde bugün" (ev davranışı girişi ve günlük tavan göstergesi), son 10 olay (okul/ev), akademik yol haritası özeti (ders başına tamamlanan durak ve "şu an"), okunmamış mesajlar (çocuğa ait en fazla 3 okunmamış mesaj ve "Tüm mesajlar" bağlantısı).
+- Kartlar: karakter kahraman kartı (halka, aşama adı, "Bilge ejderha olmaya 3 XP kaldı"), haftalık davranış dengesi (son 7 gün grafiği, "+N olumlu" ve "En çok: 🤝 Yardımlaştı (8 kez)"), "Evde bugün" (ev davranışı girişi ve günlük tavan için "ev enerjisi" kavanozu; bugün işaretlenen davranış ✓ / ✓ ×2 rozetli), son 10 olay (okul 🏫 / ev 🏠 simgeli), macera haritası özeti (ders başına tamamlanan durak ve "şu an"), okunmamış mesajlar ("Öğretmenden"; çocuğa ait en fazla 3 okunmamış mesaj ve "Tüm mesajlar" bağlantısı).
+- Çocuk seçicide her çocuğun karakteri görünür.
+- Davet koduyla kayıt veya çocuk ekleme sonrası tek seferlik karşılama: "Ada'nın bahçesine hoş geldiniz!" (`?hosgeldin=1`), "Panele git".
 - Son olaylarda öğretmenin **notları ve puanı kimin verdiği gösterilmez**; not öğretmene özeldir.
 - Veli başka hiçbir öğrenciye ait veri göremez (isim listesi dahil).
 
-### 4.10 Öğretmen paneli
+### 4.10 Sınıf hedefi (arayüz önerisi kararı, 2026-10-03)
+- Öğretmen sınıfa ortak bir hedef koyar: ödül adı (en fazla 60 karakter, ör. "Bahçe oyunu") ve kaç yıldız gerektiği (5–1000). Ödül öğretmenin sınıf içi kararıdır; uygulama yalnızca sayar.
+- Sayaç: hedef başladığından beri sınıfta verilen **olumlu okul puanlarının** toplamı. Olumsuz puanlar çubuğu **düşürmez** (bir çocuğun hatası sınıfı geri götürmesin); ev puanları sayılmaz; geri alınan/silinen olaylar sayıdan düşer. Sayaç olaylardan türetilir, ayrıca saklanmaz.
+- Sınıfta tek açık hedef olur; "Yeni hedef" eskisini bitirip sıfırdan başlar, "Hedefi bitir" kapatır. Koyma ve bitirme audit log'a düşer.
+- Puanlama sekmesinde ve tahta modunda çubuk olarak görünür (ara duraklar 🌱 🌿 🌷); hedefe ulaşınca "Hedefe ulaştık". Yalnızca sınıf toplamıdır, öğrenci adı veya bireysel katkı gösterilmez.
+
+### 4.11 Öğretmen paneli
 - Sınıf listesi → sınıf ekranı (öğrenci kartları grid).
 - Öğrenci detayı: zaman çizelgesi, haftalık/aylık grafik, akademik durum, bağlı veliler, davet kodları.
   - Grafik: son 7 gün, gün gün olumlu/olumsuz puan (okulun saat dilimine göre). Aylık görünüm henüz yok.
@@ -195,6 +213,8 @@ Topic(id, subjectId, name, sortOrder, archivedAt?)
 Stage(id, topicId, name, sortOrder, archivedAt?)
 StudentProgress(studentId, stageId, status, stars 0–3?, updatedById?, updatedAt)  PK(studentId, stageId)
   -- satır yoksa "başlamadı"; başlamadı'ya dönüş satırı siler. check: stars yalnızca status='completed'
+ClassGoal(id, classId, title ≤60, target 5–1000, startedAt, endedAt?, createdById?)
+  -- sınıf başına tek açık hedef (endedAt null, kısmi unique index); ilerleme behavior_event'ten sayılır
 Message(id, classId, studentId?, authorId?, title, body, createdAt, deletedAt?)
 MessageRead(messageId, parentId, readAt, reaction?)                PK(messageId, parentId)
 Notification(id, userId, type, payload jsonb, url, readAt?, createdAt)

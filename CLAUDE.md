@@ -53,6 +53,9 @@ docs/PRD.md
 - Dokunma hedefleri en az 44×44px; tahta modunda en az 80px. shadcn `Button`/`Input` dokunmatikte (`pointer-coarse:`) kendiliğinden 44px olur; özel düğme ve bağlantılarda `min-h-11` kullan, geri bağlantıları için `BackLink`. Soluk metin için `opacity` değil `text-muted-foreground` (kontrast).
 - Renk kontrastı WCAG AA. Karanlık mod desteklenir.
 - Çocuk dostu, sıcak ama sade görünüm; öğretmen ekranları hızlı ve az dokunuşlu.
+- **Görsel dil** (`docs/Cocuk-Odakli-Arayuz-Onerileri.pdf`, PRD §2): renk token'ları `src/app/globals.css`'te (`grass`, `sun`, `sky`, `lav`, `coral`, krem zemin, mürekkep metin). Parlak tonlar dolgu içindir; metinde AA için `text-grass-strong`, `text-sky-ink`, `text-coral-ink` kullan. Başlıklar `font-display` (Baloo 2), metin Nunito.
+- **Çocuk yüzeyi** (tahta, kutlama, karakter seçimi): kök `data-surface="kid"`, kartlar `kid-card`; mercan/kırmızı, sayı ve sıralama yok. Durumlar yalnızca renkle değil biçimle de ayrılır.
+- Hazır parçalar: `CharacterAvatar` (ilerleme halkası) + `LevelStars`, `BehaviorTile` (renk `behaviorTone(icon)`), `ClassGoalBar`, hata/boş ekranda `CharacterMessage`. Karakter SVG'leri elle düzenlenmez: `node scripts/characters/generate.mjs`.
 
 ## Komutlar
 ```bash
