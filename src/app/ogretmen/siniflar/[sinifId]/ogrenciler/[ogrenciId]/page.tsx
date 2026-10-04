@@ -137,6 +137,8 @@ export default async function StudentPage({
             studentId={student.id}
             firstName={student.firstName}
             lastInitial={student.lastInitial}
+            gradeLevel={student.gradeLevel}
+            classGradeLevels={student.classGradeLevels}
             active={student.active}
           />
         </CardContent>

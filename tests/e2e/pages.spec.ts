@@ -12,7 +12,7 @@ import {
 } from "./helpers";
 
 // Every key screen in every breakpoint project: no horizontal scroll, large enough touch
-// targets, and an axe WCAG 2 AA scan (contrast included) in light and dark mode.
+// targets, an axe WCAG 2 AA scan (contrast included), and the light theme holding under OS dark mode.
 
 type Screen = { name: string; path: () => Promise<string>; board?: boolean };
 
@@ -80,9 +80,13 @@ for (const [role, screens] of Object.entries(SCREENS)) {
         await expectNoHorizontalScroll(page);
         expect.soft(await smallTargets(page, minTarget(testInfo, screen.board)), "touch targets too small").toEqual([]);
 
-        expect.soft(await axeViolations(page), "axe (light)").toEqual([]);
+        expect.soft(await axeViolations(page), "axe").toEqual([]);
+
+        // The UI is light only: an OS dark preference must not change it.
+        const background = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+        const light = await background();
         await page.emulateMedia({ colorScheme: "dark" });
-        expect.soft(await axeViolations(page), "axe (dark)").toEqual([]);
+        expect.soft(await background(), "stays light under OS dark mode").toBe(light);
       });
     }
   });

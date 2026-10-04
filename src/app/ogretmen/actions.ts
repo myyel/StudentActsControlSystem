@@ -25,7 +25,7 @@ import { addStudents, listStudentsForClass, updateStudent } from "@/server/servi
 import { classGoalSchema, createClassSchema, homeDailyXpCapSchema } from "@/server/validation/class";
 import { classInviteSchema, inviteOptionsSchema } from "@/server/validation/invite";
 import { studentCharacterSchema } from "@/server/validation/character";
-import { bulkStudentsSchema, studentNameSchema } from "@/server/validation/student";
+import { bulkStudentsSchema, optionalGradeLevelSchema, studentNameSchema } from "@/server/validation/student";
 
 export type InviteCard = { studentName: string; code: string; url: string; qrSvg: string };
 
@@ -39,7 +39,12 @@ export async function createClassAction(_: unknown, formData: FormData): Promise
   let classId: string;
   try {
     const { user } = await requireRole("teacher");
-    const input = createClassSchema.parse(Object.fromEntries(formData));
+    const input = createClassSchema.parse({
+      name: formData.get("name"),
+      combined: formData.get("combined") === "on",
+      gradeLevels: formData.getAll("gradeLevels"),
+      academicYear: formData.get("academicYear"),
+    });
     const { ip } = await getRequestMeta();
     classId = (await createClass(db, user, input, ip)).id;
   } catch (error) {
@@ -109,8 +114,9 @@ export async function addStudentAction(
       firstName: formData.get("firstName"),
       lastInitial: formData.get("lastInitial") ?? "",
     });
+    const gradeLevel = optionalGradeLevelSchema.parse(formData.get("gradeLevel"));
     const { ip } = await getRequestMeta();
-    await addStudents(db, user, classId, [name], ip);
+    await addStudents(db, user, classId, [name], gradeLevel, ip);
     refresh();
     return ok({ count: 1 }, "Öğrenci eklendi.");
   } catch (error) {
@@ -127,8 +133,9 @@ export async function bulkAddStudentsAction(
     const { user } = await requireRole("teacher");
     await assertTeacherOfClass(user, classId);
     const names = bulkStudentsSchema.parse(formData.get("names") ?? "");
+    const gradeLevel = optionalGradeLevelSchema.parse(formData.get("gradeLevel"));
     const { ip } = await getRequestMeta();
-    const created = await addStudents(db, user, classId, names, ip);
+    const created = await addStudents(db, user, classId, names, gradeLevel, ip);
     refresh();
     return ok({ count: created.length }, `${created.length} öğrenci eklendi.`);
   } catch (error) {
@@ -148,8 +155,10 @@ export async function updateStudentAction(
       firstName: formData.get("firstName"),
       lastInitial: formData.get("lastInitial") ?? "",
     });
+    // Only combined classes show the grade field; a missing field leaves the grade as it is.
+    const gradeLevel = optionalGradeLevelSchema.parse(formData.get("gradeLevel"));
     const { ip } = await getRequestMeta();
-    await updateStudent(db, user, studentId, name, ip);
+    await updateStudent(db, user, studentId, gradeLevel === null ? name : { ...name, gradeLevel }, ip);
     refresh();
     return ok(undefined, "Kaydedildi.");
   } catch (error) {

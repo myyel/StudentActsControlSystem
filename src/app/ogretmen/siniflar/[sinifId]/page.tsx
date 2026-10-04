@@ -5,6 +5,7 @@ import { ClassGoalCard } from "@/components/class-goal/class-goal-card";
 import { ClassNav } from "@/components/classes/class-nav";
 import { ScoringBoard } from "@/components/scoring/scoring-board";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatGradeLevels } from "@/lib/grade-levels";
 import { formatStudentName } from "@/lib/student-names";
 import { db } from "@/server/db";
 import { assertTeacherOfClass } from "@/server/auth/guards";
@@ -34,7 +35,7 @@ export default async function ClassPage({ params }: PageProps<"/ogretmen/sinifla
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <ClassNav classId={sinifId} className={cls.name} active="puanlama" />
       <p className="-mt-3 text-sm text-muted-foreground">
-        {cls.gradeLevel}. sınıf · {cls.academicYear} · {active.length} öğrenci
+        {formatGradeLevels(cls.gradeLevels)} · {cls.academicYear} · {active.length} öğrenci
       </p>
       {withoutParent > 0 && (
         // Information that leads to the action: one tap to the invite cards.
@@ -49,10 +50,12 @@ export default async function ClassPage({ params }: PageProps<"/ogretmen/sinifla
 
       <ScoringBoard
         classId={sinifId}
-        students={active.map(({ id, firstName, lastInitial, xp, characterLevel, stage }) => ({
+        gradeLevels={cls.gradeLevels}
+        students={active.map(({ id, firstName, lastInitial, gradeLevel, xp, characterLevel, stage }) => ({
           id,
           firstName,
           lastInitial,
+          gradeLevel,
           xp,
           level: characterLevel,
           stage,
@@ -89,7 +92,7 @@ export default async function ClassPage({ params }: PageProps<"/ogretmen/sinifla
             <CardTitle>Öğrenci ekle</CardTitle>
           </CardHeader>
           <CardContent>
-            <AddStudentForm classId={sinifId} />
+            <AddStudentForm classId={sinifId} gradeLevels={cls.gradeLevels} />
           </CardContent>
         </Card>
         <Card>
@@ -97,7 +100,7 @@ export default async function ClassPage({ params }: PageProps<"/ogretmen/sinifla
             <CardTitle>Toplu ekle</CardTitle>
           </CardHeader>
           <CardContent>
-            <BulkAddForm classId={sinifId} />
+            <BulkAddForm classId={sinifId} gradeLevels={cls.gradeLevels} />
           </CardContent>
         </Card>
       </div>

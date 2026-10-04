@@ -2,6 +2,8 @@
 
 import { Fragment, useOptimistic, useRef, useState, useTransition } from "react";
 import { bulkSetProgressAction, setProgressAction } from "@/app/ogretmen/progress-actions";
+import { CheckSquare, Star, X } from "lucide-react";
+import { softOutlineButtonSm, toggleOn } from "@/components/action-styles";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -17,6 +19,7 @@ import { cn } from "@/lib/utils";
 import type { ProgressStatus } from "@/server/db/schema";
 import type { SubjectNode } from "@/server/services/curriculum";
 import { Stars, StatusIcon, StatusLegend } from "./status-icon";
+import { useDragScroll } from "./use-drag-scroll";
 
 type Student = { id: string; firstName: string; lastInitial: string | null };
 type Update = { keys: string[]; value: (current: ProgressState) => ProgressState };
@@ -46,6 +49,7 @@ export function ClassMatrix({ classId, subject, students, progress }: Props) {
   // Long press (or right click) on a cell: "Tamamlandı + yıldız" in one step.
   const [starCell, setStarCell] = useState<Cell | null>(null);
   const press = useRef<{ timer: ReturnType<typeof setTimeout> | null; fired: boolean }>({ timer: null, fired: false });
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const stages = subject.topics.flatMap((t) => t.stages);
   const state = (studentId: string, stageId: string) => optimistic[progressKey(studentId, stageId)] ?? NOT_STARTED;
@@ -71,6 +75,9 @@ export function ClassMatrix({ classId, subject, students, progress }: Props) {
     if (press.current.timer) clearTimeout(press.current.timer);
     press.current.timer = null;
   }
+
+  // Dragging the table sideways cancels a long press that started on a cell.
+  const dragging = useDragScroll(scrollRef, pressEnd);
 
   function onCell(s: Student, stage: { id: string; name: string }) {
     // The click that ends a long press must not also cycle the status.
@@ -121,26 +128,25 @@ export function ClassMatrix({ classId, subject, students, progress }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant={starMode ? "default" : "outline"}
-          className="h-11"
-          aria-pressed={starMode}
-          onClick={() => setStarMode(!starMode)}
-        >
-          ★ Yıldız modu {starMode ? "açık" : "kapalı"}
+        <Button className={cn(softOutlineButtonSm, starMode && toggleOn)} aria-pressed={starMode} onClick={() => setStarMode(!starMode)}>
+          <Star className={cn("size-4", starMode ? "fill-sun text-sun" : "text-sun-press")} aria-hidden />
+          Yıldız modu {starMode ? "açık" : "kapalı"}
         </Button>
         <Button
-          variant={selectRows ? "default" : "outline"}
-          className="h-11"
+          className={cn(softOutlineButtonSm, selectRows && toggleOn)}
           aria-pressed={selectRows}
           onClick={() => {
             setSelectRows(!selectRows);
             setSelected(new Set());
           }}
         >
+          {selectRows ? <X className="size-4" aria-hidden /> : <CheckSquare className="size-4" aria-hidden />}
           {selectRows ? `Öğrenci seçimi (${selected.size})` : "Öğrenci seç"}
         </Button>
-        <StatusLegend />
+        {/* A key, not controls: a quiet box so it does not read as more buttons. */}
+        <div className="rounded-xl border border-dashed border-input bg-card/60 px-3 py-1.5 sm:ml-auto [&_div]:gap-3">
+          <StatusLegend />
+        </div>
       </div>
       <p className="text-sm text-muted-foreground">
         {starMode
@@ -153,31 +159,45 @@ export function ClassMatrix({ classId, subject, students, progress }: Props) {
         </p>
       )}
 
-      <div className="max-w-full overflow-x-auto rounded-xl border">
-        <table className="border-collapse text-sm">
-          <thead>
+      {/*
+        A full-width card: ink header (the app's main colour), white rows, cream totals. Stage columns keep
+        their width; a filler column carries the colours to the right edge. Wider subjects scroll sideways
+        inside the card while the student column stays put (sticky cells repeat their row colour).
+      */}
+      <div
+        ref={scrollRef}
+        className={cn(
+          "scroll-x-bar w-full overflow-x-auto rounded-2xl border bg-card shadow-[0_4px_0_var(--kid-shadow)]",
+          // Grab and drag sideways with the mouse (useDragScroll).
+          dragging ? "cursor-grabbing select-none [&_*]:cursor-grabbing" : "cursor-grab",
+        )}
+      >
+        <table className="min-w-full border-collapse text-sm">
+          <thead className="bg-primary text-primary-foreground">
             <tr>
-              <th rowSpan={2} className="sticky left-0 z-20 min-w-36 border-b bg-background p-2 text-left align-bottom">
+              <th rowSpan={2} className="sticky left-0 z-20 min-w-36 border-b border-white/15 bg-primary p-2 text-left align-bottom">
                 Öğrenci
               </th>
               {subject.topics.map((t) =>
                 t.stages.length === 0 ? null : (
-                  <th key={t.id} colSpan={t.stages.length} className="border-b border-l px-2 py-1 text-left font-medium">
+                  <th key={t.id} colSpan={t.stages.length} className="border-b border-l border-white/15 px-2 py-1.5 text-center text-base font-extrabold">
                     {t.name}
                   </th>
                 ),
               )}
+              <td rowSpan={2} aria-hidden className="w-full border-b border-l border-white/15" />
             </tr>
             <tr>
               {subject.topics.map((t) =>
                 t.stages.map((stage, i) => (
-                  <th key={stage.id} scope="col" className={cn("border-b p-0 align-bottom", i === 0 && "border-l")}>
+                  <th key={stage.id} scope="col" className={cn("border-b border-white/15 p-0 align-bottom", i === 0 && "border-l")}>
                     <button
                       type="button"
                       onClick={() => setBulkStage(stage)}
                       title={stage.name}
                       aria-label={`${stage.name}: toplu işaretle`}
-                      className="flex max-h-40 min-h-24 w-12 items-end justify-center p-1 text-xs font-normal hover:bg-accent [writing-mode:vertical-rl] rotate-180"
+                      // Same height for every stage, so the vertical names sit centred in their column.
+                      className="flex h-40 w-12 items-center justify-center p-1 text-center text-sm font-normal hover:bg-white/15 [writing-mode:vertical-rl] rotate-180"
                     >
                       <span className="line-clamp-2">{stage.name}</span>
                     </button>
@@ -191,7 +211,7 @@ export function ClassMatrix({ classId, subject, students, progress }: Props) {
               const name = formatStudentName(s);
               return (
                 <tr key={s.id} className="border-b last:border-b-0">
-                  <th scope="row" className="sticky left-0 z-10 bg-background p-0 text-left font-medium">
+                  <th scope="row" className="sticky left-0 z-10 bg-card p-0 text-left font-medium">
                     {selectRows ? (
                       <label className="flex min-h-12 items-center gap-2 px-2">
                         <input
@@ -239,24 +259,26 @@ export function ClassMatrix({ classId, subject, students, progress }: Props) {
                       );
                     }),
                   )}
+                  <td aria-hidden className="border-l" />
                 </tr>
               );
             })}
           </tbody>
-          <tfoot>
-            <tr className="border-t">
-              <th scope="row" className="sticky left-0 z-10 bg-background p-2 text-left text-xs font-normal text-muted-foreground">
+          <tfoot className="bg-primary text-primary-foreground">
+            <tr>
+              <th scope="row" className="sticky left-0 z-10 bg-primary p-2 text-left text-sm font-bold">
                 Tamamlayan
               </th>
               {subject.topics.map((t) => (
                 <Fragment key={t.id}>
                   {t.stages.map((stage, i) => (
-                    <td key={stage.id} className={cn("p-1 text-center text-xs text-muted-foreground", i === 0 && "border-l")}>
+                    <td key={stage.id} className={cn("p-1 text-center text-xs font-semibold", i === 0 && "border-l border-white/15")}>
                       {students.filter((s) => state(s.id, stage.id).status === "completed").length}/{students.length}
                     </td>
                   ))}
                 </Fragment>
               ))}
+              <td aria-hidden className="border-l border-white/15" />
             </tr>
           </tfoot>
         </table>

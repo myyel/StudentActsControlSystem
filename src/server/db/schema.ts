@@ -147,7 +147,8 @@ export const schoolClass = pgTable(
       .notNull()
       .references(() => school.id, { onDelete: "restrict" }),
     name: text().notNull(),
-    gradeLevel: smallint().notNull(),
+    /** One level, or several for a combined (birleştirilmiş) class; sorted, distinct. */
+    gradeLevels: smallint().array().notNull(),
     academicYear: text().notNull(),
     homeDailyXpCap: integer().notNull().default(10),
     archivedAt: timestamp({ withTimezone: true }),
@@ -155,7 +156,10 @@ export const schoolClass = pgTable(
   },
   (t) => [
     index().on(t.schoolId),
-    check("class_grade_level_check", sql`${t.gradeLevel} between 1 and 4`),
+    check(
+      "class_grade_levels_check",
+      sql`cardinality(${t.gradeLevels}) between 1 and 4 and ${t.gradeLevels} <@ '{1,2,3,4}'::smallint[]`,
+    ),
     check("class_home_daily_xp_cap_check", sql`${t.homeDailyXpCap} >= 0`),
   ],
 );
@@ -228,6 +232,8 @@ export const student = pgTable(
       .references(() => schoolClass.id, { onDelete: "restrict" }),
     firstName: text().notNull(),
     lastInitial: varchar({ length: 1 }),
+    /** The student's own grade; one of the class's gradeLevels. */
+    gradeLevel: smallint().notNull(),
     characterTypeId: uuid()
       .notNull()
       .references(() => characterType.id, { onDelete: "restrict" }),
@@ -241,6 +247,7 @@ export const student = pgTable(
   (t) => [
     index().on(t.classId),
     check("student_xp_check", sql`${t.xp} >= 0`),
+    check("student_grade_level_check", sql`${t.gradeLevel} between 1 and 4`),
     check("student_character_level_check", sql`${t.characterLevel} >= 1`),
   ],
 );
@@ -434,11 +441,16 @@ export const subject = pgTable(
       .notNull()
       .references(() => schoolClass.id, { onDelete: "cascade" }),
     name: varchar({ length: 60 }).notNull(),
+    /** Combined classes: the grade this subject is for; null = every student of the class. */
+    gradeLevel: smallint(),
     sortOrder: integer().notNull().default(0),
     archivedAt: timestamp({ withTimezone: true }),
     createdAt: createdAt(),
   },
-  (t) => [index().on(t.classId, t.sortOrder)],
+  (t) => [
+    index().on(t.classId, t.sortOrder),
+    check("subject_grade_level_check", sql`${t.gradeLevel} between 1 and 4`),
+  ],
 );
 
 export const topic = pgTable(

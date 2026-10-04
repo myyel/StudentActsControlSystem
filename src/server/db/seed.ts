@@ -32,13 +32,36 @@ const CLASS_2B = [
   ["Ege", "K"], ["Irmak", "T"], ["Kaan", "Y"], ["Lina", "A"],
 ] as const;
 
-async function addClass(tx: Tx, schoolId: string, teacherId: string, name: string, names: readonly (readonly [string, string])[], characterTypeIds: string[]) {
-  const [cls] = await tx.insert(schoolClass).values({ schoolId, name, gradeLevel: 2, academicYear: "2026-2027" }).returning();
+/** A combined (birleştirilmiş) class: [first name, last initial, grade]. */
+const CLASS_COMBINED = [
+  ["Aras", "D", 1], ["Beren", "K", 1], ["Çınar", "M", 1],
+  ["Defne", "S", 2], ["Emre", "T", 2],
+  ["Gizem", "A", 3], ["Hakan", "B", 3],
+] as const;
+
+async function addClass(
+  tx: Tx,
+  schoolId: string,
+  teacherId: string,
+  name: string,
+  names: readonly (readonly [string, string] | readonly [string, string, number])[],
+  characterTypeIds: string[],
+  gradeLevels: number[] = [2],
+) {
+  const [cls] = await tx.insert(schoolClass).values({ schoolId, name, gradeLevels, academicYear: "2026-2027" }).returning();
   await tx.insert(classTeacher).values({ classId: cls!.id, userId: teacherId });
   await seedDefaultBehaviorTypes(tx, cls!.id);
   const students = await tx
     .insert(student)
-    .values(names.map(([firstName, lastInitial], i) => ({ classId: cls!.id, firstName, lastInitial, characterTypeId: characterTypeIds[i % characterTypeIds.length]! })))
+    .values(
+      names.map(([firstName, lastInitial, grade], i) => ({
+        classId: cls!.id,
+        firstName,
+        lastInitial,
+        gradeLevel: grade ?? gradeLevels[0]!,
+        characterTypeId: characterTypeIds[i % characterTypeIds.length]!,
+      })),
+    )
     .returning();
   return { cls: cls!, students };
 }
@@ -243,6 +266,7 @@ async function main() {
 
       const a = await addClass(tx, schoolId, teacher.id, "2-A", CLASS_2A, typeIds);
       const b = await addClass(tx, schoolId, teacher2.id, "2-B", CLASS_2B, typeIds);
+      const combined = await addClass(tx, schoolId, teacher2.id, "Birleştirilmiş 1-2-3", CLASS_COMBINED, typeIds, [1, 2, 3]);
 
       // Parents join the way real ones do: an invite code is created and redeemed,
       // which also writes consent records and the parent.link audit entry.
@@ -274,6 +298,18 @@ async function main() {
 
       const stages2A = await seedCurriculum(tx, { id: teacher.id, role: "teacher", schoolId }, a.cls.id, CURRICULUM_2A);
       await seedCurriculum(tx, { id: teacher2.id, role: "teacher", schoolId }, b.cls.id, CURRICULUM_2B);
+      // Combined class: one shared subject, and a Matematik per grade.
+      const actor2 = { id: teacher2.id, role: "teacher" as const, schoolId };
+      for (const [subjectName, grade, topicName, stageNames] of [
+        ["Hayat Bilgisi", null, "Okulumuz", ["Sınıfımı tanıyorum", "Okul kuralları"]],
+        ["Matematik 1", 1, "Sayılar", ["1–10 arası sayılar", "1–20 arası sayılar"]],
+        ["Matematik 2", 2, "Toplama", ["Onluk bozmadan toplama", "Onluk bozarak toplama"]],
+        ["Matematik 3", 3, "Çarpma", ["Çarpım tablosu (2–5)", "Çarpım tablosu (6–9)"]],
+      ] as const) {
+        const subjectId = await createNode(tx, actor2, "subject", combined.cls.id, subjectName, SEED_IP, grade);
+        const topicId = await createNode(tx, actor2, "topic", subjectId, topicName, SEED_IP);
+        for (const name of stageNames) await createNode(tx, actor2, "stage", topicId, name, SEED_IP);
+      }
       const progressCount = await seedProgress(tx, teacher.id, a.students.map((s) => s.id), stages2A);
 
       const eventCount = await seedBehaviorHistory(
@@ -376,7 +412,7 @@ async function main() {
     console.log("Hesaplar:");
     console.log("  admin@ornek.okul       yönetici");
     console.log("  ogretmen@ornek.okul    öğretmen, 2-A (20 öğrenci)");
-    console.log("  ogretmen2@ornek.okul   öğretmen, 2-B (8 öğrenci)");
+    console.log("  ogretmen2@ornek.okul   öğretmen, 2-B (8 öğrenci) ve Birleştirilmiş 1-2-3 (7 öğrenci)");
     console.log("  veli1@ornek.okul       Ada Y. ve Ali K. (2-A)");
     console.log("  veli2 … veli5          birer çocuk (2-A)");
     console.log("  veli6@ornek.okul       Arda C. (2-B)\n");

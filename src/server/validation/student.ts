@@ -1,4 +1,5 @@
 import { z } from "@/lib/zod";
+import { gradeLevelSchema } from "./class";
 import { MAX_BULK_STUDENTS, MAX_FIRST_NAME_LENGTH, parseStudentLines } from "@/lib/student-names";
 
 export const studentNameSchema = z.object({
@@ -36,3 +37,6 @@ export const bulkStudentsSchema = z
     }
     return names;
   });
+
+/** A grade or none: a student in a single-level class (the service fills it in), or a subject for every grade. */
+export const optionalGradeLevelSchema = z.union([z.literal("").transform(() => null), z.null(), gradeLevelSchema]);

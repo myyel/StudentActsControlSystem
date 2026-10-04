@@ -7,7 +7,10 @@ import {
   renameNodeAction,
   reorderAction,
   setNodeArchivedAction,
+  setSubjectGradeLevelAction,
 } from "@/app/ogretmen/curriculum-actions";
+import { GradeLevelSelect } from "@/components/classes/grade-level-select";
+import { selectClassName } from "@/components/form-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { NodeKind, SubjectNode, TopicNode } from "@/server/services/curriculum";
@@ -33,6 +36,7 @@ function NameForm({
   submitLabel,
   onDone,
   autoFocus,
+  extra,
 }: {
   kind: NodeKind;
   action: (prev: unknown, formData: FormData) => ReturnType<typeof createNodeAction>;
@@ -40,6 +44,8 @@ function NameForm({
   submitLabel: string;
   onDone?: () => void;
   autoFocus?: boolean;
+  /** Extra fields under the name (the grade of a new subject in combined classes). */
+  extra?: React.ReactNode;
 }) {
   const [state, formAction, pending] = useActionState(async (prev: unknown, formData: FormData) => {
     const result = await action(prev, formData);
@@ -63,6 +69,7 @@ function NameForm({
           {submitLabel}
         </Button>
       </div>
+      {extra}
       {state && !state.ok && (
         <p role="alert" className="text-sm text-destructive">
           {state.error}
@@ -109,7 +116,7 @@ function NodeHeader({ kind, id, name, heading }: { kind: NodeKind; id: string; n
   );
 }
 
-function AddChild({ kind, parentId }: { kind: NodeKind; parentId: string }) {
+function AddChild({ kind, parentId, gradeLevels = [] }: { kind: NodeKind; parentId: string; gradeLevels?: number[] }) {
   const [open, setOpen] = useState(false);
   if (!open) {
     return (
@@ -125,6 +132,11 @@ function AddChild({ kind, parentId }: { kind: NodeKind; parentId: string }) {
       submitLabel="Ekle"
       onDone={() => setOpen(false)}
       autoFocus
+      extra={
+        kind === "subject" && (
+          <GradeLevelSelect id="new-subject-grade" gradeLevels={gradeLevels} label="Hangi düzey için?" allOption="Tüm düzeyler" />
+        )
+      }
     />
   );
 }
@@ -146,10 +158,50 @@ function TopicBlock({ topic }: { topic: TopicNode }) {
   );
 }
 
-function SubjectBlock({ subject }: { subject: SubjectNode }) {
+/** Combined classes: which grade's students follow this subject (matrix and parents' roadmap). */
+function SubjectGrade({ subject, gradeLevels }: { subject: SubjectNode; gradeLevels: number[] }) {
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const id = `subject-grade-${subject.id}`;
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <label htmlFor={id} className="text-sm text-muted-foreground">
+        Düzey
+      </label>
+      <select
+        id={id}
+        defaultValue={subject.gradeLevel ?? ""}
+        disabled={pending}
+        className={selectClassName.replace("w-full", "w-auto")}
+        onChange={(e) => {
+          const value = e.target.value;
+          start(async () => {
+            const result = await setSubjectGradeLevelAction(subject.id, value);
+            setError(result.ok ? null : result.error);
+          });
+        }}
+      >
+        <option value="">Tüm düzeyler</option>
+        {gradeLevels.map((g) => (
+          <option key={g} value={g}>
+            {g}. sınıf
+          </option>
+        ))}
+      </select>
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function SubjectBlock({ subject, gradeLevels }: { subject: SubjectNode; gradeLevels: number[] }) {
   return (
     <div className="flex flex-col gap-3 py-2">
       <NodeHeader kind="subject" id={subject.id} name={subject.name} heading />
+      {gradeLevels.length > 1 && <SubjectGrade subject={subject} gradeLevels={gradeLevels} />}
       {subject.topics.length > 0 && (
         <SortableList
           key={subject.topics.map((t) => t.id).join()}
@@ -163,7 +215,16 @@ function SubjectBlock({ subject }: { subject: SubjectNode }) {
   );
 }
 
-export function CurriculumEditor({ classId, subjects }: { classId: string; subjects: SubjectNode[] }) {
+export function CurriculumEditor({
+  classId,
+  gradeLevels,
+  subjects,
+}: {
+  classId: string;
+  /** The class's levels; combined classes can tie a subject to one grade. */
+  gradeLevels: number[];
+  subjects: SubjectNode[];
+}) {
   return (
     <div className="flex flex-col gap-4">
       {subjects.length === 0 ? (
@@ -173,11 +234,11 @@ export function CurriculumEditor({ classId, subjects }: { classId: string; subje
           key={subjects.map((s) => s.id).join()}
           items={subjects}
           onReorder={reorder("subject", classId)}
-          renderItem={(s) => <SubjectBlock subject={s} />}
+          renderItem={(s) => <SubjectBlock subject={s} gradeLevels={gradeLevels} />}
           className="gap-4"
         />
       )}
-      <AddChild kind="subject" parentId={classId} />
+      <AddChild kind="subject" parentId={classId} gradeLevels={gradeLevels} />
     </div>
   );
 }

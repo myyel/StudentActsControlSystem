@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ClassNav } from "@/components/classes/class-nav";
 import { ClassMatrix } from "@/components/progress/class-matrix";
 import { buttonVariants } from "@/components/ui/button";
+import { tabBarSm, tabItemCurrent, tabItemIdle, tabItemSm } from "@/components/action-styles";
 import { cn } from "@/lib/utils";
 import { db } from "@/server/db";
 import { assertTeacherOfClass } from "@/server/auth/guards";
@@ -38,18 +39,18 @@ export default async function MatrixPage({ params, searchParams }: PageProps<"/o
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <ClassNav classId={sinifId} className={cls.name} active="matris" />
-      <nav aria-label="Dersler" className="-mx-1 flex gap-2 overflow-x-auto px-1">
+      <nav aria-label="Dersler" className={cn(tabBarSm, "flex w-fit max-w-full gap-0.5 overflow-x-auto")}>
         {matrix.subjects.map((s) => (
           <Link
             key={s.id}
             href={`${base}?ders=${s.id}`}
             aria-current={s.id === subjectId ? "page" : undefined}
-            className={cn(
-              "flex min-h-11 shrink-0 items-center rounded-md border px-4 font-medium",
-              s.id === subjectId ? "border-primary bg-primary/10" : "hover:bg-accent",
-            )}
+            className={cn(tabItemSm, s.id === subjectId ? tabItemCurrent : tabItemIdle)}
           >
             {s.name}
+            {s.gradeLevel !== null && (
+              <span className="rounded-full bg-lav-soft px-2 text-xs font-bold text-lav-ink">{s.gradeLevel}. sınıf</span>
+            )}
           </Link>
         ))}
       </nav>

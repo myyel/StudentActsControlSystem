@@ -5,13 +5,34 @@ export const academicYearSchema = z
   .regex(/^\d{4}-\d{4}$/, "Öğretim yılı 2026-2027 biçiminde olmalı.")
   .refine((v) => Number(v.slice(5)) === Number(v.slice(0, 4)) + 1, "Öğretim yılı ardışık iki yıl olmalı.");
 
-export const createClassSchema = z.object({
-  name: z.string().trim().min(1, "Sınıf adını girin.").max(40, "Sınıf adı en fazla 40 karakter olabilir."),
-  gradeLevel: z.coerce.number().int().min(1, "Sınıf düzeyi 1–4 olmalı.").max(4, "Sınıf düzeyi 1–4 olmalı."),
-  academicYear: academicYearSchema,
-});
+export const gradeLevelSchema = z.coerce
+  .number({ message: "Sınıf düzeyini seçin." })
+  .int("Sınıf düzeyi 1–4 olmalı.")
+  .min(1, "Sınıf düzeyi 1–4 olmalı.")
+  .max(4, "Sınıf düzeyi 1–4 olmalı.");
 
-export type CreateClassInput = z.infer<typeof createClassSchema>;
+/** A single-level class has one level; a combined (birleştirilmiş) class at least two. Sorted, distinct. */
+export const createClassSchema = z
+  .object({
+    name: z.string().trim().min(1, "Sınıf adını girin.").max(40, "Sınıf adı en fazla 40 karakter olabilir."),
+    combined: z.boolean(),
+    gradeLevels: z.array(gradeLevelSchema).min(1, "Sınıf düzeyini seçin."),
+    academicYear: academicYearSchema,
+  })
+  .transform(({ combined, gradeLevels, ...rest }, ctx) => {
+    const levels = [...new Set(gradeLevels)].sort((a, b) => a - b);
+    if (combined ? levels.length < 2 : levels.length !== 1) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["gradeLevels"],
+        message: combined ? "Birleştirilmiş sınıf için en az iki düzey seçin." : "Bir sınıf düzeyi seçin.",
+      });
+      return z.NEVER;
+    }
+    return { ...rest, gradeLevels: levels };
+  });
+
+export type CreateClassInput = z.output<typeof createClassSchema>;
 
 /** September starts a new school year. */
 export function currentAcademicYear(now = new Date()) {

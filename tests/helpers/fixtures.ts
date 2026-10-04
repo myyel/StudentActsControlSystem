@@ -38,12 +38,12 @@ export async function seedAuthFixture(db: Db) {
   const [classA, classB, classAOld] = await db
     .insert(schoolClass)
     .values([
-      { schoolId: school1!.id, name: "2-A", gradeLevel: 2, academicYear: "2026-2027" },
-      { schoolId: school1!.id, name: "2-B", gradeLevel: 2, academicYear: "2026-2027" },
+      { schoolId: school1!.id, name: "2-A", gradeLevels: [2], academicYear: "2026-2027" },
+      { schoolId: school1!.id, name: "2-B", gradeLevels: [2], academicYear: "2026-2027" },
       {
         schoolId: school1!.id,
         name: "1-A",
-        gradeLevel: 1,
+        gradeLevels: [1],
         academicYear: "2025-2026",
         archivedAt: new Date(),
       },
@@ -59,11 +59,11 @@ export async function seedAuthFixture(db: Db) {
   const [studentA1, studentA2, studentB1, studentAOld, deletedStudent] = await db
     .insert(student)
     .values([
-      { classId: classA!.id, firstName: "Ada", characterTypeId: dragon!.id },
-      { classId: classA!.id, firstName: "Ali", characterTypeId: dragon!.id },
-      { classId: classB!.id, firstName: "Can", characterTypeId: dragon!.id },
-      { classId: classAOld!.id, firstName: "Efe", characterTypeId: dragon!.id },
-      { classId: classA!.id, firstName: "Ece", characterTypeId: dragon!.id, deletedAt: new Date() },
+      { classId: classA!.id, firstName: "Ada", gradeLevel: 2, characterTypeId: dragon!.id },
+      { classId: classA!.id, firstName: "Ali", gradeLevel: 2, characterTypeId: dragon!.id },
+      { classId: classB!.id, firstName: "Can", gradeLevel: 2, characterTypeId: dragon!.id },
+      { classId: classAOld!.id, firstName: "Efe", gradeLevel: 1, characterTypeId: dragon!.id },
+      { classId: classA!.id, firstName: "Ece", gradeLevel: 2, characterTypeId: dragon!.id, deletedAt: new Date() },
     ])
     .returning();
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { Maximize, Minimize, Users, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize, Minimize, Pause, Play, Users, X } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { giveBehaviorAction } from "@/app/ogretmen/scoring-actions";
 import { BehaviorTile } from "@/components/behaviors/behavior-tile";
 import { CharacterAvatar, LevelStars } from "@/components/characters/character-avatar";
@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { newUuid } from "@/lib/uuid";
 import type { BoardStudent } from "@/server/services/character";
 import { CharacterChooser, type BoardCharacterType } from "./character-chooser";
+import { useAutoAdvance, useCardsPerPage } from "./use-board-pages";
 
 type Props = {
   classId: string;
@@ -38,6 +39,8 @@ const iconButton =
 /**
  * Full screen class board for the smartboard. Children see it: positive behaviors only, no XP,
  * balance or ranking; cards are in name order. Touch targets are at least 80px.
+ * The board never scrolls: when the class does not fit the screen (windowed or fullscreen), the
+ * cards are split into pages that slide every 10 seconds, so every child is shown in turn.
  */
 export function Board({ classId, className, students, behaviors, characterTypes, chooseFor, goal }: Props) {
   const [targets, setTargets] = useState<string[] | null>(null);
@@ -50,12 +53,24 @@ export function Board({ classId, className, students, behaviors, characterTypes,
   const [choosing, setChoosing] = useState<string | null>(chooseFor ?? null);
   const [fullscreen, setFullscreen] = useState(false);
   const [pending, start] = useTransition();
+  const [page, setPage] = useState(0);
+  const [userPaused, setUserPaused] = useState(false);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const closeUndo = useCallback(() => setLastScore(null), []);
   const closeCelebration = useCallback(() => setCelebrations(null), []);
 
   const byId = new Map(students.map((s) => [s.id, s]));
   const single = shownTargets.length === 1 ? byId.get(shownTargets[0]!) : undefined;
   const chooser = choosing ? byId.get(choosing) : undefined;
+
+  const perPage = useCardsPerPage(viewportRef, students.length);
+  const pages: BoardStudent[][] = [];
+  for (let i = 0; i < students.length; i += perPage) pages.push(students.slice(i, i + perPage));
+  const pageCount = pages.length;
+  const current = Math.min(page, Math.max(pageCount - 1, 0));
+  // Hold the page while the teacher is scoring, choosing a character or a celebration is on.
+  const paused = userPaused || targets !== null || chooser !== undefined || celebrations !== null;
+  useAutoAdvance(current, pageCount, paused, setPage);
 
   useEffect(() => {
     const sync = () => setFullscreen(document.fullscreenElement !== null);
@@ -107,7 +122,8 @@ export function Board({ classId, className, students, behaviors, characterTypes,
   }
 
   return (
-    <div data-surface="kid" className="flex flex-1 flex-col gap-4 p-4 pb-36 lg:p-6 lg:pb-36 lg:short:gap-3 lg:short:pt-3">
+    // h-dvh: the board fits the screen; the bottom row (controls) leaves room for the undo bar.
+    <div data-surface="kid" className="flex h-dvh flex-col gap-4 overflow-hidden p-4 pb-6 lg:p-6 lg:pb-6 lg:short:gap-3 lg:short:pt-3 lg:short:pb-5">
       <header className="flex flex-wrap items-center gap-3 lg:gap-4 lg:short:gap-3">
         <div className="mr-auto">
           <h1 className="font-display text-4xl leading-none font-extrabold lg:text-5xl">{className}</h1>
@@ -147,48 +163,106 @@ export function Board({ classId, className, students, behaviors, characterTypes,
       {students.length === 0 ? (
         <p className="text-2xl font-semibold">Bu sınıfta aktif öğrenci yok.</p>
       ) : (
-        <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5 lg:gap-4 2xl:grid-cols-6">
-          {students.map((s) => {
-            const praised = balloon?.ids.has(s.id);
-            return (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  onClick={() => openPicker([s.id])}
-                  className={cn(
-                    "kid-card relative flex min-h-20 w-full flex-col items-center gap-1 border-4 p-2 text-center outline-none focus-visible:ring-[4px] focus-visible:ring-ring/60 active:scale-[0.96] motion-reduce:active:scale-100 lg:p-3 lg:short:gap-0 lg:short:p-1.5",
-                    praised ? "border-sun" : "border-transparent",
-                  )}
+        <section aria-label="Öğrenciler" className="flex min-h-0 flex-1 flex-col">
+          {/* Clip only sideways (the next page); the praise balloon may rise above the first row. */}
+          <div ref={viewportRef} className="relative min-h-0 flex-1 overflow-x-clip">
+            <div
+              className="flex h-full motion-safe:transition-transform motion-safe:duration-700 motion-safe:ease-in-out"
+              style={{ transform: `translateX(-${current * 100}%)` }}
+            >
+              {pages.map((pageStudents, index) => (
+                <ul
+                  key={index}
+                  data-board-page
+                  // Pages off screen stay out of the tab order and the accessibility tree.
+                  inert={index !== current}
+                  className="grid h-full w-full shrink-0 grid-cols-2 content-center gap-3 px-1 pt-1 pb-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-4 lg:short:gap-y-2 2xl:grid-cols-6 2xl:midh:gap-y-3"
                 >
-                  {praised && (
-                    <span
-                      key={balloon!.key}
-                      aria-hidden
-                      className="absolute -top-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-grass-strong px-3 py-1 text-base font-extrabold whitespace-nowrap text-white shadow-md motion-safe:animate-balloon dark:text-ink"
-                    >
-                      {balloon!.text}
-                    </span>
-                  )}
-                  <CharacterAvatar
-                    // New key restarts the hop for every praise.
-                    key={praised ? `hop-${balloon!.key}` : undefined}
-                    stage={s.stage}
-                    level={s.level}
-                    progress={s.progress}
-                    size={88}
-                    className={cn("lg:short:[--avatar:60px] 2xl:[--avatar:116px]", praised && "motion-safe:animate-hop")}
-                  />
-                  <span className="w-full truncate font-display text-2xl leading-tight font-extrabold lg:short:text-xl 2xl:text-3xl">
-                    {formatStudentName(s)}
-                  </span>
-                  <span className="sr-only">{s.stage.name}</span>
-                  <LevelStars level={s.level} size={18} />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+                  {pageStudents.map((s) => {
+                    const praised = balloon?.ids.has(s.id);
+                    return (
+                      <li key={s.id}>
+                        <button
+                          type="button"
+                          onClick={() => openPicker([s.id])}
+                          className={cn(
+                            "kid-card relative flex min-h-20 w-full flex-col items-center gap-1 border-4 p-2 text-center outline-none focus-visible:ring-[4px] focus-visible:ring-ring/60 active:scale-[0.96] motion-reduce:active:scale-100 lg:p-3 lg:short:gap-0 lg:short:p-1.5",
+                            praised ? "border-sun" : "border-transparent",
+                          )}
+                        >
+                          {praised && (
+                            <span
+                              key={balloon!.key}
+                              aria-hidden
+                              className="absolute -top-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-grass-strong px-3 py-1 text-base font-extrabold whitespace-nowrap text-white shadow-md motion-safe:animate-balloon dark:text-ink"
+                            >
+                              {balloon!.text}
+                            </span>
+                          )}
+                          <CharacterAvatar
+                            // New key restarts the hop for every praise.
+                            key={praised ? `hop-${balloon!.key}` : undefined}
+                            stage={s.stage}
+                            level={s.level}
+                            progress={s.progress}
+                            size={88}
+                            className={cn("lg:short:[--avatar:52px] 2xl:[--avatar:116px] 2xl:midh:[--avatar:96px]", praised && "motion-safe:animate-hop")}
+                          />
+                          <span className="w-full truncate font-display text-2xl leading-tight font-extrabold lg:short:text-xl 2xl:text-3xl">
+                            {formatStudentName(s)}
+                          </span>
+                          <span className="sr-only">{s.stage.name}</span>
+                          <LevelStars level={s.level} size={18} />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ))}
+            </div>
+          </div>
+        </section>
       )}
+
+      {/* Always present, so the undo bar covers this row and never a card. */}
+      <div className="flex h-20 shrink-0 items-center justify-center gap-2 sm:gap-4">
+        {pageCount > 1 && (
+          <>
+            <button
+              type="button"
+              aria-label="Önceki öğrenciler"
+              onClick={() => setPage((current - 1 + pageCount) % pageCount)}
+              className={iconButton}
+            >
+              <ChevronLeft className="size-10" aria-hidden />
+            </button>
+            {/* Where we are, without numbers: a thumb sliding along a track; fits any number of pages. */}
+            <div aria-hidden className="h-5 min-w-12 flex-1 overflow-hidden rounded-full bg-card shadow-[inset_0_0_0_3px_var(--line)] sm:max-w-56">
+              <div
+                className="h-full rounded-full bg-grass-strong motion-safe:transition-transform motion-safe:duration-700"
+                style={{ width: `${100 / pageCount}%`, transform: `translateX(${current * 100}%)` }}
+              />
+            </div>
+            <button
+              type="button"
+              aria-label="Sonraki öğrenciler"
+              onClick={() => setPage((current + 1) % pageCount)}
+              className={iconButton}
+            >
+              <ChevronRight className="size-10" aria-hidden />
+            </button>
+            <button
+              type="button"
+              aria-pressed={userPaused}
+              aria-label={userPaused ? "Kaydırmayı sürdür" : "Kaydırmayı durdur"}
+              onClick={() => setUserPaused(!userPaused)}
+              className={iconButton}
+            >
+              {userPaused ? <Play className="size-8" aria-hidden /> : <Pause className="size-8" aria-hidden />}
+            </button>
+          </>
+        )}
+      </div>
 
       <Dialog open={targets !== null} onOpenChange={(open) => !open && setTargets(null)}>
         <DialogContent

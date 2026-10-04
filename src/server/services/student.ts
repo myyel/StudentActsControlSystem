@@ -4,6 +4,7 @@ import { characterType, parentStudent, school, schoolClass, student, user } from
 import type { StudentName } from "@/lib/student-names";
 import type { AuthUser } from "@/server/auth/guards";
 import { forbidden } from "@/server/auth/errors";
+import { UserError } from "@/server/action-result";
 import { writeAudit } from "./audit";
 
 const byName = (a: StudentName, b: StudentName) =>
@@ -26,25 +27,42 @@ async function defaultCharacterTypeId(db: DbOrTx, schoolId: string) {
   return row.id;
 }
 
-/** Call only after assertTeacherOfClass. */
+/**
+ * The grade a student gets in this class: the given one if the class teaches it, or the only
+ * level of a single-level class when none is given.
+ */
+export function resolveGradeLevel(classLevels: number[], gradeLevel: number | null | undefined) {
+  if (gradeLevel == null) {
+    if (classLevels.length === 1) return classLevels[0]!;
+    throw new UserError("Öğrencinin sınıf düzeyini seçin.");
+  }
+  if (!classLevels.includes(gradeLevel)) throw new UserError("Bu sınıfta o düzey yok.");
+  return gradeLevel;
+}
+
+/** Call only after assertTeacherOfClass. In a combined class every new student needs a gradeLevel. */
 export async function addStudents(
   db: Db,
   actor: AuthUser,
   classId: string,
   names: StudentName[],
+  gradeLevel: number | null,
   ip?: string | null,
 ) {
   return db.transaction(async (tx) => {
     const [cls] = await tx
-      .select({ schoolId: schoolClass.schoolId })
+      .select({ schoolId: schoolClass.schoolId, gradeLevels: schoolClass.gradeLevels })
       .from(schoolClass)
       .where(eq(schoolClass.id, classId));
     if (!cls) throw forbidden();
+    const level = resolveGradeLevel(cls.gradeLevels, gradeLevel);
 
     const characterTypeId = await defaultCharacterTypeId(tx, cls.schoolId);
     const created = await tx
       .insert(student)
-      .values(names.map((n) => ({ classId, firstName: n.firstName, lastInitial: n.lastInitial, characterTypeId })))
+      .values(
+        names.map((n) => ({ classId, firstName: n.firstName, lastInitial: n.lastInitial, gradeLevel: level, characterTypeId })),
+      )
       .returning({ id: student.id });
 
     await writeAudit(tx, {
@@ -53,7 +71,7 @@ export async function addStudents(
       entityId: classId,
       actorId: actor.id,
       schoolId: cls.schoolId,
-      data: { count: created.length, studentIds: created.map((s) => s.id) },
+      data: { count: created.length, gradeLevel: level, studentIds: created.map((s) => s.id) },
       ip,
     });
     return created;
@@ -65,10 +83,19 @@ export async function updateStudent(
   db: Db,
   actor: AuthUser,
   studentId: string,
-  changes: Partial<StudentName & { active: boolean }>,
+  changes: Partial<StudentName & { active: boolean; gradeLevel: number }>,
   ip?: string | null,
 ) {
   return db.transaction(async (tx) => {
+    if (changes.gradeLevel !== undefined) {
+      const [current] = await tx
+        .select({ gradeLevels: schoolClass.gradeLevels })
+        .from(student)
+        .innerJoin(schoolClass, eq(schoolClass.id, student.classId))
+        .where(eq(student.id, studentId));
+      if (!current) throw forbidden();
+      resolveGradeLevel(current.gradeLevels, changes.gradeLevel);
+    }
     const [updated] = await tx
       .update(student)
       .set(changes)
@@ -99,6 +126,7 @@ export async function listStudentsForClass(db: Db, classId: string) {
       id: student.id,
       firstName: student.firstName,
       lastInitial: student.lastInitial,
+      gradeLevel: student.gradeLevel,
       active: student.active,
       xp: student.xp,
       characterTypeId: student.characterTypeId,
@@ -119,8 +147,10 @@ export async function getStudentForTeacher(db: Db, studentId: string) {
       id: student.id,
       classId: student.classId,
       className: schoolClass.name,
+      classGradeLevels: schoolClass.gradeLevels,
       firstName: student.firstName,
       lastInitial: student.lastInitial,
+      gradeLevel: student.gradeLevel,
       active: student.active,
       xp: student.xp,
       balance: student.balance,

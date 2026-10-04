@@ -19,7 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
 
 type Item = { id: string; name: string };
@@ -59,6 +59,9 @@ export function SortableList<T extends Item>({ items: initial, onReorder, render
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
+  // dnd-kit numbers its aria ids with a global counter; a stable id keeps SSR and hydration in sync.
+  const dndId = useId();
+
   function onDragEnd({ active, over }: DragEndEvent) {
     if (!over || active.id === over.id) return;
     const previous = items;
@@ -77,6 +80,7 @@ export function SortableList<T extends Item>({ items: initial, onReorder, render
   return (
     <>
       <DndContext
+        id={dndId}
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={onDragEnd}

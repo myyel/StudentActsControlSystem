@@ -12,7 +12,7 @@ import { getCurriculum, type SubjectNode } from "./curriculum";
 /** The stage must be live (it and its parents not archived) and belong to the class. */
 async function assertLiveStageOfClass(tx: Tx | Db, classId: string, stageId: string) {
   const [row] = await tx
-    .select({ schoolId: schoolClass.schoolId })
+    .select({ schoolId: schoolClass.schoolId, gradeLevel: subject.gradeLevel })
     .from(stage)
     .innerJoin(topic, eq(topic.id, stage.topicId))
     .innerJoin(subject, eq(subject.id, topic.subjectId))
@@ -27,11 +27,21 @@ async function assertLiveStageOfClass(tx: Tx | Db, classId: string, stageId: str
       ),
     );
   if (!row) throw forbidden();
-  return row.schoolId;
+  return row;
 }
 
-const activeStudentsOf = (classId: string) =>
-  and(eq(student.classId, classId), eq(student.active, true), isNull(student.deletedAt));
+/** Active students of the class; for a grade-specific subject only that grade's students. */
+const activeStudentsOf = (classId: string, gradeLevel: number | null = null) =>
+  and(
+    eq(student.classId, classId),
+    eq(student.active, true),
+    isNull(student.deletedAt),
+    gradeLevel === null ? undefined : eq(student.gradeLevel, gradeLevel),
+  );
+
+/** Subjects a student follows: shared ones and those of the student's own grade. */
+export const subjectsForGrade = <T extends { gradeLevel: number | null }>(subjects: T[], gradeLevel: number) =>
+  subjects.filter((s) => s.gradeLevel === null || s.gradeLevel === gradeLevel);
 
 /** Call only after assertTeacherOfClass. */
 export async function getClassMatrix(db: Db, classId: string, subjectId: string) {
@@ -42,7 +52,7 @@ export async function getClassMatrix(db: Db, classId: string, subjectId: string)
   const students = await db
     .select({ id: student.id, firstName: student.firstName, lastInitial: student.lastInitial })
     .from(student)
-    .where(activeStudentsOf(classId));
+    .where(activeStudentsOf(classId, current.gradeLevel));
 
   const stageIds = current.topics.flatMap((t) => t.stages.map((s) => s.id));
   const rows =
@@ -66,17 +76,17 @@ export async function getClassMatrix(db: Db, classId: string, subjectId: string)
 
   // Turkish alphabetical order (Ç, Ğ, İ, Ö, Ş, Ü) is not what the DB collation gives.
   students.sort((a, b) => a.firstName.localeCompare(b.firstName, "tr"));
-  return { subjects: tree.map(({ id, name }) => ({ id, name })), subject: current, students, progress };
+  return { subjects: tree.map(({ id, name, gradeLevel }) => ({ id, name, gradeLevel })), subject: current, students, progress };
 }
 
 /** Sets one cell. "not_started" removes the row; stars only survive on completed stages. */
 export async function setProgress(db: Db, actor: AuthUser, classId: string, input: SetProgressInput, ip?: string | null) {
   await db.transaction(async (tx) => {
-    const schoolId = await assertLiveStageOfClass(tx, classId, input.stageId);
+    const { schoolId, gradeLevel } = await assertLiveStageOfClass(tx, classId, input.stageId);
     const [member] = await tx
       .select({ id: student.id })
       .from(student)
-      .where(and(eq(student.id, input.studentId), activeStudentsOf(classId)));
+      .where(and(eq(student.id, input.studentId), activeStudentsOf(classId, gradeLevel)));
     if (!member) throw forbidden();
 
     const where = and(eq(studentProgress.studentId, input.studentId), eq(studentProgress.stageId, input.stageId));
@@ -105,7 +115,8 @@ export async function setProgress(db: Db, actor: AuthUser, classId: string, inpu
 }
 
 /**
- * Sets one stage for many students, all or nothing. "all" means every active student of the class.
+ * Sets one stage for many students, all or nothing. "all" means every active student of the class
+ * (of the subject's grade, for a grade-specific subject).
  * Existing stars are kept when the status stays "completed". Call only after assertTeacherOfClass.
  */
 export async function bulkSetProgress(
@@ -116,14 +127,14 @@ export async function bulkSetProgress(
   ip?: string | null,
 ) {
   return db.transaction(async (tx) => {
-    const schoolId = await assertLiveStageOfClass(tx, classId, input.stageId);
+    const { schoolId, gradeLevel } = await assertLiveStageOfClass(tx, classId, input.stageId);
     const members = await tx
       .select({ id: student.id })
       .from(student)
       .where(
         input.studentIds === "all"
-          ? activeStudentsOf(classId)
-          : and(inArray(student.id, input.studentIds), activeStudentsOf(classId)),
+          ? activeStudentsOf(classId, gradeLevel)
+          : and(inArray(student.id, input.studentIds), activeStudentsOf(classId, gradeLevel)),
       );
     const ids = members.map((m) => m.id);
     if (input.studentIds !== "all" && ids.length !== new Set(input.studentIds).size) throw forbidden();
@@ -179,6 +190,7 @@ export async function getRoadmapForParent(db: Db, parentId: string, studentId: s
       firstName: student.firstName,
       lastInitial: student.lastInitial,
       classId: student.classId,
+      gradeLevel: student.gradeLevel,
       characterTypeId: student.characterTypeId,
       characterLevel: student.characterLevel,
     })
@@ -187,7 +199,7 @@ export async function getRoadmapForParent(db: Db, parentId: string, studentId: s
     .where(and(eq(parentStudent.parentId, parentId), eq(parentStudent.studentId, studentId), isNull(student.deletedAt)));
   if (!child) throw forbidden();
 
-  const tree = await getCurriculum(db, child.classId);
+  const tree = subjectsForGrade(await getCurriculum(db, child.classId), child.gradeLevel);
   const rows = await db.select().from(studentProgress).where(eq(studentProgress.studentId, child.id));
   const byStage = new Map(rows.map((r) => [r.stageId, r]));
 
@@ -201,7 +213,7 @@ export async function getRoadmapForParent(db: Db, parentId: string, studentId: s
       }),
     }));
     const all = topics.flatMap((t) => t.stages);
-    return { id: s.id, name: s.name, topics, completed: all.filter((x) => x.status === "completed").length, total: all.length };
+    return { id: s.id, name: s.name, gradeLevel: s.gradeLevel, topics, completed: all.filter((x) => x.status === "completed").length, total: all.length };
   });
 
   // The child's character stands on the "şu an burada" stop of the adventure map.

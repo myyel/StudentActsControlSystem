@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { db } from "@/server/db";
-import { auditLog, classTeacher, student } from "@/server/db/schema";
+import { auditLog, classTeacher, parentStudent, student } from "@/server/db/schema";
 import { assertTeacherOfClass, assertTeacherOfStudent } from "@/server/auth/guards";
 import { createClass, listClassesForTeacher } from "@/server/services/class";
 import { addStudents, listStudentsForClass, updateStudent } from "@/server/services/student";
@@ -23,7 +23,7 @@ describe("class creation", () => {
   it("creates the class in the teacher's school and assigns the teacher", async () => {
     const created = await createClass(db, fx.users.teacherA, {
       name: "3-C",
-      gradeLevel: 3,
+      gradeLevels: [3],
       academicYear: "2026-2027",
     });
     expect(created.schoolId).toBe(fx.school1.id);
@@ -38,7 +38,7 @@ describe("class creation", () => {
   });
 
   it("rejects parents, admins and teachers without a school", async () => {
-    const input = { name: "X", gradeLevel: 1, academicYear: "2026-2027" };
+    const input = { name: "X", gradeLevels: [1], academicYear: "2026-2027" };
     await expect(createClass(db, fx.users.parentA, input)).rejects.toMatchObject(FORBIDDEN);
     await expect(createClass(db, fx.users.admin1, input)).rejects.toMatchObject(FORBIDDEN);
     await expect(
@@ -55,6 +55,19 @@ describe("class listing", () => {
     expect(ids).not.toContain(fx.classes.classB.id);
     expect(ids).not.toContain(fx.classes.classAOld.id);
   });
+
+  it("counts students with a linked parent once, ignoring deleted students", async () => {
+    // A second parent for studentA1 must not count the student (or the class size) twice.
+    await db.insert(parentStudent).values({ parentId: fx.users.parentB.id, studentId: fx.students.studentA1.id });
+    try {
+      const classA = (await listClassesForTeacher(db, fx.users.teacherA.id)).find((c) => c.id === fx.classes.classA.id);
+      expect(classA).toMatchObject({ studentCount: 2, withParentCount: 2 });
+    } finally {
+      await db
+        .delete(parentStudent)
+        .where(and(eq(parentStudent.parentId, fx.users.parentB.id), eq(parentStudent.studentId, fx.students.studentA1.id)));
+    }
+  });
 });
 
 describe("student management", () => {
@@ -62,7 +75,7 @@ describe("student management", () => {
     const created = await addStudents(db, fx.users.teacherB, fx.classes.classB.id, [
       { firstName: "Deniz", lastInitial: "K" },
       { firstName: "Ece", lastInitial: null },
-    ]);
+    ], null);
     expect(created).toHaveLength(2);
 
     const list = await listStudentsForClass(db, fx.classes.classB.id);

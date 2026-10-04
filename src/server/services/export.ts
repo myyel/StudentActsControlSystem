@@ -75,6 +75,7 @@ const studentColumns = {
   id: student.id,
   firstName: student.firstName,
   lastInitial: student.lastInitial,
+  gradeLevel: student.gradeLevel,
   className: schoolClass.name,
   classId: student.classId,
   character: characterType.name,

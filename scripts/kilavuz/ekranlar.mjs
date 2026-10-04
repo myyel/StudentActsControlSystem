@@ -126,7 +126,7 @@ const classUrl = async (page) => {
   await shot("ogretmen-puanlama", page, {
     before: async () => {
       await page.goto(base);
-      await mark(page.getByRole("navigation").or(page.locator("a", { hasText: "Matris" }).locator("..")));
+      await mark(page.getByRole("navigation").or(page.locator("a", { hasText: "Ölçek" }).locator("..")));
     },
   });
 

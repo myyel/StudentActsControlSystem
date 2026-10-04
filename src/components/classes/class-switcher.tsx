@@ -12,7 +12,7 @@ export function ClassSwitcher({ currentId, tabPath, classes }: Props) {
       aria-label="Sınıf değiştir"
       value={currentId}
       onChange={(e) => router.push(`/ogretmen/siniflar/${e.target.value}${tabPath}`)}
-      className="min-h-11 rounded-xl border bg-card px-3 text-sm font-bold"
+      className="min-h-11 max-w-full rounded-xl border bg-card px-3 text-sm font-bold"
     >
       {classes.map((c) => (
         <option key={c.id} value={c.id}>

@@ -15,9 +15,11 @@ import {
   renameNode,
   reorderChildren,
   setNodeArchived,
+  setSubjectGradeLevel,
   type NodeKind,
 } from "@/server/services/curriculum";
 import { nodeKindSchema, nodeNameSchema, reorderSchema } from "@/server/validation/curriculum";
+import { optionalGradeLevelSchema } from "@/server/validation/student";
 
 // Order in every action: session → role → ownership → Zod → service.
 
@@ -40,8 +42,9 @@ export async function createNodeAction(
     const target = parseIds(kind, parentId);
     await assertTeacherOfClass(user, await getParentClassId(db, target.kind, target.id));
     const name = nodeNameSchema(target.kind).parse(formData.get("name"));
+    const gradeLevel = target.kind === "subject" ? optionalGradeLevelSchema.parse(formData.get("gradeLevel")) : null;
     const { ip } = await getRequestMeta();
-    await createNode(db, user, target.kind, target.id, name, ip);
+    await createNode(db, user, target.kind, target.id, name, ip, gradeLevel);
     refresh();
     return ok(undefined);
   } catch (error) {
@@ -94,6 +97,22 @@ export async function reorderAction(kind: NodeKind, parentId: string, orderedIds
     await reorderChildren(db, user, target.kind, target.id, ids, ip);
     refresh();
     return ok(undefined);
+  } catch (error) {
+    return toActionError(error);
+  }
+}
+
+/** Combined classes: which grade a subject is for; "" = every grade. */
+export async function setSubjectGradeLevelAction(subjectId: string, gradeLevel: string): Promise<ActionResult<undefined>> {
+  try {
+    const { user } = await requireRole("teacher");
+    const target = parseIds("subject", subjectId);
+    await assertTeacherOfClass(user, await getNodeClassId(db, target.kind, target.id));
+    const parsed = optionalGradeLevelSchema.parse(gradeLevel);
+    const { ip } = await getRequestMeta();
+    await setSubjectGradeLevel(db, user, target.id, parsed, ip);
+    refresh();
+    return ok(undefined, "Kaydedildi.");
   } catch (error) {
     return toActionError(error);
   }

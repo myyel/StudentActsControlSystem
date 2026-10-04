@@ -52,12 +52,12 @@ export function LoginForm({ next }: { next: string | null }) {
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle className="text-xl">Giriş yap</CardTitle>
+    <Card className="w-full max-w-sm rounded-[1.75rem] border-0 py-6 shadow-[0_6px_0_var(--kid-shadow)] sm:max-w-md sm:py-8">
+      <CardHeader className="sm:px-8">
+        <CardTitle className="font-display text-2xl font-extrabold sm:text-3xl">Hoş geldiniz!</CardTitle>
         <CardDescription>Öğretmen, veli veya yönetici hesabınızla giriş yapın.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="sm:px-8">
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
           <div className="flex flex-col gap-2">
             <Label htmlFor="email">E-posta</Label>
@@ -68,7 +68,7 @@ export function LoginForm({ next }: { next: string | null }) {
               autoComplete="email"
               inputMode="email"
               required
-              className="h-11"
+              className="h-12 rounded-xl text-base"
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -79,7 +79,7 @@ export function LoginForm({ next }: { next: string | null }) {
               type="password"
               autoComplete="current-password"
               required
-              className="h-11"
+              className="h-12 rounded-xl text-base"
             />
           </div>
           {error && (
@@ -87,7 +87,7 @@ export function LoginForm({ next }: { next: string | null }) {
               {error}
             </p>
           )}
-          <Button type="submit" disabled={pending} className="h-11">
+          <Button type="submit" disabled={pending} className="h-12 rounded-xl text-base font-bold">
             {pending ? "Giriş yapılıyor…" : "Giriş yap"}
           </Button>
         </form>

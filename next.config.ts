@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // Self-contained server for the production Docker image (Dockerfile).
   output: "standalone",
+  // Dev only: let phones and tablets on the local network load the dev server.
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.*.*.*"],
   async headers() {
     return [
       {

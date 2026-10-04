@@ -29,7 +29,7 @@ beforeAll(async () => {
 
 describe("default behaviors", () => {
   it("a new class starts with the approved default list", async () => {
-    const cls = await createClass(db, fx.users.teacherA, { name: "4-D", gradeLevel: 4, academicYear: "2026-2027" });
+    const cls = await createClass(db, fx.users.teacherA, { name: "4-D", gradeLevels: [4], academicYear: "2026-2027" });
     const types = await listBehaviorTypes(db, cls.id);
     expect(types).toHaveLength(DEFAULT_BEHAVIORS.length);
     expect(types.filter((t) => t.scope === "home").every((t) => t.points > 0)).toBe(true);

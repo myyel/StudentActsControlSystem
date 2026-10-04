@@ -64,6 +64,20 @@
       "when": 1790981065147,
       "tag": "0008_class_goal",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791143379330,
+      "tag": "0009_combined_classes",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791143395848,
+      "tag": "0010_drop_class_grade_level",
+      "breakpoints": true
     }
   ]
 }

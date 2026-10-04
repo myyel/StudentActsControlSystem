@@ -44,8 +44,8 @@ export function ParentNav({ initial }: { initial: Badges }) {
             aria-current={current ? "page" : undefined}
             aria-label={count > 0 ? `${label}, ${count} ${unread}` : label}
             className={cn(
-              "relative flex size-11 items-center justify-center rounded-md transition-colors hover:bg-accent",
-              current && "bg-accent",
+              "relative flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-white/15",
+              current && "bg-primary-foreground text-primary hover:bg-primary-foreground",
             )}
           >
             <Icon className="size-5" aria-hidden />

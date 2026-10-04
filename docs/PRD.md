@@ -13,7 +13,7 @@
 - Kırılım noktaları: telefon (≥360px), tablet (≥768px), masaüstü (≥1280px), akıllı tahta (1920px, dokunmatik).
 - İleride Capacitor ile mağaza uygulamasına paketlenebilecek şekilde tasarlanır (native-özel API kullanılmaz).
 - **Çevrimdışı (Faz 8 kararı):** oturum açılmış sayfalar cihazda **saklanmaz** (çocuk verisi, paylaşılan cihazlar). Bağlantı yokken açılamayan sayfa yerine "İnternet uykuya daldı" ekranı (`/cevrimdisi`, "Tekrar dene") gösterilir; puan, mesaj gibi işlemler yalnızca bağlantı varken kaydedilir, çevrimdışı kuyruk yoktur.
-- **Erişilebilirlik:** WCAG 2 AA kontrast (açık ve karanlık mod); dokunmatik ekranlarda dokunma hedefleri en az 44px (tahta modunda 80px), fare ile kullanımda kompakt boyutlar korunur (en az 24px); tüm işlemler klavyeyle yapılabilir, odak görünür, pencereler kapanınca odak açan öğeye döner.
+- **Erişilebilirlik:** WCAG 2 AA kontrast (arayüz yalnızca açık modda; sistemin karanlık modu yok sayılır); dokunmatik ekranlarda dokunma hedefleri en az 44px (tahta modunda 80px), fare ile kullanımda kompakt boyutlar korunur (en az 24px); tüm işlemler klavyeyle yapılabilir, odak görünür, pencereler kapanınca odak açan öğeye döner.
 - Yetkisiz veya olmayan kayıtlar için Türkçe "Bu sayfayı bulamadık" (404) gösterilir; metin kaydın var olup olmadığını belli etmez.
 - **Görsel dil (2026-10-03, `docs/Cocuk-Odakli-Arayuz-Onerileri.pdf`):** iki katman. Çocuk yüzeyleri (tahta, kutlama, karakter seçimi, veli panelindeki karakter kartı ve macera haritası) büyük, yuvarlak ve oyunsu; yetişkin yüzeyleri sakin ve hızlı. Palet: çimen, güneş, gökyüzü, lavanta, mercan (yalnız yetişkin ekranında olumsuz), krem zemin, mürekkep metin; yazı Baloo 2 (başlık) + Nunito (metin). Hata ve boş ekranlar karakterle konuşur ("İnternet uykuya daldı", "Bu sayfayı bulamadık"); hata metinlerinde suçlama ve teknik terim yoktur.
 
@@ -32,7 +32,10 @@
 
 ### 4.1 Sınıf ve öğrenci yönetimi
 - Öğretmen sınıf oluşturur, öğrenci ekler (tek tek veya satır satır isim yapıştırarak toplu).
-- Öğrenci: ad, soyad (isteğe bağlı baş harf), karakter türü, aktif/pasif.
+- **Birleştirilmiş sınıf** (karar 2026-10-04): sınıf oluştururken "Tek düzey" ya da "Birleştirilmiş sınıf" seçilir. Birleştirilmiş sınıf 1–4 arasından en az iki düzeyi bir arada okutur (ör. 1-2, 1-2-3, 1-2-3-4); tüm öğrenciler aynı sınıftadır.
+  - Her öğrencinin kendi düzeyi tutulur. Birleştirilmiş sınıfta öğrenci eklerken (toplu eklemede bütün liste için) düzey seçilir ve öğrenci detayından değiştirilebilir; tek düzeyli sınıfta düzey otomatik atanır.
+  - Puanlama ekranında "Tümü / 1. sınıf / 2. sınıf …" filtresi ve öğrenci kartında küçük düzey etiketi bulunur. Tahta modunda ve çocuk ekranlarında düzey gösterilmez.
+- Öğrenci: ad, soyad (isteğe bağlı baş harf), sınıf düzeyi, karakter türü, aktif/pasif.
 - Öğretmen her öğrenci için **veli davet kodu + QR** üretir (tek kullanımlık veya süreli, iptal edilebilir).
   - Varsayılan: **tek kullanımlık, 14 gün**. Öğretmen kod başına tek/çok kullanımlık ve 7/14/30 gün/süresiz seçebilir.
   - Kod 8 karakterdir (`ABCD-EFGH`, karışan 0/O, 1/I/L yok). Veritabanında yalnızca hash'i durur; düz kod yalnızca üretildiği anda gösterilir, kaybolursa yeni kod üretilir.
@@ -83,11 +86,12 @@
 ### 4.5 Akademik duraklar
 - Hiyerarşi: **Ders → Konu → Durak** (sıralı; sürükle-bırak ile sıralama).
   - Sürükle-bırak dokunmatik ekranda ve klavyeyle çalışır (`@dnd-kit`). Sıralama aynı üst öğe içindedir; durağı başka konuya taşımak henüz yok.
-  - Silme yerine **arşivleme**: arşivlenen öğe (ve altındakiler) matriste ve veli ekranında görünmez, ilerleme kayıtları korunur, geri alınabilir.
+  - Silme yerine **arşivleme**: arşivlenen öğe (ve altındakiler) ölçekte ve veli ekranında görünmez, ilerleme kayıtları korunur, geri alınabilir.
+- Birleştirilmiş sınıfta ders bir düzeye bağlanabilir ("Tüm düzeyler" varsayılandır; ör. Matematik 1, Matematik 2). Düzeye bağlı dersin ölçeğinde ve toplu işaretlemesinde yalnızca o düzeyin öğrencileri bulunur; veli macera haritasında çocuğun düzeyine uygun dersler ve ortak dersler görünür.
 - Her öğrenci × durak için durum: `not_started` | `in_progress` | `completed` (+ isteğe bağlı 0–3 yıldız).
   - Yıldız yalnızca tamamlanan duraklarda olabilir.
-- Öğretmen görünümü: sınıf matrisi (satır öğrenci, sütun durak), hücreye dokunarak durum değiştirme, toplu işaretleme.
-  - Matris ders ders gösterilir; sütunlar konu başlıkları altında gruplanır.
+- Öğretmen görünümü: sınıf **ölçeği** (eski adıyla matris; satır öğrenci, sütun durak), hücreye dokunarak durum değiştirme, toplu işaretleme.
+  - Ölçek ders ders gösterilir; sütunlar konu başlıkları altında gruplanır.
   - Dokunuş durumu döndürür: Başlamadı → Devam ediyor → Tamamlandı → Başlamadı. "Yıldız modu" açıkken tamamlanmış hücreye dokunmak yıldızı 0→1→2→3→0 yapar.
   - Hücreye **uzun basmak** (fareyle sağ tık) doğrudan "Tamamlandı + 0–3 yıldız" seçicisini açar; Yıldız modu da kalır.
   - Durumlar biçimle de ayrılır (renk körlüğü): başlamadı kesikli halka, devam ediyor yarı dolu daire, tamamlandı dolu tik; yıldızlar hücrenin altında.
@@ -116,7 +120,9 @@
   - **Oturum:** öğretmenin normal oturumu ve aynı yetki kontrolleri; ayrı tahta bağlantısı/kodu yoktur.
   - Kartta karakter, ad, karakteri saran **ilerleme halkası** (bir sonraki seviyeye) ve seviye yıldızları bulunur; **XP sayısı gösterilmez** (kıyas olmasın). Son seviyede halka altın renktir. Kartlar ada göre sıralıdır.
   - Davranış penceresi: solda çocuğun karakteri ve sayı yerine bir cümle ("Fidan olmaya çok az kaldı!"), başlıkta "Elif ne yaptı?", büyük pastel davranış kartları (puan sayı yerine yıldız). Puan verilince kartın üstünde 1,5 sn "+1 ⭐ Yardımlaştı" balonu çıkar, karakter zıplar.
-  - Arka plan yumuşak bir manzaradır (gökyüzü → krem, alttaki tepe); 1280×720'de 20 öğrenci kaydırmadan sığar.
+  - Arka plan yumuşak bir manzaradır (gökyüzü → krem, alttaki tepe); 1280×720'de ve 1920×1080'de 20 öğrenci kaydırmadan sığar.
+  - **Sayfalama** (karar 2026-10-04): tahta hiç kaydırılmaz. Öğrenciler ekrana sığmıyorsa (pencerede ya da tam ekranda) kartlar ekrana sığacak kadar sayfalara bölünür ve sayfalar **10 saniyede bir** yana kayar, sondan başa döner; böylece her çocuk sırayla görünür. Ekran boyutu değişince (tam ekrana geçiş dahil) yeniden hesaplanır.
+    - Altta ◀ / ▶ ve duraklat düğmeleri (80px) ile sayısız bir konum şeridi vardır. Davranış penceresi, karakter seçimi veya seviye kutlaması açıkken kayma durur; elle sayfa değiştirmek bekleme süresini baştan başlatır. Hareketi azalt ayarında sayfalar kaymadan değişir.
   - Yalnızca olumlu davranışlar listelenir; tek öğrenciye veya "Tüm sınıf"a puan verilir. Not alanı yoktur. 10 saniyelik geri alma burada da vardır.
   - Dokunma hedefleri en az 80px; tam ekran düğmesi ve sınıfa dönüş bağlantısı vardır.
 - Tahta modunda **negatif puanlar ve denge gösterilmez**, sıralama/liderlik tablosu yoktur. Sunucu bu ekrana XP, denge veya olumsuz olay verisi göndermez.
@@ -188,14 +194,15 @@ School(id, name, timezone='Europe/Istanbul', settings jsonb, createdAt)
 User(id, email, emailVerified, name, image, role, schoolId?, createdAt, updatedAt)
   -- Better Auth tablosu; şifre Better Auth'un account tablosunda. Veli için schoolId null.
 Session / Account / Verification  -- Better Auth standart tabloları
-Class(id, schoolId, name, gradeLevel 1–4, academicYear, homeDailyXpCap=10, archivedAt?, createdAt)
+Class(id, schoolId, name, gradeLevels smallint[] (1–4, en az bir, sıralı, tekrarsız; birden fazla = birleştirilmiş),
+      academicYear, homeDailyXpCap=10, archivedAt?, createdAt)
 ClassTeacher(classId, userId, createdAt)                         PK(classId, userId)
 CharacterType(id, schoolId?, name, active, sortOrder)             -- schoolId null = genel tür
 CharacterLevel(schoolId, level 1–5, xpThreshold ≥ 0)              PK(schoolId, level); tüm türler için ortak
   -- okulda kayıt yoksa varsayılan eşikler (src/lib/character.ts) kullanılır
 CharacterStage(id, characterTypeId, level 1–5, name, assetUrl)    unique(characterTypeId, level)
   -- aşama yoksa genel yer tutucu görsel gösterilir
-Student(id, classId, firstName, lastInitial?, characterTypeId, xp=0, balance=0,
+Student(id, classId, firstName, lastInitial?, gradeLevel 1–4 (sınıfın düzeylerinden biri), characterTypeId, xp=0, balance=0,
         characterLevel=1, active, createdAt, deletedAt?)
 ParentStudent(parentId, studentId, relation, inviteCodeId?, createdAt)  PK(parentId, studentId)
 InviteCode(id, studentId, codeHash, singleUse, expiresAt?, usedAt?, usedById?, revokedAt?,
@@ -208,7 +215,7 @@ BehaviorEvent(id, studentId, classId, behaviorTypeId?, nameSnapshot, iconSnapsho
               createdAt, deletedAt?, deletedById?, deleteReason? (undo|delete))
   -- batchId istemcide dokunuş başına üretilir; unique(studentId, batchId) çift gönderimi engeller
   -- ve toplu puanlamayı gruplar
-Subject(id, classId, name, sortOrder, archivedAt?)
+Subject(id, classId, name, gradeLevel? (null = tüm düzeyler), sortOrder, archivedAt?)
 Topic(id, subjectId, name, sortOrder, archivedAt?)
 Stage(id, topicId, name, sortOrder, archivedAt?)
 StudentProgress(studentId, stageId, status, stars 0–3?, updatedById?, updatedAt)  PK(studentId, stageId)

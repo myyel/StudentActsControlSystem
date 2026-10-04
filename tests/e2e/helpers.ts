@@ -58,8 +58,16 @@ export async function expectNoHorizontalScroll(page: Page) {
 
 /** Visible buttons, links and form controls smaller than `min` px (either side). */
 export async function smallTargets(page: Page, min: number, scope = "body") {
-  // Dialogs zoom in from 95%; measure the final size.
-  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
+  // Dialogs zoom in from 95%; measure the final size. Looping decorations (the login's floating
+  // characters) never finish, so only finite animations are awaited.
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+        .map((a) => a.finished.catch(() => {})),
+    ),
+  );
   return page.evaluate(
     ({ min, scope }) => {
       const selector = 'a[href], button, [role="button"], [role="switch"], [role="tab"], [role="checkbox"], [role="radio"], input:not([type="hidden"]), select, textarea, summary';

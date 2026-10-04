@@ -42,6 +42,7 @@ export function createAuth(db: Db, { nextjs = true, rateLimitEnabled }: CreateAu
     advanced: {
       database: { generateId: "uuid" },
     },
+    trustedOrigins: devLanOrigin,
     rateLimit: {
       // Better Auth defaults to production-only; tests turn it on explicitly.
       enabled: rateLimitEnabled,
@@ -52,6 +53,23 @@ export function createAuth(db: Db, { nextjs = true, rateLimitEnabled }: CreateAu
     },
     plugins,
   });
+}
+
+const PRIVATE_IPV4 = /^(10\.\d+|192\.168|172\.(1[6-9]|2\d|3[01]))\.\d+\.\d+$/;
+
+/**
+ * Dev only: trust the request's own origin when it is a private LAN address, so phones and
+ * tablets can sign in to `pnpm dev` at e.g. http://192.168.1.36:3000. Production trusts only BETTER_AUTH_URL.
+ */
+function devLanOrigin(request?: Request): string[] {
+  if (process.env.NODE_ENV !== "development" || !request) return [];
+  const origin = request.headers.get("origin");
+  if (!origin) return [];
+  try {
+    return PRIVATE_IPV4.test(new URL(origin).hostname) ? [origin] : [];
+  } catch {
+    return [];
+  }
 }
 
 export const auth = createAuth(defaultDb);

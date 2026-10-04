@@ -77,7 +77,7 @@ ${steps(
 )}
 
 <h2>2.2 Sınıf ekranı ve sekmeler</h2>
-<p>Sınıf ekranının üstünde şu sekmeler bulunur: <b>Puanlama</b>, <b>Matris</b>, <b>Davranışlar</b>, <b>Duraklar</b>, <b>Mesajlar</b> ve <b>Veli davet kartları</b>. Sağ üstteki <b>Tahta modu</b> düğmesi akıllı tahta ekranını açar.</p>
+<p>Sınıf ekranının üstünde şu sekmeler bulunur: <b>Puanlama</b>, <b>Ölçek</b>, <b>Davranışlar</b>, <b>Duraklar</b>, <b>Mesajlar</b> ve <b>Veli davet kartları</b>. Sağ üstteki <b>Tahta modu</b> düğmesi akıllı tahta ekranını açar.</p>
 ${fig("ogretmen-puanlama", "Puanlama sekmesi: her kartta öğrencinin karakteri, adı ve XP'si")}
 ${tip("Sınıf ekranı tahtaya yansıtılabileceği için kartlarda yalnızca ad ve XP görünür; davranış dengesi ve olumsuz puanlar yalnızca öğrenci detayındadır.")}
 
@@ -167,12 +167,12 @@ ${fig("ogretmen-duraklar", "Ders, konu ve durakların düzenlenmesi")}
 <li><b>Ekleme:</b> <b>Ders ekle</b>, konu içinde <b>Konu ekle</b>, konu içinde <b>Durak ekle</b>.</li>
 <li><b>Yeniden adlandırma:</b> kalem simgesi.</li>
 <li><b>Sıralama:</b> soldaki tutamaçtan (⋮⋮) sürükleyin. Klavyede tutamaca gelip <b>boşluk</b>'a basın, <b>ok tuşlarıyla</b> taşıyın, yeniden <b>boşluk</b>'la bırakın.</li>
-<li><b>Arşivleme:</b> kutu simgesi. Arşivlenen öğeler matriste ve veli ekranında görünmez; öğrencilerin ilerlemesi silinmez ve arşivden geri getirilebilir.</li>
+<li><b>Arşivleme:</b> kutu simgesi. Arşivlenen öğeler ölçekte ve veli ekranında görünmez; öğrencilerin ilerlemesi silinmez ve arşivden geri getirilebilir.</li>
 </ul>
 
-<h2>2.9 Sınıf matrisi (ilerleme işaretleme)</h2>
-<p><b>Matris</b> sekmesi öğrencileri satırlarda, durakları sütunlarda gösterir. Üstten dersi seçin.</p>
-${fig("ogretmen-matris", "Sınıf matrisi: her hücre bir öğrencinin bir duraktaki durumu")}
+<h2>2.9 Sınıf ölçeği (ilerleme işaretleme)</h2>
+<p><b>Ölçek</b> sekmesi öğrencileri satırlarda, durakları sütunlarda gösterir. Üstten dersi seçin.</p>
+${fig("ogretmen-matris", "Sınıf ölçeği: her hücre bir öğrencinin bir duraktaki durumu")}
 <ul>
 <li><b>Hücreye dokunun:</b> Başlamadı → Devam ediyor → Tamamlandı sırasıyla değişir.</li>
 <li><b>Yıldız modu:</b> <b>★ Yıldız modu</b>'nu açıp tamamlanmış bir hücreye dokunarak 0–3 yıldız verin.</li>

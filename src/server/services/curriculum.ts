@@ -12,12 +12,13 @@ const ordered = <T extends typeof subject | typeof topic | typeof stage>(t: T) =
 
 export type StageNode = { id: string; name: string };
 export type TopicNode = { id: string; name: string; stages: StageNode[] };
-export type SubjectNode = { id: string; name: string; topics: TopicNode[] };
+/** gradeLevel: combined classes may tie a subject to one grade; null = every student. */
+export type SubjectNode = { id: string; name: string; gradeLevel: number | null; topics: TopicNode[] };
 
 /** Ordered subject → topic → stage tree of a class. Archived nodes (and their children) are left out. */
 export async function getCurriculum(db: DbOrTx, classId: string): Promise<SubjectNode[]> {
   const subjects = await db
-    .select({ id: subject.id, name: subject.name })
+    .select({ id: subject.id, name: subject.name, gradeLevel: subject.gradeLevel })
     .from(subject)
     .where(and(eq(subject.classId, classId), isNull(subject.archivedAt)))
     .orderBy(...ordered(subject));
@@ -132,15 +133,38 @@ async function liveChildren(db: DbOrTx, kind: NodeKind, parentId: string) {
   return db.select({ id: stage.id }).from(stage).where(and(eq(stage.topicId, parentId), isNull(stage.archivedAt))).orderBy(...ordered(stage));
 }
 
-/** Call only after assertTeacherOfClass on getParentClassId. New nodes go last. */
-export async function createNode(db: Db, actor: AuthUser, kind: NodeKind, parentId: string, name: string, ip?: string | null) {
+/** Subjects in combined classes: the grade must be one the class teaches (null = all grades). */
+async function assertClassGrade(db: DbOrTx, classId: string, gradeLevel: number | null) {
+  if (gradeLevel === null) return;
+  const [row] = await db.select({ gradeLevels: schoolClass.gradeLevels }).from(schoolClass).where(eq(schoolClass.id, classId));
+  if (!row) throw forbidden();
+  if (!row.gradeLevels.includes(gradeLevel)) throw new UserError("Bu sınıfta o düzey yok.");
+}
+
+/**
+ * Call only after assertTeacherOfClass on getParentClassId. New nodes go last.
+ * `gradeLevel` applies to subjects only.
+ */
+export async function createNode(
+  db: Db,
+  actor: AuthUser,
+  kind: NodeKind,
+  parentId: string,
+  name: string,
+  ip?: string | null,
+  gradeLevel: number | null = null,
+) {
   return db.transaction(async (tx) => {
     const classId = await getParentClassId(tx, kind, parentId);
+    if (kind === "subject") await assertClassGrade(tx, classId, gradeLevel);
     const next = (last: { n: number | null } | undefined) => (last?.n ?? -1) + 1;
     let created: { id: string } | undefined;
     if (kind === "subject") {
       const [last] = await tx.select({ n: max(subject.sortOrder) }).from(subject).where(eq(subject.classId, parentId));
-      [created] = await tx.insert(subject).values({ classId: parentId, name, sortOrder: next(last) }).returning({ id: subject.id });
+      [created] = await tx
+        .insert(subject)
+        .values({ classId: parentId, name, gradeLevel, sortOrder: next(last) })
+        .returning({ id: subject.id });
     } else if (kind === "topic") {
       const [last] = await tx.select({ n: max(topic.sortOrder) }).from(topic).where(eq(topic.subjectId, parentId));
       [created] = await tx.insert(topic).values({ subjectId: parentId, name, sortOrder: next(last) }).returning({ id: topic.id });
@@ -156,7 +180,7 @@ export async function createNode(db: Db, actor: AuthUser, kind: NodeKind, parent
       entityId: id,
       actorId: actor.id,
       schoolId: await schoolIdOf(tx, classId),
-      data: { name, parentId },
+      data: kind === "subject" ? { name, parentId, gradeLevel } : { name, parentId },
       ip,
     });
     return id;
@@ -178,6 +202,24 @@ export async function renameNode(db: Db, actor: AuthUser, kind: NodeKind, id: st
       actorId: actor.id,
       schoolId: await schoolIdOf(tx, await getNodeClassId(tx, kind, id)),
       data: { name },
+      ip,
+    });
+  });
+}
+
+/** Which grade a subject is for (null = all). Call only after assertTeacherOfClass on getNodeClassId. */
+export async function setSubjectGradeLevel(db: Db, actor: AuthUser, id: string, gradeLevel: number | null, ip?: string | null) {
+  await db.transaction(async (tx) => {
+    const classId = await getNodeClassId(tx, "subject", id);
+    await assertClassGrade(tx, classId, gradeLevel);
+    await tx.update(subject).set({ gradeLevel }).where(eq(subject.id, id));
+    await writeAudit(tx, {
+      action: "curriculum.update",
+      entity: "subject",
+      entityId: id,
+      actorId: actor.id,
+      schoolId: await schoolIdOf(tx, classId),
+      data: { gradeLevel },
       ip,
     });
   });

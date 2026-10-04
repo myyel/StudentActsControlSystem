@@ -1,10 +1,11 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, CheckCheck, ListChecks, X } from "lucide-react";
 import { useCallback, useState, useTransition } from "react";
 import { giveBehaviorAction } from "@/app/ogretmen/scoring-actions";
 import { CharacterAvatar } from "@/components/characters/character-avatar";
 import { LevelUpCelebration, type Celebration } from "@/components/characters/level-up-celebration";
+import { softOutlineButton, toggleOn } from "@/components/action-styles";
 import { Button } from "@/components/ui/button";
 import { formatPoints, UNDO_WINDOW_MS } from "@/lib/behavior";
 import { formatStudentName } from "@/lib/student-names";
@@ -17,15 +18,22 @@ type Student = {
   id: string;
   firstName: string;
   lastInitial: string | null;
+  gradeLevel: number;
   xp: number;
   level: number;
   stage: { name: string; assetUrl: string };
 };
 
-type Props = { classId: string; students: Student[]; behaviors: PickerBehavior[] };
+type Props = { classId: string; gradeLevels: number[]; students: Student[]; behaviors: PickerBehavior[] };
 
-/** Class scoring: tap a card, tap a behavior. Cards show name and XP only (screen may be projected). */
-export function ScoringBoard({ classId, students, behaviors }: Props) {
+/**
+ * Class scoring: tap a card, tap a behavior. Cards show name and XP only (screen may be projected).
+ * Combined classes get a grade filter and a small grade label on each card.
+ */
+export function ScoringBoard({ classId, gradeLevels, students: allStudents, behaviors }: Props) {
+  const combined = gradeLevels.length > 1;
+  const [grade, setGrade] = useState<number | null>(null);
+  const students = grade === null ? allStudents : allStudents.filter((s) => s.gradeLevel === grade);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [targets, setTargets] = useState<string[] | null>(null);
@@ -37,7 +45,7 @@ export function ScoringBoard({ classId, students, behaviors }: Props) {
   const closeUndo = useCallback(() => setLastScore(null), []);
   const closeCelebration = useCallback(() => setCelebrations(null), []);
 
-  const byId = new Map(students.map((s) => [s.id, s]));
+  const byId = new Map(allStudents.map((s) => [s.id, s]));
   const title =
     targets?.length === 1 ? formatStudentName(byId.get(targets[0]!)!) : `${targets?.length ?? 0} öğrenci`;
 
@@ -89,31 +97,61 @@ export function ScoringBoard({ classId, students, behaviors }: Props) {
     });
   }
 
-  if (students.length === 0) {
+  if (allStudents.length === 0) {
     return <p className="text-muted-foreground">Puan verilecek aktif öğrenci yok. Aşağıdan öğrenci ekleyin.</p>;
   }
 
   return (
     <div className="flex flex-col gap-4 pb-24">
+      {combined && (
+        <div role="group" aria-label="Düzeye göre süz" className="flex flex-wrap gap-2">
+          {[null, ...gradeLevels].map((g) => {
+            const count = g === null ? allStudents.length : allStudents.filter((s) => s.gradeLevel === g).length;
+            return (
+              <button
+                key={g ?? "all"}
+                type="button"
+                aria-pressed={grade === g}
+                onClick={() => {
+                  setGrade(g);
+                  setSelected(new Set());
+                }}
+                className={cn(
+                  "flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-bold transition-colors",
+                  grade === g ? "bg-sky-ink text-white" : "bg-card shadow-[0_2px_0_var(--kid-shadow)] hover:bg-accent",
+                )}
+              >
+                {g === null ? "Tümü" : `${g}. sınıf`}
+                <span className={cn("rounded-full px-2 text-xs", grade === g ? "bg-white/20" : "bg-muted")}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2">
+        {/* Prominent: scoring several children at once is a main action on this screen. */}
         <Button
-          variant={selectMode ? "default" : "outline"}
-          className="h-11 rounded-xl"
+          className={cn(
+            softOutlineButton,
+            selectMode && toggleOn,
+          )}
           aria-pressed={selectMode}
           onClick={() => {
             setSelectMode(!selectMode);
             setSelected(new Set());
           }}
         >
+          {selectMode ? <X className="size-5" aria-hidden /> : <ListChecks className="size-5" aria-hidden />}
           {selectMode ? "Çoklu seçimi kapat" : "Çoklu seç"}
         </Button>
         {selectMode && (
           <>
-            <Button variant="outline" className="h-11 rounded-xl" onClick={() => setSelected(new Set(students.map((s) => s.id)))}>
+            <Button className={softOutlineButton} onClick={() => setSelected(new Set(students.map((s) => s.id)))}>
+              <CheckCheck className="size-5" aria-hidden />
               Tümünü seç
             </Button>
             <Button
-              className="h-11 rounded-xl bg-grass-strong text-white hover:bg-grass-strong/90 dark:text-ink"
+              className="h-12 rounded-xl bg-grass-strong px-5 text-base font-extrabold text-white shadow-[0_3px_0_var(--kid-shadow)] hover:bg-grass-strong/90 dark:text-ink"
               disabled={selected.size === 0}
               onClick={() => {
                 setError(null);
@@ -144,6 +182,9 @@ export function ScoringBoard({ classId, students, behaviors }: Props) {
                 <CharacterAvatar stage={s.stage} size={52} className="rounded-full bg-muted" />
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="truncate text-lg font-bold">{formatStudentName(s)}</span>
+                  {combined && (
+                    <span className="w-fit rounded-full bg-lav-soft px-2 text-xs font-bold text-lav-ink">{s.gradeLevel}. sınıf</span>
+                  )}
                   <span className="text-sm text-muted-foreground">
                     Sv {s.level} · {s.xp} XP
                   </span>

@@ -263,30 +263,30 @@ ${sc("D5", "Günlük ev XP tavanını değiştirme", {
 `);
 
 // ─── 7. Duraklar ve matris ─────────────────────────────────────────────────
-chapter("duraklar", "E · Duraklar ve Sınıf Matrisi", "Ders → Konu → Durak yönetimi ve ilerleme işaretleme.", `
+chapter("duraklar", "E · Duraklar ve Sınıf Ölçeği", "Ders → Konu → Durak yönetimi ve ilerleme işaretleme.", `
 ${sc("E1", "Ders, konu ve durak ekleme / yeniden adlandırma", {
   rol: "Ö",
   adim: ["2-A → <b>Duraklar</b> → <b>Ders ekle</b>: \"Müzik\".", "İçine konu \"Ritim\", konuya duraklar \"Alkış\", \"Tempo\" ekleyin.", "Kalem simgesiyle \"Tempo\"yu \"Tempo tutma\" yapın."],
-  bekle: ["Hiyerarşi doğru görünür; ad değişikliği kaydedilir.", "Matris sekmesinde ders seçicide <b>Müzik</b> çıkar."],
+  bekle: ["Hiyerarşi doğru görünür; ad değişikliği kaydedilir.", "Ölçek sekmesinde ders seçicide <b>Müzik</b> çıkar."],
 })}
 ${sc("E2", "Sürükle-bırak ve klavyeyle sıralama", {
   rol: "Ö",
   adim: ["Bir durağı ⋮⋮ tutamacından sürükleyip yerini değiştirin.", "Klavyede Tab ile bir tutamaca gelin, <b>Boşluk</b> → <b>↓</b> → <b>Boşluk</b>.", "Sayfayı yenileyin (F5)."],
-  bekle: ["Her iki yöntemle de sıra değişir ve yenilemeden sonra korunur.", "Matris sütunları yeni sırayla görünür."],
+  bekle: ["Her iki yöntemle de sıra değişir ve yenilemeden sonra korunur.", "Ölçek sütunları yeni sırayla görünür."],
 })}
 ${sc("E3", "Arşivleme", {
   rol: "Ö, V1",
-  adim: ["Türkçe → Yazma → \"Cümle kurma\" durağını arşivleyin (kutu simgesi).", "Matris'e ve V1 ile Ada Y.'nin yol haritasına bakın.", "Durağı arşivden geri getirin."],
-  bekle: ["Arşivlenen durak matriste ve veli yol haritasında görünmez.", "Geri getirince öğrencilerin önceki ilerlemesiyle birlikte döner."],
+  adim: ["Türkçe → Yazma → \"Cümle kurma\" durağını arşivleyin (kutu simgesi).", "Ölçek'e ve V1 ile Ada Y.'nin yol haritasına bakın.", "Durağı arşivden geri getirin."],
+  bekle: ["Arşivlenen durak ölçekte ve veli yol haritasında görünmez.", "Geri getirince öğrencilerin önceki ilerlemesiyle birlikte döner."],
 })}
-${sc("E4", "Matriste durum ve yıldız", {
+${sc("E4", "Ölçekte durum ve yıldız", {
   rol: "Ö",
-  adim: ["Matris → Matematik. Bir öğrencinin boş hücresine üç kez dokunun.", "<b>★ Yıldız modu</b>'nu açıp tamamlanmış bir hücreye dokunun (birkaç kez)."],
+  adim: ["Ölçek → Matematik. Bir öğrencinin boş hücresine üç kez dokunun.", "<b>★ Yıldız modu</b>'nu açıp tamamlanmış bir hücreye dokunun (birkaç kez)."],
   bekle: ["Hücre sırasıyla Başlamadı → Devam ediyor → Tamamlandı olur.", "Yıldız modunda 0–3 yıldız arasında döner; yalnızca tamamlanmış hücrelere yıldız verilir."],
 })}
 ${sc("E5", "Toplu işaretleme ve veliye yansıma", {
   rol: "Ö, V1",
-  adim: ["Matris'te bir durağın başlığına dokunun, <b>Öğrenci seç</b> ile Ada Y. ve Ali K.'yı seçip <b>Tamamlandı</b> işaretleyin.", "V1 ile giriş yapıp Ada Y. ve Ali K. için <b>Akademik yol haritası</b>'nı açın."],
+  adim: ["Ölçek'te bir durağın başlığına dokunun, <b>Öğrenci seç</b> ile Ada Y. ve Ali K.'yı seçip <b>Tamamlandı</b> işaretleyin.", "V1 ile giriş yapıp Ada Y. ve Ali K. için <b>Akademik yol haritası</b>'nı açın."],
   bekle: ["Yalnızca seçilen iki öğrencinin hücresi değişir.", "Veli yol haritasında durak ✓ tamamlandı görünür; <b>Şu an burada</b> etiketi bir sonraki durağa geçer."],
 })}
 `);
@@ -489,16 +489,16 @@ ${sc("L4", "Çıkıştan sonra geri tuşu", {
 `);
 
 // ─── 15. Görünüm ───────────────────────────────────────────────────────────
-chapter("gorunum", "M · Ekran Boyutu, Erişilebilirlik ve PWA", "Telefon, tablet, masaüstü, karanlık mod, klavye ve çevrimdışı.", `
+chapter("gorunum", "M · Ekran Boyutu, Erişilebilirlik ve PWA", "Telefon, tablet, masaüstü, açık tema, klavye ve çevrimdışı.", `
 ${sc("M1", "Ekran boyutları", {
   rol: "Ö, V1",
   adim: ["Chrome'da F12 → Ctrl + Shift + M; genişliği sırasıyla <b>360</b>, <b>768</b>, <b>1280</b>, <b>1920</b> px yapın.", "Her genişlikte öğretmen puanlama, matris, veli paneli ve tahta modunu gezin."],
-  bekle: ["Hiçbir ekranda yatay kaydırma çubuğu yok (matris tablosu kendi kutusunda kayabilir).", "Metinler taşmaz, düğmeler parmakla rahat basılacak büyüklükte."],
+  bekle: ["Hiçbir ekranda yatay kaydırma çubuğu yok (ölçek tablosu kendi kutusunda kayabilir).", "Metinler taşmaz, düğmeler parmakla rahat basılacak büyüklükte."],
 })}
-${sc("M2", "Karanlık mod", {
+${sc("M2", "Sistem karanlık moddayken açık tema", {
   rol: "Herkes",
   adim: ["Windows Ayarlar → Kişiselleştirme → Renkler → <b>Koyu</b> (ya da DevTools → Rendering → <i>prefers-color-scheme: dark</i>).", "Ana ekranları gezin."],
-  bekle: ["Tüm ekranlar koyu temaya geçer; yazılar okunaklı, beyaz kutu kalmaz."],
+  bekle: ["Arayüz koyu temaya geçmez; tüm ekranlar açık (krem) zeminde kalır."],
 })}
 ${sc("M3", "Yalnızca klavyeyle kullanım", {
   rol: "Ö",

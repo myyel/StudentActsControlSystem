@@ -32,7 +32,13 @@ export function SignOutButton() {
   }
 
   return (
-    <Button variant="outline" onClick={signOut} disabled={pending} className="h-11">
+    // Sits on the dark header bar (AppShell).
+    <Button
+      variant="outline"
+      onClick={signOut}
+      disabled={pending}
+      className="h-11 border-white/35 bg-transparent text-primary-foreground hover:bg-white/10 hover:text-primary-foreground dark:bg-transparent"
+    >
       Çıkış yap
     </Button>
   );

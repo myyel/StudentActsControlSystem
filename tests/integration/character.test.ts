@@ -232,7 +232,7 @@ describe("student character type", () => {
 
 describe("board students", () => {
   it("sends only name, type, level, stages and progress; active students sorted by name", async () => {
-    await db.insert(student).values({ classId: fx.classes.classA.id, firstName: "Zeynep", characterTypeId: dragonId, active: false });
+    await db.insert(student).values({ classId: fx.classes.classA.id, firstName: "Zeynep", gradeLevel: 2, characterTypeId: dragonId, active: false });
     const board = await listBoardStudents(db, fx.classes.classA.id);
 
     expect(board.map((s) => s.firstName)).toEqual(["Ada", "Ali"]);

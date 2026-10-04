@@ -24,7 +24,7 @@
 | **XP ve denge** | XP yalnızca olumlu puanlardan artar; davranış dengesi olumlu + olumsuz toplamdır. Sayaçlar olayla aynı transaction'da güncellenir. |
 | **Öğrenci detayı** | Zaman çizelgesi (Tümü/Okul/Ev filtresi), son 7 günün olumlu/olumsuz grafiği, bağlı veliler, davet kodları. |
 | **Akademik duraklar** | Ders → Konu → Durak yönetimi, sürükle-bırak sıralama (dokunmatik + klavye), arşivleme. |
-| **Sınıf matrisi** | Öğrenci × durak tablosu. Dokunarak durum değiştirme, 0–3 yıldız, durak başlığından toplu işaretleme. |
+| **Sınıf ölçeği** | Öğrenci × durak tablosu. Dokunarak durum değiştirme, 0–3 yıldız, durak başlığından toplu işaretleme. |
 | **Veli yol haritası** | Çocuğun her dersteki ilerlemesi: tamamlanan duraklar, "şu an burada", gelecek duraklar. |
 | **Karakterler** | 4 özgün tür × 5 evrim aşaması. XP ile seviye atlama (seviye asla düşmez), animasyonlu kutlama. Öğretmen öğrencinin türünü değiştirir. |
 | **Karakter yönetimi** | Yönetici seviye eşiklerini, tür ve aşama adlarını ayarlar, türleri aktif/pasif yapar. |
@@ -33,7 +33,7 @@
 | **Tahta modu** | Akıllı tahtada tam ekran: büyük karakter kartları, yalnızca olumlu puan, tüm sınıfa puan; XP, denge ve sıralama yok. |
 | **Mesajlar** | Sınıf duyurusu veya öğrenciye özel mesaj. Veli okuyunca okundu bilgisi düşer; "Gördüm 👍" / "Teşekkürler 🙏" hızlı tepki. Öğretmen kimin okuduğunu görür. |
 | **PWA** | Ana ekrana yüklenebilir uygulama (Android, iOS 16.4+, masaüstü). Bağlantı yokken "İnternet bağlantısı yok" ekranı; çocuk verisi içeren sayfalar cihazda saklanmaz. |
-| **Erişilebilirlik** | WCAG 2 AA kontrast (açık/karanlık mod), dokunmatikte en az 44px (tahtada 80px) dokunma hedefleri, klavyeyle tam kullanım. Uçtan uca testlerle 4 ekran boyutunda denetlenir. |
+| **Erişilebilirlik** | WCAG 2 AA kontrast (her zaman açık mod), dokunmatikte en az 44px (tahtada 80px) dokunma hedefleri, klavyeyle tam kullanım. Uçtan uca testlerle 4 ekran boyutunda denetlenir. |
 | **KVKK araçları** | Veli verilerini JSON/CSV indirir, çocuğunun verisinin silinmesini talep eder, kendi hesabını siler. Yönetici talepleri görür, verileri indirir, kalıcı olarak siler veya reddeder. Rıza kayıtları ispat için saklanır. |
 | **Denetim kaydı** | Yönetici kritik işlemleri (puan, ilerleme, veli bağlama, silme, dışa aktarma) kişi, işlem ve tarihe göre süzerek görür. |
 | **Güvenlik** | Giriş, davet kodu, dışa aktarma, silme onayı ve mesaj/ev girişi için hız sınırları; HTTPS (HSTS) ve güvenlik başlıkları. |
@@ -170,7 +170,7 @@ Geliştirme kuralları ve kod kalıpları: [`CLAUDE.md`](CLAUDE.md).
 
 `pnpm test:e2e` (Playwright) uygulamanın üretim derlemesini ayrı bir `class_attitude_e2e` veritabanına karşı çalıştırır; her çalıştırmada veritabanı sıfırlanıp seed edilir. Önce `docker compose up -d db`; ilk seferde `pnpm exec playwright install chromium`. Testler 4 projede koşar — **mobile** 360px, **tablet** 768px, **desktop** 1280px, **board** 1920px (dokunmatik) — ve şunları denetler:
 
-- Anahtar ekranlarda yatay kaydırma olmaması, dokunma hedefi boyutları, axe ile WCAG 2 AA (kontrast dahil, açık ve karanlık mod),
+- Anahtar ekranlarda yatay kaydırma olmaması, dokunma hedefi boyutları, axe ile WCAG 2 AA (kontrast dahil), sistem karanlık moddayken de açık temanın korunması,
 - Puan verme/geri alma, tahtada olumsuz puan ve XP görünmemesi, ev davranışı, mesaj tepkisi,
 - Yetki: başka sınıf veya başka ailenin çocuğu → 404,
 - PWA: manifest, ikonlar, çevrimdışı ekran; klavye: giriş, pencere odak tuzağı, sürükle-bırak sıralama.

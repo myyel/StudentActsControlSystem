@@ -188,7 +188,7 @@ describe("messages", () => {
   it("hides messages of a child once the child is deleted", async () => {
     const [kid] = await db
       .insert(student)
-      .values({ classId: fx.classes.classA.id, firstName: "Gizem", characterTypeId: fx.students.studentA1.characterTypeId })
+      .values({ classId: fx.classes.classA.id, firstName: "Gizem", gradeLevel: 2, characterTypeId: fx.students.studentA1.characterTypeId })
       .returning();
     await db.insert(parentStudent).values({ parentId: fx.users.parentB.id, studentId: kid!.id });
     const { messageId } = await send(fx.classes.classA.id, { title: "Gizem", body: "...", studentId: kid!.id });

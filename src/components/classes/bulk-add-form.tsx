@@ -6,9 +6,10 @@ import { FormMessage } from "@/components/form-message";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { GradeLevelSelect } from "./grade-level-select";
 import { formatStudentName, MAX_BULK_STUDENTS, parseStudentLines } from "@/lib/student-names";
 
-export function BulkAddForm({ classId }: { classId: string }) {
+export function BulkAddForm({ classId, gradeLevels }: { classId: string; gradeLevels: number[] }) {
   const [text, setText] = useState("");
   const [state, action, pending] = useActionState(async (prev: unknown, formData: FormData) => {
     const result = await bulkAddStudentsAction(classId, prev, formData);
@@ -38,6 +39,8 @@ export function BulkAddForm({ classId }: { classId: string }) {
           Soyadının yalnızca baş harfi saklanır. Listeden kopyalanan numaralar (&quot;1.&quot;) yok sayılır.
         </p>
       </div>
+
+      <GradeLevelSelect id="bulk-grade" gradeLevels={gradeLevels} label="Bu öğrencilerin düzeyi" />
 
       {lines.length > 0 && (
         <div className="rounded-md border p-3 text-sm" aria-live="polite">
