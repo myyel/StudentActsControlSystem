@@ -15,7 +15,7 @@ const TYPES = {
   robot: { name: "Robot", bg: "#e2f0ff", stages: ["Parça kutusu", "Mini robot", "Yardımcı robot", "Kalpli robot", "Süper robot"] },
   tohum: { name: "Tohum", bg: "#eaf6df", stages: ["Tohum", "Filiz", "Fidan", "Genç ağaç", "Çiçekli ağaç"] },
   kedi: { name: "Kedi", bg: "#fff0dc", stages: ["Sepetteki yavru", "Minik kedi", "Oyuncu kedi", "Fiyonklu kedi", "Bilge kedi"] },
-  tavsan: { name: "Tavşan", bg: "#fde8f0", stages: ["Yuvadaki yavru", "Pamuk yavru", "Zıpzıp tavşan", "Çiçekli tavşan", "Bilge tavşan"] },
+  tavsan: { name: "Tavşan", bg: "#dcf3ee", stages: ["Yuvadaki yavru", "Pamuk yavru", "Zıpzıp tavşan", "Çiçekli tavşan", "Bilge tavşan"] },
   penguen: { name: "Penguen", bg: "#e3f1fb", stages: ["Buzlu yumurta", "Pofuduk yavru", "Meraklı penguen", "Atkılı penguen", "Kral penguen"] },
   tilki: { name: "Tilki", bg: "#ffe9dc", stages: ["Yapraklı yuva", "Yavru tilki", "Çevik tilki", "Kaşif tilki", "Bilge tilki"] },
   kaplumbaga: { name: "Kaplumbağa", bg: "#e6f5e4", stages: ["Kumdaki yumurta", "Minik kaplumbağa", "Yürüyen kaplumbağa", "Çiçekli kaplumbağa", "Bilge kaplumbağa"] },

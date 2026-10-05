@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.41.1 | 2026-10-06 | fix | Tavşan karakterinin arka planı pembe yerine açık nane yeşili (`#dcf3ee`); 5 görsel yeniden üretildi | Pilot |
 | 0.41.0 | 2026-10-06 | feat | **Sınıfa özel karakter sırası ve aşama adları:** öğretmen Karakterler sekmesinde seçili türleri yukarı/aşağı düğmeleriyle sıralar (1. tür yeni öğrencilere; öğrenci detayı ve tahta seçimi bu sırayla) ve her türün aşama adlarını yalnızca kendi sınıfı için değiştirir (boş = okul adı, "Okul adlarına dön"); adlar o sınıfın tahta, kutlama, bildirim, veli paneli ve macera haritasında görünür; migration 0014 (`class_character_type.sort_order`, `class_character_stage_name`), audit `class.character_stages_update`; Karakterler formlarında kayıttan sonra mesajın kaybolması giderildi | Pilot |
 | 0.40.0 | 2026-10-06 | feat | **10 karakter:** altı yeni özgün tür (Kedi, Tavşan, Penguen, Tilki, Kaplumbağa, Ahtapot), her biri 5 aşama SVG (`generate.mjs`, 50 görsel); `CHARACTER_TEMPLATES`, halka renkleri ve "kedisi/tavşanı…" ekleri; migration 0013 mevcut her okula altı türü aşamalarıyla ekler (sıra 5–10); tahtadaki karakter seçimi 4'ten fazla türde beşerli iki sıra | Pilot |
 | 0.39.1 | 2026-10-06 | fix | e2e akış testlerindeki Türkçe karakterler (v0.39.0'da PowerShell ile yeniden yazılırken çift kodlanmıştı) düzeltildi; 22 akış testi yeniden geçiyor | Pilot |
