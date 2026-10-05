@@ -9,6 +9,12 @@ const RING: Record<string, string> = {
   baykus: "#b7835a",
   robot: "#2e7fd6",
   tohum: "#3fa34d",
+  kedi: "#e98a2e",
+  tavsan: "#e27fa3",
+  penguen: "#3d5a80",
+  tilki: "#e8642c",
+  kaplumbaga: "#3f9a55",
+  ahtapot: "#8b5fe0",
 };
 const GOLD = "#f5b400";
 

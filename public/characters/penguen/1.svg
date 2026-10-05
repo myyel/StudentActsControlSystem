@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Penguen: Buzlu yumurta">
+<title>Penguen: Buzlu yumurta</title>
+<circle cx="100" cy="100" r="98" fill="#e3f1fb"/>
+<path d="M40 158 L160 158 L168 182 L32 182Z" fill="#bfe3fb" stroke="#7fc0ea" stroke-width="3" stroke-linejoin="round"/><path d="M60 166 l14 8 M120 164 l18 10" stroke="#fff" stroke-width="3" stroke-linecap="round"/><ellipse cx="100" cy="106" rx="44" ry="56" fill="#fdfdff" stroke="#7fc0ea" stroke-width="4"/><circle cx="84" cy="90" r="8" fill="#bfe3fb"/><circle cx="116" cy="118" r="10" fill="#bfe3fb"/><circle cx="92" cy="140" r="6" fill="#bfe3fb"/><circle cx="118" cy="80" r="5" fill="#bfe3fb"/><ellipse cx="82" cy="70" rx="7" ry="12" fill="#fff" transform="rotate(25 82 70)"/>
+</svg>

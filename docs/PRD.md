@@ -101,7 +101,7 @@
 - İlerleme değişiklikleri veliye bildirim göndermez.
 
 ### 4.6 Karakterler
-- Birden fazla karakter türü (ejderha, baykuş, robot, tohum→ağaç).
+- On yerleşik karakter türü (2026-10-06): ejderha, baykuş, robot, tohum→ağaç, kedi, tavşan, penguen, tilki, kaplumbağa, ahtapot. Her okul kendi kopyasını alır; mevcut okullara yeni altı tür migration ile (sıra 5–10) eklendi.
   - Türü **yalnızca öğretmen** seçer/değiştirir (öğrenci detayı; çocuk isterse tahtada öğretmenle birlikte seçer). Veli değiştiremez. Değişiklik audit log'a düşer.
 - **Okulun 5 seviyesi.** XP eşikleri **tüm türler için ortaktır** (okul bazlı tablo, admin ayarlar); varsayılan 0 / 20 / 50 / 100 / 200 XP. 1. seviyenin eşiği 0'dır, her eşik bir öncekinden büyüktür.
   - Eşikler düşürülürse yeni eşiğe ulaşan öğrenciler hemen yükselir; eşikler yükseltilirse kimse düşmez. Değişiklik audit log'a düşer.
@@ -114,9 +114,9 @@
 - Seviye atlandığında animasyonlu kutlama: üç sahne (eski form titrer ve parlar → ışık patlaması ve yeni formun beyaz silueti → yeni form + konfeti), başlık "Deniz'in ejderhası büyüdü!" ve altında "3. seviye · Yavru ejderha". Pencere "Harika!"ya basılana kadar açık kalır (alkış zamanı); birden çok seviye atlama sırayla gösterilir. Hareket azaltma tercihinde sade çapraz geçiş. Öğretmen puanlama ekranında, tahta modunda ve veli ev girişinde gösterilir.
   - Ses efektleri ve sesli okuma henüz yoktur (kayıtlı Türkçe ses gerekir).
 - Karakter **hiçbir koşulda geri gitmez**.
-- Görseller özgündür (telifli karakter kullanılmaz); SVG veya Lottie. Yerleşik 4 tür × 5 seviye SVG `scripts/characters/generate.mjs` ile çizilir: her seviye bir öncekinden bir bakışta ayırt edilir (yeni parça: kanat, kitap, kalp, çiçek), 5. seviye yıldızlarla çevrilidir.
-  - Aşama adları (v0.36): Ejderha: Gizemli yumurta, Çatlayan yumurta, Yavru ejderha, Kanatlı ejderha, Bilge ejderha · Baykuş: Benekli yumurta, Pofuduk yavru, Meraklı baykuş, Kitapsever baykuş, Bilge baykuş · Robot: Parça kutusu, Mini robot, Yardımcı robot, Kalpli robot, Süper robot · Tohum: Tohum, Filiz, Fidan, Genç ağaç, Çiçekli ağaç. Mevcut okullarda yöneticinin değiştirmediği eski varsayılan adlar migration ile yenilenir.
-- Tahtada karakter seçimi: öğrenci detayındaki "Tahtada birlikte seç" bağlantısı tahtayı `?karakter=<öğrenci>` ile açar; "Deniz, hangisi seninle büyüsün?" ekranı sınıfta seçili türleri çocuğun **kendi seviyesindeki** formuyla gösterir, seçim iki adımlıdır (karta dokun → "Bunu seçiyorum!").
+- Görseller özgündür (telifli karakter kullanılmaz); SVG veya Lottie. Yerleşik 10 tür × 5 seviye SVG `scripts/characters/generate.mjs` ile çizilir: her seviye bir öncekinden bir bakışta ayırt edilir (yeni parça: kanat, kitap, kalp, çiçek, yün yumağı, fiyonk, havuç, atkı, büyüteç, dalgıç maskesi…), 5. seviye yıldızlarla çevrilidir.
+  - Aşama adları (v0.36): Ejderha: Gizemli yumurta, Çatlayan yumurta, Yavru ejderha, Kanatlı ejderha, Bilge ejderha · Baykuş: Benekli yumurta, Pofuduk yavru, Meraklı baykuş, Kitapsever baykuş, Bilge baykuş · Robot: Parça kutusu, Mini robot, Yardımcı robot, Kalpli robot, Süper robot · Tohum: Tohum, Filiz, Fidan, Genç ağaç, Çiçekli ağaç · Kedi: Sepetteki yavru, Minik kedi, Oyuncu kedi, Fiyonklu kedi, Bilge kedi · Tavşan: Yuvadaki yavru, Pamuk yavru, Zıpzıp tavşan, Çiçekli tavşan, Bilge tavşan · Penguen: Buzlu yumurta, Pofuduk yavru, Meraklı penguen, Atkılı penguen, Kral penguen · Tilki: Yapraklı yuva, Yavru tilki, Çevik tilki, Kaşif tilki, Bilge tilki · Kaplumbağa: Kumdaki yumurta, Minik kaplumbağa, Yürüyen kaplumbağa, Çiçekli kaplumbağa, Bilge kaplumbağa · Ahtapot: Deniz kabuğu, Minik ahtapot, Neşeli ahtapot, Dalgıç ahtapot, Bilge ahtapot. Mevcut okullarda yöneticinin değiştirmediği eski varsayılan adlar migration ile yenilenir.
+- Tahtada karakter seçimi: öğrenci detayındaki "Tahtada birlikte seç" bağlantısı tahtayı `?karakter=<öğrenci>` ile açar; "Deniz, hangisi seninle büyüsün?" ekranı sınıfta seçili türleri (4'ten fazlaysa iki sıra hâlinde, beşerli) çocuğun **kendi seviyesindeki** formuyla gösterir, seçim iki adımlıdır (karta dokun → "Bunu seçiyorum!").
 
 ### 4.7 Tahta modu
 - Öğretmen sınıfı tam ekran açar (`/tahta/[sinifId]`): büyük karakter kartları, dokunarak olumlu puan verme.

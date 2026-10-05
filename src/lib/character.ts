@@ -41,7 +41,18 @@ export function nextStageSentence(progress: number, nextStageName: string | null
 }
 
 // "Deniz'in ejderhası büyüdü!": the built-in type (slug in the asset url) with its possessive suffix.
-const TYPE_NOUNS: Record<string, string> = { ejderha: "ejderhası", baykus: "baykuşu", robot: "robotu", tohum: "tohumu" };
+const TYPE_NOUNS: Record<string, string> = {
+  ejderha: "ejderhası",
+  baykus: "baykuşu",
+  robot: "robotu",
+  tohum: "tohumu",
+  kedi: "kedisi",
+  tavsan: "tavşanı",
+  penguen: "pengueni",
+  tilki: "tilkisi",
+  kaplumbaga: "kaplumbağası",
+  ahtapot: "ahtapotu",
+};
 
 export function characterNoun(assetUrl: string) {
   const slug = /\/characters\/([^/]+)\//.exec(assetUrl)?.[1] ?? "";

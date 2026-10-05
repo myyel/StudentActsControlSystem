@@ -21,6 +21,8 @@ type Props = {
  */
 export function CharacterChooser({ student, types, onClose }: Props) {
   const [chosen, setChosen] = useState(student.characterTypeId);
+  // The full set (up to ten types) fits the board in two rows of five.
+  const many = types.length > 4;
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
@@ -47,7 +49,11 @@ export function CharacterChooser({ student, types, onClose }: Props) {
           Seviyen korunur — sadece karakterin değişir.
         </DialogDescription>
 
-        <div role="radiogroup" aria-label="Karakter türü" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div
+          role="radiogroup"
+          aria-label="Karakter türü"
+          className={cn("grid grid-cols-2 gap-4", many ? "sm:grid-cols-3 lg:grid-cols-5" : "lg:grid-cols-4")}
+        >
           {types.map((t) => {
             const stage = t.stages[student.level - 1]!;
             const selected = t.id === chosen;
@@ -59,7 +65,8 @@ export function CharacterChooser({ student, types, onClose }: Props) {
                 aria-checked={selected}
                 onClick={() => setChosen(t.id)}
                 className={cn(
-                  "kid-card relative flex min-h-20 flex-col items-center gap-2 border-4 p-4 outline-none focus-visible:ring-[4px] focus-visible:ring-ring/60",
+                  "kid-card relative flex min-h-20 flex-col items-center border-4 outline-none focus-visible:ring-[4px] focus-visible:ring-ring/60",
+                  many ? "gap-1 p-3" : "gap-2 p-4",
                   selected ? "border-grass-strong" : "border-transparent",
                 )}
               >
@@ -68,9 +75,9 @@ export function CharacterChooser({ student, types, onClose }: Props) {
                     <Check className="size-6" strokeWidth={3} aria-hidden />
                   </span>
                 )}
-                <CharacterAvatar stage={stage} size={140} className="2xl:[--avatar:180px]" />
-                <span className="font-display text-3xl font-extrabold">{t.name}</span>
-                <span className="text-lg font-semibold text-muted-foreground">{stage.name}</span>
+                <CharacterAvatar stage={stage} size={many ? 88 : 140} className={many ? "2xl:[--avatar:130px]" : "2xl:[--avatar:180px]"} />
+                <span className={cn("font-display font-extrabold", many ? "text-2xl" : "text-3xl")}>{t.name}</span>
+                <span className={cn("font-semibold text-muted-foreground", many ? "text-base" : "text-lg")}>{stage.name}</span>
               </button>
             );
           })}
