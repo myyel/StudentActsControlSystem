@@ -60,3 +60,16 @@ export const classGoalSchema = z.object({
 });
 
 export type ClassGoalInput = z.infer<typeof classGoalSchema>;
+
+export const classActivitiesSchema = z.object({
+  activities: z
+    .array(
+      z.object({
+        weekday: z.coerce.number().int().min(1).max(7),
+        time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Saati SS:DD biçiminde girin (ör. 14:30)."),
+        name: z.string().trim().min(1, "Etkinliğin adını girin (ör. Kitap okuma saati).").max(60, "Etkinlik adı en fazla 60 karakter olabilir."),
+      }),
+    )
+    .max(7)
+    .refine((list) => new Set(list.map((a) => a.weekday)).size === list.length, "Her güne en fazla bir etkinlik eklenebilir."),
+});

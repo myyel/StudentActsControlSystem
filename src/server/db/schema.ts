@@ -11,6 +11,7 @@ import {
   primaryKey,
   smallint,
   text,
+  time,
   timestamp,
   unique,
   uniqueIndex,
@@ -400,6 +401,25 @@ export const classGoal = pgTable(
   (t) => [
     uniqueIndex("class_goal_open_class").on(t.classId).where(sql`${t.endedAt} is null`),
     check("class_goal_target_check", sql`${t.target} between 5 and 1000`),
+  ],
+);
+
+// Weekly activity time of a class (PRD §4.12): at most one per weekday; the board rings at that
+// time in the school's time zone. No row = no alarm that day.
+export const classActivity = pgTable(
+  "class_activity",
+  {
+    classId: uuid()
+      .notNull()
+      .references(() => schoolClass.id, { onDelete: "cascade" }),
+    /** ISO weekday: 1 = Monday … 7 = Sunday. */
+    weekday: smallint().notNull(),
+    time: time({ precision: 0 }).notNull(),
+    name: varchar({ length: 60 }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.classId, t.weekday] }),
+    check("class_activity_weekday_check", sql`${t.weekday} between 1 and 7`),
   ],
 );
 

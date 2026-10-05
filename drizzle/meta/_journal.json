@@ -85,6 +85,13 @@
       "when": 1791235973938,
       "tag": "0011_class_character_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791237705320,
+      "tag": "0012_class_activity",
+      "breakpoints": true
     }
   ]
 }

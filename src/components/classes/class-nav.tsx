@@ -1,4 +1,4 @@
-import { Grid3x3, Mail, Map, Presentation, Sparkles, Star, Tag, Ticket } from "lucide-react";
+import { AlarmClock, Grid3x3, Mail, Map, Presentation, Sparkles, Star, Tag, Ticket } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { db } from "@/server/db";
@@ -11,6 +11,7 @@ const TABS = [
   { key: "matris", label: "Ölçek", icon: Grid3x3, path: "/matris" },
   { key: "davranislar", label: "Davranışlar", short: "Davranış", icon: Tag, path: "/davranislar" },
   { key: "karakterler", label: "Karakterler", short: "Karakter", icon: Sparkles, path: "/karakterler" },
+  { key: "etkinlik", label: "Etkinlik saati", short: "Etkinlik", icon: AlarmClock, path: "/etkinlik" },
   { key: "duraklar", label: "Duraklar", icon: Map, path: "/duraklar" },
   { key: "mesajlar", label: "Mesajlar", icon: Mail, path: "/mesajlar" },
   { key: "davetler", label: "Veli davet kartları", short: "Davetler", icon: Ticket, path: "/davetler" },

@@ -11,11 +11,13 @@ import type { PickerBehavior } from "@/components/scoring/behavior-picker";
 import { UndoBar, type LastScore } from "@/components/scoring/undo-bar";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { UNDO_WINDOW_MS } from "@/lib/behavior";
+import type { Activity } from "@/lib/activity";
 import { nextStageSentence } from "@/lib/character";
 import { formatStudentName } from "@/lib/student-names";
 import { cn } from "@/lib/utils";
 import { newUuid } from "@/lib/uuid";
 import type { BoardStudent } from "@/server/services/character";
+import { ActivityAlarm } from "./activity-alarm";
 import { CharacterChooser, type BoardCharacterType } from "./character-chooser";
 import { useAutoAdvance, useCardsPerPage } from "./use-board-pages";
 
@@ -28,6 +30,8 @@ type Props = {
   /** Student whose character is chosen together on the board (opened from the student detail). */
   chooseFor?: string;
   goal?: React.ReactNode;
+  /** Weekly activity times; the board rings at today's (PRD §4.12). */
+  activity?: { timeZone: string; activities: Activity[] };
 };
 
 type Balloon = { key: string; text: string; ids: Set<string> };
@@ -42,7 +46,7 @@ const iconButton =
  * The board never scrolls: when the class does not fit the screen (windowed or fullscreen), the
  * cards are split into pages that slide every 10 seconds, so every child is shown in turn.
  */
-export function Board({ classId, className, students, behaviors, characterTypes, chooseFor, goal }: Props) {
+export function Board({ classId, className, students, behaviors, characterTypes, chooseFor, goal, activity }: Props) {
   const [targets, setTargets] = useState<string[] | null>(null);
   // Kept after closing so the picker does not switch to "Tüm sınıf" during its close animation.
   const [shownTargets, setShownTargets] = useState<string[]>([]);
@@ -55,11 +59,14 @@ export function Board({ classId, className, students, behaviors, characterTypes,
   const [pending, start] = useTransition();
   const [page, setPage] = useState(0);
   const [userPaused, setUserPaused] = useState(false);
+  const [alarmOpen, setAlarmOpen] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
   const closeUndo = useCallback(() => setLastScore(null), []);
   const closeCelebration = useCallback(() => setCelebrations(null), []);
 
   const byId = new Map(students.map((s) => [s.id, s]));
+  // One picture per character type around the alarm bell.
+  const alarmStages = [...new Map(students.map((s) => [s.characterTypeId, s.stage])).values()].slice(0, 6);
   const single = shownTargets.length === 1 ? byId.get(shownTargets[0]!) : undefined;
   const chooser = choosing ? byId.get(choosing) : undefined;
 
@@ -68,8 +75,8 @@ export function Board({ classId, className, students, behaviors, characterTypes,
   for (let i = 0; i < students.length; i += perPage) pages.push(students.slice(i, i + perPage));
   const pageCount = pages.length;
   const current = Math.min(page, Math.max(pageCount - 1, 0));
-  // Hold the page while the teacher is scoring, choosing a character or a celebration is on.
-  const paused = userPaused || targets !== null || chooser !== undefined || celebrations !== null;
+  // Hold the page while the teacher is scoring, choosing a character, or a celebration or alarm is on.
+  const paused = userPaused || targets !== null || chooser !== undefined || celebrations !== null || alarmOpen;
   useAutoAdvance(current, pageCount, paused, setPage);
 
   useEffect(() => {
@@ -327,6 +334,15 @@ export function Board({ classId, className, students, behaviors, characterTypes,
         </DialogContent>
       </Dialog>
 
+      {activity && (
+        <ActivityAlarm
+          classId={classId}
+          timeZone={activity.timeZone}
+          activities={activity.activities}
+          stages={alarmStages}
+          onOpenChange={setAlarmOpen}
+        />
+      )}
       {chooser && <CharacterChooser student={chooser} types={characterTypes} onClose={() => setChoosing(null)} />}
       {lastScore && <UndoBar key={lastScore.batchId} score={lastScore} onClose={closeUndo} large />}
       {celebrations && (

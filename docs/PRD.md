@@ -125,7 +125,7 @@
   - Davranış penceresi: solda çocuğun karakteri ve sayı yerine bir cümle ("Fidan olmaya çok az kaldı!"), başlıkta "Elif ne yaptı?", büyük pastel davranış kartları (puan sayı yerine yıldız). Puan verilince kartın üstünde 1,5 sn "+1 ⭐ Yardımlaştı" balonu çıkar, karakter zıplar.
   - Arka plan yumuşak bir manzaradır (gökyüzü → krem, alttaki tepe); 1280×720'de ve 1920×1080'de 20 öğrenci kaydırmadan sığar.
   - **Sayfalama** (karar 2026-10-04): tahta hiç kaydırılmaz. Öğrenciler ekrana sığmıyorsa (pencerede ya da tam ekranda) kartlar ekrana sığacak kadar sayfalara bölünür ve sayfalar **10 saniyede bir** yana kayar, sondan başa döner; böylece her çocuk sırayla görünür. Ekran boyutu değişince (tam ekrana geçiş dahil) yeniden hesaplanır.
-    - Altta ◀ / ▶ ve duraklat düğmeleri (80px) ile sayısız bir konum şeridi vardır. Davranış penceresi, karakter seçimi veya seviye kutlaması açıkken kayma durur; elle sayfa değiştirmek bekleme süresini baştan başlatır. Hareketi azalt ayarında sayfalar kaymadan değişir.
+    - Altta ◀ / ▶ ve duraklat düğmeleri (80px) ile sayısız bir konum şeridi vardır. Davranış penceresi, karakter seçimi, seviye kutlaması veya etkinlik alarmı (§4.12) açıkken kayma durur; elle sayfa değiştirmek bekleme süresini baştan başlatır. Hareketi azalt ayarında sayfalar kaymadan değişir.
   - Yalnızca olumlu davranışlar listelenir; tek öğrenciye veya "Tüm sınıf"a puan verilir. Not alanı yoktur. 10 saniyelik geri alma burada da vardır.
   - Dokunma hedefleri en az 80px; tam ekran düğmesi ve sınıfa dönüş bağlantısı vardır.
 - Tahta modunda **negatif puanlar ve denge gösterilmez**, sıralama/liderlik tablosu yoktur. Sunucu bu ekrana XP, denge veya olumsuz olay verisi göndermez.
@@ -168,7 +168,14 @@
 - Sınıf listesi → sınıf ekranı (öğrenci kartları grid).
 - Öğrenci detayı: zaman çizelgesi, haftalık/aylık grafik, akademik durum, bağlı veliler, davet kodları.
   - Grafik: son 7 gün, gün gün olumlu/olumsuz puan (okulun saat dilimine göre). Aylık görünüm henüz yok.
-- Ayarlar: davranış tipleri, dersler/duraklar, ev XP tavanı, karakterler (sınıfın türleri, seviye sayısı ve eşikleri; §4.6).
+- Ayarlar: davranış tipleri, dersler/duraklar, ev XP tavanı, karakterler (sınıfın türleri, seviye sayısı ve eşikleri; §4.6), etkinlik saati (§4.12).
+
+### 4.12 Etkinlik saati (2026-10-06)
+- Öğretmen sınıfın "Etkinlik saati" sekmesinden her hafta günü (Pazartesi–Pazar) için **en fazla bir** etkinlik saati ve adı (en fazla 60 karakter, ör. "Kitap okuma saati") belirler; program her hafta tekrar eder. Kapalı günde alarm yoktur. "Pazartesiyi hafta içine kopyala" kısayolu vardır. Değişiklik audit log'a düşer.
+- Saat okulun saat dilimine göredir. Saat geldiğinde **tahta modu açıksa** tam ekran bir çocuk kartı çıkar: sallanan zil, zıplayan sınıf karakterleri, "Etkinlik zamanı!" ve etkinliğin adı. Tarayıcıda üretilen kısa bir zil sesi (ses dosyası yok) 30 sn boyunca birkaç saniyede bir çalar; kart öğretmen "Tamam"a (80px) basana kadar kalır. Açıkken tahta sayfası kaymaz. Hareketi azalt ayarında zil ve karakterler hareket etmez.
+  - Tahta saatten sonraki 5 dakika içinde açılırsa da çalar; aynı gün o tarayıcıda bir kez çalar.
+  - Tarayıcılar sesi yalnızca sayfaya bir kez dokunulduktan sonra çalar; dokunulmamışsa yalnızca kart görünür.
+  - Program tahta açılırken yüklenir; tahta açıkken yapılan değişiklik tahta yeniden açılınca geçerli olur.
 
 ## 5. Gizlilik, güvenlik, KVKK
 
@@ -228,6 +235,7 @@ Stage(id, topicId, name, sortOrder, archivedAt?)
 StudentProgress(studentId, stageId, status, stars 0–3?, updatedById?, updatedAt)  PK(studentId, stageId)
   -- satır yoksa "başlamadı"; başlamadı'ya dönüş satırı siler. check: stars yalnızca status='completed'
 ClassGoal(id, classId, title ≤60, target 5–1000, startedAt, endedAt?, createdById?)
+ClassActivity(classId, weekday 1–7 (1 = Pazartesi), time, name ≤60)  PK(classId, weekday); kayıt yoksa o gün alarm yok
   -- sınıf başına tek açık hedef (endedAt null, kısmi unique index); ilerleme behavior_event'ten sayılır
 Message(id, classId, studentId?, authorId?, title, body, createdAt, deletedAt?)
 MessageRead(messageId, parentId, readAt, reaction?)                PK(messageId, parentId)

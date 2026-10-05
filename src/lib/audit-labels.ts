@@ -28,6 +28,7 @@ export const AUDIT_ACTION_LABEL: Record<string, string> = {
   "character_type.update": "Karakter türü güncellendi",
   "class.character_levels_update": "Sınıfın seviye ayarı değişti",
   "class.character_types_update": "Sınıfın karakter türleri değişti",
+  "class.activities_update": "Etkinlik saatleri değişti",
   "message.create": "Mesaj gönderildi",
   "message.delete": "Mesaj silindi",
   "deletion.request": "Silme talebi",
