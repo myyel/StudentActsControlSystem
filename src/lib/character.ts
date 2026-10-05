@@ -3,6 +3,9 @@
 /** Fixed number of evolution levels (product decision, phase 5). */
 export const MAX_LEVEL = 5;
 
+/** A teacher can give a class fewer levels (PRD §4.6); every type has MAX_LEVEL stages. */
+export const MIN_CLASS_LEVELS = 2;
+
 /** XP needed for levels 1…5 when a school has not configured its own thresholds. */
 export const DEFAULT_LEVEL_THRESHOLDS = [0, 20, 50, 100, 200] as const;
 

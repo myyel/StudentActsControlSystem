@@ -78,6 +78,13 @@
       "when": 1791143395848,
       "tag": "0010_drop_class_grade_level",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791235973938,
+      "tag": "0011_class_character_settings",
+      "breakpoints": true
     }
   ]
 }

@@ -17,6 +17,7 @@ type Props = {
   character: {
     characterTypeId: string;
     level: number;
+    maxLevel: number;
     xp: number;
     progress: number;
     nextThreshold: number | null;
@@ -29,7 +30,7 @@ type Props = {
 export function StudentCharacter({ studentId, boardHref, character }: Props) {
   const [pending, start] = useTransition();
   const [state, setState] = useState<ActionResult<undefined> | null>(null);
-  const { level, xp, nextThreshold, stage, progress, types, characterTypeId } = character;
+  const { level, maxLevel, xp, nextThreshold, stage, progress, types, characterTypeId } = character;
 
   function choose(typeId: string) {
     if (typeId === characterTypeId) return;
@@ -39,11 +40,11 @@ export function StudentCharacter({ studentId, boardHref, character }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col items-center gap-4 sm:flex-row">
-        <CharacterAvatar stage={stage} level={level} progress={progress} size={152} label={`${stage.name}, ${level}. seviye`} />
+        <CharacterAvatar stage={stage} level={level} maxLevel={maxLevel} progress={progress} size={152} label={`${stage.name}, ${level}. seviye`} />
         <div className="flex w-full flex-col gap-2">
           <p className="text-xl font-semibold">{stage.name}</p>
           <p className="text-muted-foreground">{level}. seviye</p>
-          <LevelBar level={level} progress={progress} />
+          <LevelBar level={level} maxLevel={maxLevel} progress={progress} />
           <p className="text-sm text-muted-foreground">
             {nextThreshold === null
               ? "Son seviyeye ulaştı."

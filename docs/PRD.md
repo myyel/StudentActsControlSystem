@@ -22,7 +22,7 @@
 | Rol | Yetki |
 |---|---|
 | **admin** | Okul ayarları, öğretmen hesapları, karakter türleri/eşikleri |
-| **teacher** | Kendi sınıflarını, öğrencilerini, davranış tiplerini, akademik durakları, mesajları yönetir |
+| **teacher** | Kendi sınıflarını, öğrencilerini, davranış tiplerini, akademik durakları, mesajları yönetir; sınıfının karakter türlerini, seviye sayısını ve eşiklerini seçer |
 | **parent** | Yalnızca kendisine bağlı öğrencileri görür; ev davranışı girer; mesajları okur |
 
 - Öğrencilerin kendi hesabı **yoktur** (6–10 yaş). Öğrenciler karakterlerini tahta modunda veya velinin cihazında görür.
@@ -103,8 +103,11 @@
 ### 4.6 Karakterler
 - Birden fazla karakter türü (ejderha, baykuş, robot, tohum→ağaç).
   - Türü **yalnızca öğretmen** seçer/değiştirir (öğrenci detayı; çocuk isterse tahtada öğretmenle birlikte seçer). Veli değiştiremez. Değişiklik audit log'a düşer.
-- **Sabit 5 seviye.** XP eşikleri **tüm türler için ortaktır** (okul bazlı tek tablo, admin ayarlar); varsayılan 0 / 20 / 50 / 100 / 200 XP. 1. seviyenin eşiği 0'dır, her eşik bir öncekinden büyüktür.
+- **Okulun 5 seviyesi.** XP eşikleri **tüm türler için ortaktır** (okul bazlı tablo, admin ayarlar); varsayılan 0 / 20 / 50 / 100 / 200 XP. 1. seviyenin eşiği 0'dır, her eşik bir öncekinden büyüktür.
   - Eşikler düşürülürse yeni eşiğe ulaşan öğrenciler hemen yükselir; eşikler yükseltilirse kimse düşmez. Değişiklik audit log'a düşer.
+- **Sınıf karakter ayarı (2026-10-06).** Öğretmen sınıfın "Karakterler" sekmesinden okul ayarının yerine sınıfa özel ayar koyabilir; ayar konmayan sınıf okulunkini kullanır, "Okul ayarına dön" sınıf ayarını kaldırır. Değişiklikler audit log'a düşer.
+  - **Seviyeler:** 2–5 seviye ve her seviyenin eşiği (aynı kurallar: 1. eşik 0, artan). N seviyeli sınıfta her türün 1…N aşaması kullanılır. Eşik düşerse yeni eşiğe ulaşanlar hemen yükselir; seviye sayısı azaltılırsa üstteki öğrenciler seviyesini ve görselini korur, en yüksek seviyede görünür (karakter geri gitmez). Okul eşiği değişikliği kendi seviye ayarı olan sınıfları etkilemez.
+  - **Türler:** okulun aktif türlerinden istediği kadarı (en az bir). Seçilmeyen türler öğrenci detayında ve tahtadaki seçim ekranında görünmez; yeni öğrenciler ilk seçili türle (okul sırasına göre) başlar. Seçimden çıkarılan türü kullanan öğrenciler, kaydetmeden önce onay alınarak ilk seçili türe geçer; seviyeleri korunur. Okula dönmek kimseyi taşımaz. Yönetici seçili türlerin hepsini pasif yaparsa sınıf okulun aktif türlerine döner.
 - Her tür, her seviye için kendi görselini ve adını (evrim aşaması) sağlar; tür değişse de seviye aynı kalır.
   - Admin okulunun türlerini adlandırır, aşama adlarını değiştirir, aktif/pasif yapar. En az bir tür aktif kalmalıdır. Pasif tür yeni seçimlerde görünmez; kullanan öğrencinin karakteri değişmez. Genel (okula ait olmayan) türler salt okunurdur.
   - Yeni tür ekleme ve görsel yükleme henüz yoktur; görseller kodla gelir (`public/characters/<tür>/<seviye>.svg`).
@@ -113,7 +116,7 @@
 - Karakter **hiçbir koşulda geri gitmez**.
 - Görseller özgündür (telifli karakter kullanılmaz); SVG veya Lottie. Yerleşik 4 tür × 5 seviye SVG `scripts/characters/generate.mjs` ile çizilir: her seviye bir öncekinden bir bakışta ayırt edilir (yeni parça: kanat, kitap, kalp, çiçek), 5. seviye yıldızlarla çevrilidir.
   - Aşama adları (v0.36): Ejderha: Gizemli yumurta, Çatlayan yumurta, Yavru ejderha, Kanatlı ejderha, Bilge ejderha · Baykuş: Benekli yumurta, Pofuduk yavru, Meraklı baykuş, Kitapsever baykuş, Bilge baykuş · Robot: Parça kutusu, Mini robot, Yardımcı robot, Kalpli robot, Süper robot · Tohum: Tohum, Filiz, Fidan, Genç ağaç, Çiçekli ağaç. Mevcut okullarda yöneticinin değiştirmediği eski varsayılan adlar migration ile yenilenir.
-- Tahtada karakter seçimi: öğrenci detayındaki "Tahtada birlikte seç" bağlantısı tahtayı `?karakter=<öğrenci>` ile açar; "Deniz, hangisi seninle büyüsün?" ekranı dört türü çocuğun **kendi seviyesindeki** formuyla gösterir, seçim iki adımlıdır (karta dokun → "Bunu seçiyorum!").
+- Tahtada karakter seçimi: öğrenci detayındaki "Tahtada birlikte seç" bağlantısı tahtayı `?karakter=<öğrenci>` ile açar; "Deniz, hangisi seninle büyüsün?" ekranı sınıfta seçili türleri çocuğun **kendi seviyesindeki** formuyla gösterir, seçim iki adımlıdır (karta dokun → "Bunu seçiyorum!").
 
 ### 4.7 Tahta modu
 - Öğretmen sınıfı tam ekran açar (`/tahta/[sinifId]`): büyük karakter kartları, dokunarak olumlu puan verme.
@@ -165,7 +168,7 @@
 - Sınıf listesi → sınıf ekranı (öğrenci kartları grid).
 - Öğrenci detayı: zaman çizelgesi, haftalık/aylık grafik, akademik durum, bağlı veliler, davet kodları.
   - Grafik: son 7 gün, gün gün olumlu/olumsuz puan (okulun saat dilimine göre). Aylık görünüm henüz yok.
-- Ayarlar: davranış tipleri, dersler/duraklar, ev XP tavanı.
+- Ayarlar: davranış tipleri, dersler/duraklar, ev XP tavanı, karakterler (sınıfın türleri, seviye sayısı ve eşikleri; §4.6).
 
 ## 5. Gizlilik, güvenlik, KVKK
 
@@ -200,6 +203,10 @@ ClassTeacher(classId, userId, createdAt)                         PK(classId, use
 CharacterType(id, schoolId?, name, active, sortOrder)             -- schoolId null = genel tür
 CharacterLevel(schoolId, level 1–5, xpThreshold ≥ 0)              PK(schoolId, level); tüm türler için ortak
   -- okulda kayıt yoksa varsayılan eşikler (src/lib/character.ts) kullanılır
+ClassCharacterLevel(classId, level 1–5, xpThreshold ≥ 0)          PK(classId, level); satır sayısı = seviye sayısı (2–5)
+  -- sınıfta kayıt yoksa okulun eşikleri kullanılır
+ClassCharacterType(classId, characterTypeId)                      PK(classId, characterTypeId)
+  -- sınıfta (aktif) kayıt yoksa okulun tüm aktif türleri sunulur
 CharacterStage(id, characterTypeId, level 1–5, name, assetUrl)    unique(characterTypeId, level)
   -- aşama yoksa genel yer tutucu görsel gösterilir
 Student(id, classId, firstName, lastInitial?, gradeLevel 1–4 (sınıfın düzeylerinden biri), characterTypeId, xp=0, balance=0,

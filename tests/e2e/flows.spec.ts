@@ -70,9 +70,43 @@ test.describe("teacher", () => {
     await expect(dialog).toBeHidden();
   });
 
+  test("sets class levels, then goes back to the school levels", async ({ page }, testInfo) => {
+    // Class settings are shared by every project, and a raised level never drops: one project,
+    // thresholds only go up (nobody is raised) and the type pick is never saved.
+    test.skip(testInfo.project.name !== "desktop", "shared class settings");
+    const id = await classId("2-A");
+    await page.goto(`/ogretmen/siniflar/${id}/karakterler`);
+
+    await page.getByRole("button", { name: "3", exact: true }).click();
+    await page.getByLabel("2. seviye").fill("5000");
+    await page.getByLabel("3. seviye").fill("9000");
+    await page.getByRole("button", { name: "Seviyeleri kaydet" }).click();
+    await expect(page.getByText("Bu sınıfın kendi ayarı: 3 seviye.")).toBeVisible();
+    const { n } = await queryOne<{ n: number }>("SELECT count(*)::int AS n FROM class_character_level WHERE class_id = $1", [id]);
+    expect(n).toBe(3);
+
+    await page.getByRole("button", { name: "Okul ayarına dön" }).click();
+    await expect(page.getByText("Bu sınıf okulun seviye ayarını kullanıyor.")).toBeVisible();
+
+    // Removing a type in use asks first; cancelling changes nothing.
+    const types = page.getByRole("group", { name: "Sınıfta kullanılacak karakter türleri" });
+    const used = types.getByRole("checkbox").first();
+    await used.uncheck();
+    await page.getByRole("button", { name: "Türleri kaydet" }).click();
+    const confirm = page.getByRole("dialog", { name: "Karakterler değişecek" });
+    await expect(confirm).toBeVisible();
+    await confirm.getByRole("button", { name: "Vazgeç" }).click();
+    await expect(confirm).toBeHidden();
+  });
+
   test("cannot open another teacher's class", async ({ page }) => {
     const other = await classId("2-B");
-    for (const path of [`/ogretmen/siniflar/${other}`, `/ogretmen/siniflar/${other}/matris`, `/tahta/${other}`]) {
+    for (const path of [
+      `/ogretmen/siniflar/${other}`,
+      `/ogretmen/siniflar/${other}/matris`,
+      `/ogretmen/siniflar/${other}/karakterler`,
+      `/tahta/${other}`,
+    ]) {
       const response = await page.goto(path);
       expect(response?.status(), path).toBe(404);
       await expect(page.getByRole("heading", { name: "Bu sayfayı bulamadık" })).toBeVisible();

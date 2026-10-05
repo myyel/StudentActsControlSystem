@@ -204,6 +204,7 @@ export function Board({ classId, className, students, behaviors, characterTypes,
                             key={praised ? `hop-${balloon!.key}` : undefined}
                             stage={s.stage}
                             level={s.level}
+                            maxLevel={s.maxLevel}
                             progress={s.progress}
                             size={88}
                             className={cn("lg:short:[--avatar:52px] 2xl:[--avatar:116px] 2xl:midh:[--avatar:96px]", praised && "motion-safe:animate-hop")}
@@ -212,7 +213,7 @@ export function Board({ classId, className, students, behaviors, characterTypes,
                             {formatStudentName(s)}
                           </span>
                           <span className="sr-only">{s.stage.name}</span>
-                          <LevelStars level={s.level} size={18} />
+                          <LevelStars level={s.level} maxLevel={s.maxLevel} size={18} />
                         </button>
                       </li>
                     );
@@ -275,12 +276,13 @@ export function Board({ classId, className, students, behaviors, characterTypes,
                 <CharacterAvatar
                   stage={single.stage}
                   level={single.level}
+                  maxLevel={single.maxLevel}
                   progress={single.progress}
                   size={150}
                   className="md:[--avatar:210px]"
                 />
                 <p className="font-display text-4xl font-extrabold">{formatStudentName(single)}</p>
-                <LevelStars level={single.level} size={24} />
+                <LevelStars level={single.level} maxLevel={single.maxLevel} size={24} />
                 <p className="rounded-2xl bg-card px-4 py-2 text-lg font-bold shadow-sm">
                   {nextStageSentence(single.progress, single.nextStageName)}
                 </p>

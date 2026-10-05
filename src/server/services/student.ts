@@ -1,30 +1,21 @@
-import { and, asc, count, eq, isNull, or } from "drizzle-orm";
+import { and, asc, count, eq, isNull } from "drizzle-orm";
 import type { Db, DbOrTx } from "@/server/db";
-import { characterType, parentStudent, school, schoolClass, student, user } from "@/server/db/schema";
+import { parentStudent, school, schoolClass, student, user } from "@/server/db/schema";
 import type { StudentName } from "@/lib/student-names";
 import type { AuthUser } from "@/server/auth/guards";
 import { forbidden } from "@/server/auth/errors";
 import { UserError } from "@/server/action-result";
 import { writeAudit } from "./audit";
+import { listClassCharacterTypes } from "./character";
 
 const byName = (a: StudentName, b: StudentName) =>
   a.firstName.localeCompare(b.firstName, "tr") || (a.lastInitial ?? "").localeCompare(b.lastInitial ?? "", "tr");
 
-/** First active character type available to the school (school-specific or global). */
-async function defaultCharacterTypeId(db: DbOrTx, schoolId: string) {
-  const [row] = await db
-    .select({ id: characterType.id })
-    .from(characterType)
-    .where(
-      and(
-        eq(characterType.active, true),
-        or(eq(characterType.schoolId, schoolId), isNull(characterType.schoolId)),
-      ),
-    )
-    .orderBy(asc(characterType.sortOrder))
-    .limit(1);
-  if (!row) throw new Error("No active character type configured");
-  return row.id;
+/** First character type the class offers (the teacher's pick, or the school's active types). */
+async function defaultCharacterTypeId(db: DbOrTx, classId: string) {
+  const [first] = await listClassCharacterTypes(db, classId);
+  if (!first) throw new Error("No active character type configured");
+  return first.id;
 }
 
 /**
@@ -57,7 +48,7 @@ export async function addStudents(
     if (!cls) throw forbidden();
     const level = resolveGradeLevel(cls.gradeLevels, gradeLevel);
 
-    const characterTypeId = await defaultCharacterTypeId(tx, cls.schoolId);
+    const characterTypeId = await defaultCharacterTypeId(tx, classId);
     const created = await tx
       .insert(student)
       .values(

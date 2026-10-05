@@ -1,4 +1,4 @@
-import { Grid3x3, Mail, Map, Presentation, Star, Tag, Ticket } from "lucide-react";
+import { Grid3x3, Mail, Map, Presentation, Sparkles, Star, Tag, Ticket } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { db } from "@/server/db";
@@ -9,7 +9,8 @@ import { ClassSwitcher } from "./class-switcher";
 const TABS = [
   { key: "puanlama", label: "Puanlama", icon: Star, path: "" },
   { key: "matris", label: "Ölçek", icon: Grid3x3, path: "/matris" },
-  { key: "davranislar", label: "Davranışlar", icon: Tag, path: "/davranislar" },
+  { key: "davranislar", label: "Davranışlar", short: "Davranış", icon: Tag, path: "/davranislar" },
+  { key: "karakterler", label: "Karakterler", short: "Karakter", icon: Sparkles, path: "/karakterler" },
   { key: "duraklar", label: "Duraklar", icon: Map, path: "/duraklar" },
   { key: "mesajlar", label: "Mesajlar", icon: Mail, path: "/mesajlar" },
   { key: "davetler", label: "Veli davet kartları", short: "Davetler", icon: Ticket, path: "/davetler" },
@@ -19,7 +20,7 @@ export type ClassTab = (typeof TABS)[number]["key"];
 
 /**
  * Class header: switch between the teacher's classes without going back, tabs, board mode.
- * "Sınıflarım" lives in the header (TeacherNav). Phones get a 3×2 tab grid instead of a hidden scroll.
+ * "Sınıflarım" lives in the header (TeacherNav). Phones get a 4×2 tab grid instead of a hidden scroll.
  */
 export async function ClassNav({ classId, className, active }: { classId: string; className: string; active: ClassTab }) {
   const { user } = await requirePageRole("teacher");
@@ -50,7 +51,7 @@ export async function ClassNav({ classId, className, active }: { classId: string
       {/* One white bar holding every tab; the current tab is the dark pill inside it. */}
       <nav
         aria-label="Sınıf menüsü"
-        className="grid grid-cols-3 gap-1 rounded-3xl border bg-card p-1.5 shadow-[0_4px_0_var(--kid-shadow)] sm:flex sm:w-fit sm:max-w-full sm:flex-wrap sm:rounded-full"
+        className="grid grid-cols-4 gap-1 rounded-3xl border bg-card p-1.5 shadow-[0_4px_0_var(--kid-shadow)] sm:flex sm:w-fit sm:max-w-full sm:flex-wrap sm:rounded-full"
       >
         {TABS.map((t) => {
           const { key, label, icon: Icon, path } = t;

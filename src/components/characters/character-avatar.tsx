@@ -24,6 +24,8 @@ type Props = {
   /** Shown as a ring around the picture: progress to the next level (0–1). */
   progress?: number;
   level?: number;
+  /** The class's level count (PRD §4.6); reaching it gives the gold ring. */
+  maxLevel?: number;
   className?: string;
   /** Screen reader text, e.g. "Ada Y., Kanatlı ejderha, 4. seviye". Omit when written next to it. */
   label?: string;
@@ -37,9 +39,9 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
  * A character with an optional progress ring (no numbers: children see it). The last level gets a
  * full gold ring.
  */
-export function CharacterAvatar({ stage, size, progress, level, className, label }: Props) {
+export function CharacterAvatar({ stage, size, progress, level, maxLevel = MAX_LEVEL, className, label }: Props) {
   const ring = progress !== undefined;
-  const done = level !== undefined && level >= MAX_LEVEL;
+  const done = level !== undefined && level >= maxLevel;
   const value = done ? 1 : Math.min(1, Math.max(0, progress ?? 0));
 
   return (
@@ -75,11 +77,24 @@ export function CharacterAvatar({ stage, size, progress, level, className, label
 
 const STAR = "M12 2l2.9 6.6 7.1.7-5.4 4.8 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.3l7.1-.7z";
 
-/** Level as five stars (filled up to the level). SVG so no glyph text reaches contrast checks. */
-export function LevelStars({ level, size = 16, className }: { level: number; size?: number; className?: string }) {
+/**
+ * Level as one star per level of the class, filled up to the level (a student above a lowered
+ * level count shows all filled). SVG so no glyph text reaches contrast checks.
+ */
+export function LevelStars({
+  level,
+  maxLevel = MAX_LEVEL,
+  size = 16,
+  className,
+}: {
+  level: number;
+  maxLevel?: number;
+  size?: number;
+  className?: string;
+}) {
   return (
     <span role="img" aria-label={`${level}. seviye`} className={cn("inline-flex gap-0.5", className)}>
-      {Array.from({ length: MAX_LEVEL }, (_, i) => (
+      {Array.from({ length: maxLevel }, (_, i) => (
         <svg key={i} width={size} height={size} viewBox="0 0 24 24" aria-hidden>
           <path d={STAR} className={i < level ? "fill-sun stroke-sun-press" : "fill-line stroke-line"} strokeWidth={1.5} strokeLinejoin="round" />
         </svg>

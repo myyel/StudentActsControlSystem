@@ -205,6 +205,38 @@ export const characterLevel = pgTable(
   ],
 );
 
+// A teacher's per-class override of the school levels: the row count is the number of levels
+// (2–5). A class without rows uses the school thresholds.
+export const classCharacterLevel = pgTable(
+  "class_character_level",
+  {
+    classId: uuid()
+      .notNull()
+      .references(() => schoolClass.id, { onDelete: "cascade" }),
+    level: smallint().notNull(),
+    xpThreshold: integer().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.classId, t.level] }),
+    check("class_character_level_level_check", sql`${t.level} between 1 and 5`),
+    check("class_character_level_threshold_check", sql`${t.xpThreshold} >= 0`),
+  ],
+);
+
+// Character types a teacher picked for a class. A class without rows offers every active school type.
+export const classCharacterType = pgTable(
+  "class_character_type",
+  {
+    classId: uuid()
+      .notNull()
+      .references(() => schoolClass.id, { onDelete: "cascade" }),
+    characterTypeId: uuid()
+      .notNull()
+      .references(() => characterType.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.classId, t.characterTypeId] })],
+);
+
 // One evolution stage (name + picture) per type and level.
 export const characterStage = pgTable(
   "character_stage",

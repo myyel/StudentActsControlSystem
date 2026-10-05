@@ -26,6 +26,8 @@ export const AUDIT_ACTION_LABEL: Record<string, string> = {
   "progress.bulk_set": "Toplu ilerleme değişti",
   "character.thresholds_update": "Seviye eşikleri değişti",
   "character_type.update": "Karakter türü güncellendi",
+  "class.character_levels_update": "Sınıfın seviye ayarı değişti",
+  "class.character_types_update": "Sınıfın karakter türleri değişti",
   "message.create": "Mesaj gönderildi",
   "message.delete": "Mesaj silindi",
   "deletion.request": "Silme talebi",

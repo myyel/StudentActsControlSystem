@@ -5,18 +5,29 @@ import { newUuid } from "@/lib/uuid";
 import { db } from "@/server/db";
 import { auditLog, behaviorEvent, characterStage, characterType, student } from "@/server/db/schema";
 import { UserError } from "@/server/action-result";
-import { assertAdminOfCharacterType, assertParentOfStudent, assertTeacherOfStudent } from "@/server/auth/guards";
+import {
+  assertAdminOfCharacterType,
+  assertParentOfStudent,
+  assertTeacherOfClass,
+  assertTeacherOfStudent,
+} from "@/server/auth/guards";
 import { listBehaviorTypes, loadDefaultBehaviorTypes } from "@/server/services/behavior-type";
 import { deleteEvent, giveBehavior, undoBatch } from "@/server/services/behavior";
 import {
+  getClassCharacterTypes,
+  getClassLevelSettings,
   getLevelThresholds,
   getStudentCharacter,
   listBoardStudents,
   listCharacterTypes,
+  listClassCharacterTypes,
   setStudentCharacterType,
   updateCharacterType,
+  updateClassCharacterTypes,
+  updateClassLevels,
   updateLevelThresholds,
 } from "@/server/services/character";
+import { addStudents } from "@/server/services/student";
 import { seedAuthFixture } from "../helpers/fixtures";
 
 vi.mock("@/server/db", async () => {
@@ -237,9 +248,126 @@ describe("board students", () => {
 
     expect(board.map((s) => s.firstName)).toEqual(["Ada", "Ali"]);
     for (const s of board) {
-      expect(Object.keys(s).sort()).toEqual(["characterTypeId", "firstName", "id", "lastInitial", "level", "nextStageName", "progress", "stage"]);
+      expect(Object.keys(s).sort()).toEqual(["characterTypeId", "firstName", "id", "lastInitial", "level", "maxLevel", "nextStageName", "progress", "stage"]);
       expect(s.progress).toBeGreaterThanOrEqual(0);
       expect(s.progress).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+describe("class character settings", () => {
+  // Class B (teacher B) gets its own students so earlier tests do not leak in.
+  const B = () => fx.classes.classB.id;
+  let low: string; // 4 XP, level 1
+  let top: string; // reached level 5 earlier, 0 XP now
+  let behaviorId: string;
+
+  beforeAll(async () => {
+    const rows = await db
+      .insert(student)
+      .values([
+        { classId: B(), firstName: "Deniz", gradeLevel: 2, characterTypeId: dragonId, xp: 4 },
+        { classId: B(), firstName: "Elif", gradeLevel: 2, characterTypeId: dragonId, characterLevel: 5 },
+      ])
+      .returning();
+    [low, top] = [rows[0]!.id, rows[1]!.id];
+    await loadDefaultBehaviorTypes(db, B());
+    behaviorId = (await listBehaviorTypes(db, B())).find((t) => t.name === "Yardımlaştı")!.id;
+  });
+
+  it("is changed only by a teacher of the class", async () => {
+    await expect(assertTeacherOfClass(fx.users.teacherB, B())).resolves.toBeUndefined();
+    await expect(assertTeacherOfClass(fx.users.teacherA, B())).rejects.toMatchObject(FORBIDDEN);
+    await expect(assertTeacherOfClass(fx.users.admin1, B())).rejects.toMatchObject(FORBIDDEN);
+    await expect(assertTeacherOfClass(fx.users.parentA, B())).rejects.toMatchObject(FORBIDDEN);
+  });
+
+  it("follows the school until the teacher sets its own levels", async () => {
+    const settings = await getClassLevelSettings(db, B());
+    expect(settings).toMatchObject({ custom: false, thresholds: await getLevelThresholds(db, fx.school1.id) });
+  });
+
+  it("sets the level count and thresholds, raising students but lowering nobody", async () => {
+    const { raised } = await updateClassLevels(db, fx.users.teacherB, B(), [0, 3, 6]);
+    expect(raised).toBe(1);
+    expect(await state(low)).toMatchObject({ level: 2 });
+    expect(await state(top)).toMatchObject({ level: 5 }); // above the new count: kept
+
+    expect(await getClassLevelSettings(db, B())).toMatchObject({ custom: true, thresholds: [0, 3, 6] });
+    const [audit] = await db.select().from(auditLog).where(eq(auditLog.action, "class.character_levels_update"));
+    expect(audit).toMatchObject({ entityId: B(), actorId: fx.users.teacherB.id, data: { to: [0, 3, 6], raisedStudents: 1 } });
+
+    const board = await listBoardStudents(db, B());
+    expect(board.find((s) => s.id === top)).toMatchObject({ level: 5, maxLevel: 3, progress: 1, nextStageName: null });
+    expect(board.find((s) => s.id === low)).toMatchObject({ level: 2, maxLevel: 3, nextStageName: "Genç" });
+  });
+
+  it("uses the class levels for scoring, capped at the class level count", async () => {
+    await setXp(low, 5);
+    const give = (batchId = newUuid()) =>
+      giveBehavior(db, fx.users.teacherB, B(), { studentIds: [low], behaviorTypeId: behaviorId, note: null, batchId });
+    expect((await give()).levelUps.map((u) => u.toLevel)).toEqual([3]);
+    await setXp(low, 100);
+    expect((await give()).levelUps).toEqual([]);
+  });
+
+  it("is not touched by school threshold changes", async () => {
+    await db.update(student).set({ xp: 4, characterLevel: 2 }).where(eq(student.id, low));
+    await updateLevelThresholds(db, fx.users.admin1, fx.school1.id, [0, 1, 2, 3, 4]);
+    expect(await state(low)).toMatchObject({ level: 2 });
+    await updateLevelThresholds(db, fx.users.admin1, fx.school1.id, [0, 500, 600, 700, 800]);
+  });
+
+  it("goes back to the school levels", async () => {
+    await setXp(low, 550);
+    await updateClassLevels(db, fx.users.teacherB, B(), null);
+    expect(await getClassLevelSettings(db, B())).toMatchObject({ custom: false, thresholds: [0, 500, 600, 700, 800] });
+    expect(await state(low)).toMatchObject({ level: 2 });
+  });
+
+  it("offers every active school type until the teacher picks", async () => {
+    const { custom, types } = await getClassCharacterTypes(db, B());
+    expect(custom).toBe(false);
+    expect(types.map((t) => [t.id, t.selected])).toEqual([
+      [dragonId, true],
+      [owlId, true],
+    ]);
+  });
+
+  it("moves students of a removed type to the first picked one and keeps their level", async () => {
+    const before = await state(top);
+    const { moved } = await updateClassCharacterTypes(db, fx.users.teacherB, B(), [owlId]);
+    expect(moved).toBe(3); // Can, Deniz, Elif
+    expect(await state(top)).toEqual({ ...before, typeId: owlId });
+    expect((await listClassCharacterTypes(db, B())).map((t) => t.id)).toEqual([owlId]);
+
+    const audits = await db.select().from(auditLog).where(eq(auditLog.action, "class.character_types_update"));
+    expect(audits.at(-1)!.data).toMatchObject({ from: null, to: [owlId], movedTo: owlId, movedStudents: 3 });
+
+    // Class A is untouched.
+    expect((await listClassCharacterTypes(db, fx.classes.classA.id)).map((t) => t.id)).toEqual([dragonId, owlId]);
+  });
+
+  it("gives new students the first picked type and rejects types left out", async () => {
+    const [created] = await addStudents(db, fx.users.teacherB, B(), [{ firstName: "Fatma", lastInitial: null }], 2);
+    expect(await state(created!.id)).toMatchObject({ typeId: owlId });
+    await expect(setStudentCharacterType(db, fx.users.teacherB, low, dragonId)).rejects.toBeInstanceOf(UserError);
+  });
+
+  it("rejects another school's type and an empty pick", async () => {
+    await expect(updateClassCharacterTypes(db, fx.users.teacherB, B(), [robotId])).rejects.toBeInstanceOf(UserError);
+    await expect(updateClassCharacterTypes(db, fx.users.teacherB, B(), [])).rejects.toBeInstanceOf(UserError);
+  });
+
+  it("falls back to the school types when the admin deactivates every picked type", async () => {
+    await db.update(characterType).set({ active: false }).where(eq(characterType.id, owlId));
+    expect(await getClassCharacterTypes(db, B())).toMatchObject({ custom: false });
+    await db.update(characterType).set({ active: true }).where(eq(characterType.id, owlId));
+  });
+
+  it("goes back to the school types without moving anyone", async () => {
+    expect(await updateClassCharacterTypes(db, fx.users.teacherB, B(), null)).toEqual({ moved: 0 });
+    expect((await listClassCharacterTypes(db, B())).map((t) => t.id)).toEqual([dragonId, owlId]);
+    expect(await state(top)).toMatchObject({ typeId: owlId });
   });
 });

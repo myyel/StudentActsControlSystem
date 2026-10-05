@@ -152,7 +152,7 @@ export async function giveHomeBehavior(
         .update(student)
         .set({ xp: sql`${student.xp} + ${xpDelta}`, balance: sql`${student.balance} + ${type.points}` })
         .where(eq(student.id, studentId));
-      const levelUps = xpDelta > 0 ? await raiseLevels(tx, ctx.schoolId, [{ ...ctx, xp: ctx.xp + xpDelta }]) : [];
+      const levelUps = xpDelta > 0 ? await raiseLevels(tx, ctx.classId, [{ ...ctx, xp: ctx.xp + xpDelta }]) : [];
 
       await writeAudit(tx, {
         action: "behavior.give_home",

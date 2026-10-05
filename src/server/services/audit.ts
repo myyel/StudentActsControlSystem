@@ -27,6 +27,8 @@ export type AuditAction =
   | "progress.bulk_set"
   | "character.thresholds_update"
   | "character_type.update"
+  | "class.character_levels_update"
+  | "class.character_types_update"
   | "student.character_change"
   | "message.create"
   | "message.delete"

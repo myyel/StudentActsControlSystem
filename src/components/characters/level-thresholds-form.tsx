@@ -38,7 +38,7 @@ export function LevelThresholdsForm({ thresholds }: { thresholds: number[] }) {
       </ol>
       <p className="text-sm text-muted-foreground">
         Eşikler tüm karakter türleri için ortaktır. Eşikleri düşürmek, yeni eşiğe ulaşan öğrencileri hemen yükseltir;
-        yükseltmek kimsenin seviyesini düşürmez.
+        yükseltmek kimsenin seviyesini düşürmez. Öğretmenin kendi seviye ayarını koyduğu sınıflar etkilenmez.
       </p>
       <FormMessage state={state} />
       <Button type="submit" disabled={pending} className="h-11 self-start">

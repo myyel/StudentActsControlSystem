@@ -6,6 +6,7 @@ type Props = {
   className: string;
   character: {
     level: number;
+    maxLevel: number;
     xp: number;
     progress: number;
     nextThreshold: number | null;
@@ -19,19 +20,19 @@ type Props = {
  * (child surface); the parent also gets the number to the next stage.
  */
 export function CharacterHero({ childName, className, character }: Props) {
-  const { level, xp, progress, nextThreshold, nextStageName, stage } = character;
+  const { level, maxLevel, xp, progress, nextThreshold, nextStageName, stage } = character;
   return (
     <section
       aria-label="Karakter"
       className="flex flex-col items-center gap-3 rounded-[2rem] bg-linear-to-b from-grass-soft to-card p-6 text-center shadow-[0_4px_0_var(--kid-shadow)] sm:flex-row sm:text-left"
     >
-      <CharacterAvatar stage={stage} level={level} progress={progress} size={168} className="sm:[--avatar:184px]" />
+      <CharacterAvatar stage={stage} level={level} maxLevel={maxLevel} progress={progress} size={168} className="sm:[--avatar:184px]" />
       <div className="flex w-full min-w-0 flex-col gap-2">
         <p className="font-display text-3xl leading-tight font-extrabold">{stage.name}</p>
         <p className="font-semibold text-muted-foreground">
           {level}. seviye · {className}
         </p>
-        <LevelBar level={level} progress={progress} className="h-4" label={`${childName}: ${stage.name}`} />
+        <LevelBar level={level} maxLevel={maxLevel} progress={progress} className="h-4" label={`${childName}: ${stage.name}`} />
         <p className="text-sm">
           {nextThreshold === null || nextStageName === null ? (
             "Son seviyeye ulaştı!"

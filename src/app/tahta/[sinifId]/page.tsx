@@ -5,7 +5,7 @@ import { db } from "@/server/db";
 import { assertTeacherOfClass } from "@/server/auth/guards";
 import { orNotFound, requirePageRole } from "@/server/auth/session";
 import { listBehaviorTypes } from "@/server/services/behavior-type";
-import { listBoardStudents, listCharacterTypes } from "@/server/services/character";
+import { listBoardStudents, listClassCharacterTypes } from "@/server/services/character";
 import { getClass } from "@/server/services/class";
 import { getClassGoal } from "@/server/services/class-goal";
 
@@ -25,7 +25,7 @@ export default async function BoardPage({ params, searchParams }: PageProps<"/ta
     listBehaviorTypes(db, sinifId, { scope: "school", activeOnly: true }),
     getClassGoal(db, sinifId),
   ]);
-  const characterTypes = await listCharacterTypes(db, cls.schoolId, { activeOnly: true });
+  const characterTypes = await listClassCharacterTypes(db, sinifId);
 
   return (
     <Board

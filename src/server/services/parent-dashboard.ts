@@ -1,10 +1,10 @@
 import { and, desc, eq, gt, gte, isNull, sql } from "drizzle-orm";
 import type { Db } from "@/server/db";
 import { behaviorEvent, parentStudent, school, schoolClass, student } from "@/server/db/schema";
-import { levelProgress, MAX_LEVEL } from "@/lib/character";
+import { levelProgress } from "@/lib/character";
 import { forbidden } from "@/server/auth/errors";
 import { listBehaviorTypes } from "./behavior-type";
-import { getLevelThresholds, getStageMap, stageOf } from "./character";
+import { getClassLevelThresholds, getStageMap, stageOf } from "./character";
 import { homeCountsToday, homeXpToday } from "./home-behavior";
 import { getRoadmapForParent } from "./progress";
 import { getLast7Days } from "./timeline";
@@ -40,7 +40,7 @@ export async function getParentDashboard(db: Db, parentId: string, studentId: st
   if (!child) throw forbidden();
 
   const [thresholds, stageMap, week, recent, roadmap, homeTypes, todayHomeXp, todayCounts, [top]] = await Promise.all([
-    getLevelThresholds(db, child.schoolId),
+    getClassLevelThresholds(db, child.classId),
     getStageMap(db, [child.characterTypeId]),
     getLast7Days(db, studentId, child.timeZone, now),
     db
@@ -78,6 +78,7 @@ export async function getParentDashboard(db: Db, parentId: string, studentId: st
   ]);
 
   const level = child.characterLevel;
+  const maxLevel = thresholds.length;
   return {
     child: {
       id: child.id,
@@ -89,11 +90,12 @@ export async function getParentDashboard(db: Db, parentId: string, studentId: st
     timeZone: child.timeZone,
     character: {
       level,
+      maxLevel,
       xp: child.xp,
       stage: stageOf(stageMap, child.characterTypeId, level),
-      nextStageName: level < MAX_LEVEL ? stageOf(stageMap, child.characterTypeId, level + 1).name : null,
+      nextStageName: level < maxLevel ? stageOf(stageMap, child.characterTypeId, level + 1).name : null,
       progress: levelProgress(thresholds, level, child.xp),
-      nextThreshold: level < MAX_LEVEL ? thresholds[level]! : null,
+      nextThreshold: level < maxLevel ? thresholds[level]! : null,
     },
     week,
     weekBalance: week.reduce((sum, d) => sum + d.positive - d.negative, 0),

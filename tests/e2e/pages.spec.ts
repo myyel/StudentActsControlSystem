@@ -28,6 +28,7 @@ const SCREENS: Partial<Record<Role | "guest", Screen[]>> = {
     { name: "puanlama", path: async () => `/ogretmen/siniflar/${await classId("2-A")}` },
     { name: "matris", path: async () => `/ogretmen/siniflar/${await classId("2-A")}/matris` },
     { name: "davranışlar", path: async () => `/ogretmen/siniflar/${await classId("2-A")}/davranislar` },
+    { name: "karakterler", path: async () => `/ogretmen/siniflar/${await classId("2-A")}/karakterler` },
     { name: "duraklar", path: async () => `/ogretmen/siniflar/${await classId("2-A")}/duraklar` },
     { name: "mesajlar", path: async () => `/ogretmen/siniflar/${await classId("2-A")}/mesajlar` },
     { name: "davetler", path: async () => `/ogretmen/siniflar/${await classId("2-A")}/davetler` },
