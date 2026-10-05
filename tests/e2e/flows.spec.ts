@@ -1,13 +1,13 @@
-﻿import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { classId, minTarget, queryOne, smallTargets, storageStatePath, studentId } from "./helpers";
 
 // Main flows in every breakpoint project. Flows that change data undo themselves, and each
 // project works on its own student so parallel projects do not interfere.
 const SCORING_STUDENT: Record<string, [string, string]> = {
-  mobile: ["Can", "Ã–"],
+  mobile: ["Can", "Ö"],
   tablet: ["Deniz", "A"],
   desktop: ["Ece", "B"],
-  board: ["Efe", "Ã‡"],
+  board: ["Efe", "Ç"],
 };
 
 async function studentXp(firstName: string, lastInitial: string) {
@@ -20,8 +20,8 @@ async function studentXp(firstName: string, lastInitial: string) {
 
 /** The low demo thresholds can level a student up; the celebration stays until "Harika!". */
 async function dismissCelebration(page: Page) {
-  const celebration = page.getByRole("dialog", { name: /bÃ¼yÃ¼dÃ¼/ });
-  if (await celebration.count()) await celebration.getByRole("button", { name: /Harika|SÄ±radaki/ }).click();
+  const celebration = page.getByRole("dialog", { name: /büyüdü/ });
+  if (await celebration.count()) await celebration.getByRole("button", { name: /Harika|Sıradaki/ }).click();
 }
 
 async function expectTargetsInDialog(page: Page, min: number) {
@@ -42,7 +42,7 @@ test.describe("teacher", () => {
     await expect(dialog).toBeVisible();
     await expectTargetsInDialog(page, minTarget(testInfo));
 
-    await dialog.getByRole("button", { name: /Derse katÄ±ldÄ±/ }).click();
+    await dialog.getByRole("button", { name: /Derse katıldı/ }).click();
     await expect(dialog).toBeHidden();
     const undo = page.getByRole("button", { name: /Geri al/ });
     await expect(page.getByRole("status").filter({ hasText: name })).toBeVisible();
@@ -50,7 +50,7 @@ test.describe("teacher", () => {
     await dismissCelebration(page);
 
     await undo.click();
-    await expect(page.getByText("Geri alÄ±ndÄ±.")).toBeVisible();
+    await expect(page.getByText("Geri alındı.")).toBeVisible();
     await expect.poll(() => studentXp(firstName, lastInitial)).toBe(xpBefore);
   });
 
@@ -60,13 +60,13 @@ test.describe("teacher", () => {
     await expect(page.getByText(/XP|denge|Denge/)).toHaveCount(0);
 
     await page.getByRole("button", { name: /^Ada Y\./ }).click();
-    const dialog = page.getByRole("dialog", { name: "Ada ne yaptÄ±?" });
+    const dialog = page.getByRole("dialog", { name: "Ada ne yaptı?" });
     await expect(dialog).toBeVisible();
     expect(await smallTargets(page, 80, '[role="dialog"]'), "board dialog targets").toEqual([]);
-    await expect(dialog.getByText(/[-âˆ’]\d/)).toHaveCount(0);
+    await expect(dialog.getByText(/[-−]\d/)).toHaveCount(0);
     await expect(dialog.getByText(/Olumsuz/)).toHaveCount(0);
 
-    await dialog.getByRole("button", { name: "VazgeÃ§" }).click();
+    await dialog.getByRole("button", { name: "Vazgeç" }).click();
     await expect(dialog).toBeHidden();
   });
 
@@ -81,21 +81,21 @@ test.describe("teacher", () => {
     await page.getByLabel("2. seviye").fill("5000");
     await page.getByLabel("3. seviye").fill("9000");
     await page.getByRole("button", { name: "Seviyeleri kaydet" }).click();
-    await expect(page.getByText("Bu sÄ±nÄ±fÄ±n kendi ayarÄ±: 3 seviye.")).toBeVisible();
+    await expect(page.getByText("Bu sınıfın kendi ayarı: 3 seviye.")).toBeVisible();
     const { n } = await queryOne<{ n: number }>("SELECT count(*)::int AS n FROM class_character_level WHERE class_id = $1", [id]);
     expect(n).toBe(3);
 
-    await page.getByRole("button", { name: "Okul ayarÄ±na dÃ¶n" }).click();
-    await expect(page.getByText("Bu sÄ±nÄ±f okulun seviye ayarÄ±nÄ± kullanÄ±yor.")).toBeVisible();
+    await page.getByRole("button", { name: "Okul ayarına dön" }).click();
+    await expect(page.getByText("Bu sınıf okulun seviye ayarını kullanıyor.")).toBeVisible();
 
     // Removing a type in use asks first; cancelling changes nothing.
-    const types = page.getByRole("group", { name: "SÄ±nÄ±fta kullanÄ±lacak karakter tÃ¼rleri" });
+    const types = page.getByRole("group", { name: "Sınıfta kullanılacak karakter türleri" });
     const used = types.getByRole("checkbox").first();
     await used.uncheck();
-    await page.getByRole("button", { name: "TÃ¼rleri kaydet" }).click();
-    const confirm = page.getByRole("dialog", { name: "Karakterler deÄŸiÅŸecek" });
+    await page.getByRole("button", { name: "Türleri kaydet" }).click();
+    const confirm = page.getByRole("dialog", { name: "Karakterler değişecek" });
     await expect(confirm).toBeVisible();
-    await confirm.getByRole("button", { name: "VazgeÃ§" }).click();
+    await confirm.getByRole("button", { name: "Vazgeç" }).click();
     await expect(confirm).toBeHidden();
   });
 
@@ -152,7 +152,7 @@ test.describe("teacher", () => {
     ]) {
       const response = await page.goto(path);
       expect(response?.status(), path).toBe(404);
-      await expect(page.getByRole("heading", { name: "Bu sayfayÄ± bulamadÄ±k" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Bu sayfayı bulamadık" })).toBeVisible();
     }
   });
 
@@ -170,7 +170,7 @@ test.describe("parent", () => {
     for (const path of [`/veli/${other}`, `/veli/${other}/yol-haritasi`]) {
       const response = await page.goto(path);
       expect(response?.status(), path).toBe(404);
-      await expect(page.getByRole("heading", { name: "Bu sayfayÄ± bulamadÄ±k" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Bu sayfayı bulamadık" })).toBeVisible();
       await expect(page.getByText("Arda")).toHaveCount(0);
     }
   });
@@ -187,17 +187,17 @@ test.describe("parent", () => {
     await expect(page.getByRole("status").filter({ hasText: "kaydedildi" })).toBeVisible();
     await dismissCelebration(page);
     await page.getByRole("button", { name: /Geri al/ }).click();
-    await expect(page.getByText("Geri alÄ±ndÄ±.")).toBeVisible();
+    await expect(page.getByText("Geri alındı.")).toBeVisible();
   });
 
   test("reads a message and reacts", async ({ page }, testInfo) => {
     // All projects share this message and parent; one project is enough.
     test.skip(testInfo.project.name !== "desktop", "shared seed message");
     await page.goto("/veli/mesajlar");
-    await page.getByRole("link", { name: /Ada'nÄ±n sunumu/ }).click();
-    await expect(page.getByRole("heading", { name: "Ada'nÄ±n sunumu" })).toBeVisible();
+    await page.getByRole("link", { name: /Ada'nın sunumu/ }).click();
+    await expect(page.getByRole("heading", { name: "Ada'nın sunumu" })).toBeVisible();
 
-    const seen = page.getByRole("group", { name: "HÄ±zlÄ± tepki" }).getByRole("button", { name: /GÃ¶rdÃ¼m/ });
+    const seen = page.getByRole("group", { name: "Hızlı tepki" }).getByRole("button", { name: /Gördüm/ });
     const before = await seen.getAttribute("aria-pressed");
     await seen.click();
     await expect(seen).not.toHaveAttribute("aria-pressed", before!);
