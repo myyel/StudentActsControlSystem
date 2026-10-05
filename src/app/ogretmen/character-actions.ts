@@ -6,8 +6,10 @@ import { assertTeacherOfClass } from "@/server/auth/guards";
 import { requireRole } from "@/server/auth/session";
 import { ok, toActionError, type ActionResult } from "@/server/action-result";
 import { getRequestMeta } from "@/server/request";
-import { updateClassCharacterTypes, updateClassLevels } from "@/server/services/character";
-import { classCharacterTypesSchema, classLevelsSchema } from "@/server/validation/character";
+import { updateClassCharacterTypes, updateClassLevels, updateClassStageNames } from "@/server/services/character";
+import { z } from "@/lib/zod";
+import { forbidden } from "@/server/auth/errors";
+import { classCharacterTypesSchema, classLevelsSchema, classStageNamesSchema } from "@/server/validation/character";
 
 // Order in every action: session → role → ownership → Zod → service.
 
@@ -69,6 +71,24 @@ export async function resetClassCharacterTypesAction(classId: string): Promise<A
     await updateClassCharacterTypes(db, user, classId, null, ip);
     refresh();
     return ok(undefined, "Okul ayarına dönüldü.");
+  } catch (error) {
+    return toActionError(error);
+  }
+}
+
+export async function updateClassStageNamesAction(
+  classId: string,
+  typeId: string,
+  names: string[],
+): Promise<ActionResult<undefined>> {
+  try {
+    const user = await authorizeClass(classId);
+    if (!z.uuid().safeParse(typeId).success) throw forbidden();
+    const input = classStageNamesSchema.parse({ names });
+    const { ip } = await getRequestMeta();
+    await updateClassStageNames(db, user, classId, typeId, input.names, ip);
+    refresh();
+    return ok(undefined, "Aşama adları kaydedildi.");
   } catch (error) {
     return toActionError(error);
   }

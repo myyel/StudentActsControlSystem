@@ -70,33 +70,62 @@ test.describe("teacher", () => {
     await expect(dialog).toBeHidden();
   });
 
-  test("sets class levels, then goes back to the school levels", async ({ page }, testInfo) => {
-    // Class settings are shared by every project, and a raised level never drops: one project,
-    // thresholds only go up (nobody is raised) and the type pick is never saved.
-    test.skip(testInfo.project.name !== "desktop", "shared class settings");
-    const id = await classId("2-A");
-    await page.goto(`/ogretmen/siniflar/${id}/karakterler`);
+  // Both change the shared settings of 2-A: one after the other.
+  test.describe("class character settings", () => {
+    test.describe.configure({ mode: "serial" });
 
-    await page.getByRole("button", { name: "3", exact: true }).click();
-    await page.getByLabel("2. seviye").fill("5000");
-    await page.getByLabel("3. seviye").fill("9000");
-    await page.getByRole("button", { name: "Seviyeleri kaydet" }).click();
-    await expect(page.getByText("Bu sınıfın kendi ayarı: 3 seviye.")).toBeVisible();
-    const { n } = await queryOne<{ n: number }>("SELECT count(*)::int AS n FROM class_character_level WHERE class_id = $1", [id]);
-    expect(n).toBe(3);
+    test("sets class levels, then goes back to the school levels", async ({ page }, testInfo) => {
+      // Class settings are shared by every project, and a raised level never drops: one project,
+      // thresholds only go up (nobody is raised) and the type pick is never saved.
+      test.skip(testInfo.project.name !== "desktop", "shared class settings");
+      const id = await classId("2-A");
+      await page.goto(`/ogretmen/siniflar/${id}/karakterler`);
 
-    await page.getByRole("button", { name: "Okul ayarına dön" }).click();
-    await expect(page.getByText("Bu sınıf okulun seviye ayarını kullanıyor.")).toBeVisible();
+      await page.getByRole("button", { name: "3", exact: true }).click();
+      await page.getByLabel("2. seviye").fill("5000");
+      await page.getByLabel("3. seviye").fill("9000");
+      await page.getByRole("button", { name: "Seviyeleri kaydet" }).click();
+      await expect(page.getByText("Bu sınıfın kendi ayarı: 3 seviye.")).toBeVisible();
+      const { n } = await queryOne<{ n: number }>("SELECT count(*)::int AS n FROM class_character_level WHERE class_id = $1", [id]);
+      expect(n).toBe(3);
 
-    // Removing a type in use asks first; cancelling changes nothing.
-    const types = page.getByRole("group", { name: "Sınıfta kullanılacak karakter türleri" });
-    const used = types.getByRole("checkbox").first();
-    await used.uncheck();
-    await page.getByRole("button", { name: "Türleri kaydet" }).click();
-    const confirm = page.getByRole("dialog", { name: "Karakterler değişecek" });
-    await expect(confirm).toBeVisible();
-    await confirm.getByRole("button", { name: "Vazgeç" }).click();
-    await expect(confirm).toBeHidden();
+      await page.getByRole("button", { name: "Okul ayarına dön" }).click();
+      await expect(page.getByText("Bu sınıf okulun seviye ayarını kullanıyor.")).toBeVisible();
+
+      // Removing a type in use asks first; cancelling changes nothing.
+      const types = page.getByRole("group", { name: "Sınıfta kullanılacak karakter türleri" });
+      const used = types.getByRole("checkbox").first();
+      await used.uncheck();
+      await page.getByRole("button", { name: "Türleri ve sırayı kaydet" }).click();
+      const confirm = page.getByRole("dialog", { name: "Karakterler değişecek" });
+      await expect(confirm).toBeVisible();
+      await confirm.getByRole("button", { name: "Vazgeç" }).click();
+      await expect(confirm).toBeHidden();
+    });
+
+    test("reorders character types and renames stages, then undoes both", async ({ page }, testInfo) => {
+      // Shared class settings; every type stays picked, so nobody changes type.
+      test.skip(testInfo.project.name !== "desktop", "shared class settings");
+      await page.goto(`/ogretmen/siniflar/${await classId("2-A")}/karakterler`);
+
+      await page.getByRole("button", { name: "Baykuş: yukarı taşı" }).click();
+      await page.getByRole("button", { name: "Türleri ve sırayı kaydet" }).click();
+      await expect(page.getByText("Bu sınıf için seçtiğiniz türler ve sıraları.")).toBeVisible();
+      const types = page.getByRole("group", { name: "Sınıfta kullanılacak karakter türleri" });
+      await expect(types.getByRole("listitem").first()).toContainText("Baykuş");
+
+      await page.getByRole("button", { name: "Aşama adlarını düzenle: Ejderha" }).click();
+      await page.locator('[id^="stage-name-"][id$="-0"]').fill("Sihirli yumurta");
+      await page.getByRole("button", { name: "Adları kaydet" }).click();
+      await expect(page.getByText("Aşama adları kaydedildi.")).toBeVisible();
+      await expect(types.getByText("Sihirli yumurta")).toBeVisible();
+
+      await page.getByRole("button", { name: "Okul adlarına dön" }).click();
+      await expect(types.getByText("Sihirli yumurta")).toHaveCount(0);
+      await page.getByRole("button", { name: "Okul ayarına dön" }).first().click();
+      await expect(page.getByText("Bu sınıf okulun tüm aktif türlerini okulun sırasıyla kullanıyor.")).toBeVisible();
+      await expect(types.getByRole("listitem").first()).toContainText("Ejderha");
+    });
   });
 
   test("rings the activity alarm on the board at its time", async ({ page, browser }) => {

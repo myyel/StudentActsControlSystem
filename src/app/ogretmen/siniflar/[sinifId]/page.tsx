@@ -27,7 +27,10 @@ export default async function ClassPage({ params }: PageProps<"/ogretmen/sinifla
     listBehaviorTypes(db, sinifId, { scope: "school", activeOnly: true }),
     getClassGoal(db, sinifId),
   ]);
-  const active = await withStages(db, students.filter((s) => s.active));
+  const active = await withStages(
+    db,
+    students.filter((s) => s.active).map((s) => ({ ...s, classId: sinifId })),
+  );
   const inactive = students.filter((s) => !s.active);
   const withoutParent = active.filter((s) => s.parentCount === 0).length;
 

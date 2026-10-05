@@ -224,7 +224,8 @@ export const classCharacterLevel = pgTable(
   ],
 );
 
-// Character types a teacher picked for a class. A class without rows offers every active school type.
+// Character types a teacher picked for a class, in the teacher's order (the first goes to new
+// students). A class without rows offers every active school type in school order.
 export const classCharacterType = pgTable(
   "class_character_type",
   {
@@ -234,8 +235,28 @@ export const classCharacterType = pgTable(
     characterTypeId: uuid()
       .notNull()
       .references(() => characterType.id, { onDelete: "cascade" }),
+    sortOrder: integer().notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.classId, t.characterTypeId] })],
+);
+
+// A teacher's stage name for one class; without a row the school's stage name is shown.
+export const classCharacterStageName = pgTable(
+  "class_character_stage_name",
+  {
+    classId: uuid()
+      .notNull()
+      .references(() => schoolClass.id, { onDelete: "cascade" }),
+    characterTypeId: uuid()
+      .notNull()
+      .references(() => characterType.id, { onDelete: "cascade" }),
+    level: smallint().notNull(),
+    name: varchar({ length: 40 }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.classId, t.characterTypeId, t.level] }),
+    check("class_character_stage_name_level_check", sql`${t.level} between 1 and 5`),
+  ],
 );
 
 // One evolution stage (name + picture) per type and level.

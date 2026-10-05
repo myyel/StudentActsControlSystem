@@ -5,6 +5,7 @@ import {
   characterStage,
   characterType,
   classCharacterLevel,
+  classCharacterStageName,
   classCharacterType,
   schoolClass,
   student,
@@ -24,7 +25,10 @@ import type { CharacterTypeInput } from "@/server/validation/character";
 import { writeAudit } from "./audit";
 
 export type Stage = { name: string; assetUrl: string };
-export type StageMap = Map<string, Map<number, Stage>>;
+/** School stages per type and level, plus the teachers' stage names per class. */
+export type StageMap = { stages: Map<string, Map<number, Stage>>; classNames: Map<string, string> };
+
+const nameKey = (classId: string, typeId: string, level: number) => `${classId}:${typeId}:${level}`;
 
 export type LevelUp = { studentId: string; fromLevel: number; toLevel: number; from: Stage; to: Stage };
 
@@ -171,24 +175,28 @@ export async function updateClassLevels(
 }
 
 /**
- * Active school types and whether the class offers each. A class without its own pick, or whose
- * picked types were all deactivated by the admin, offers every active type.
+ * Active school types and whether the class offers each, with the class's stage names. Picked
+ * types come first in the teacher's order, the rest follow in school order. A class without its
+ * own pick, or whose picked types were all deactivated by the admin, offers every active type.
  */
 export async function getClassCharacterTypes(db: DbOrTx, classId: string) {
   const schoolId = await schoolIdOfClass(db, classId);
   const [types, picked] = await Promise.all([
-    listCharacterTypes(db, schoolId, { activeOnly: true }),
+    listCharacterTypes(db, schoolId, { activeOnly: true, classId }),
     db
-      .select({ id: classCharacterType.characterTypeId })
+      .select({ id: classCharacterType.characterTypeId, sortOrder: classCharacterType.sortOrder })
       .from(classCharacterType)
       .where(eq(classCharacterType.classId, classId)),
   ]);
-  const pickedIds = new Set(picked.map((p) => p.id));
-  const custom = types.some((t) => pickedIds.has(t.id));
-  return { schoolId, custom, types: types.map((t) => ({ ...t, selected: !custom || pickedIds.has(t.id) })) };
+  const order = new Map(picked.map((p) => [p.id, p.sortOrder]));
+  const custom = types.some((t) => order.has(t.id));
+  const rank = (id: string) => order.get(id) ?? Number.MAX_SAFE_INTEGER;
+  // Array.sort is stable: ties (and unpicked types) keep the school order.
+  const sorted = custom ? [...types].sort((a, b) => rank(a.id) - rank(b.id)) : types;
+  return { schoolId, custom, types: sorted.map((t) => ({ ...t, selected: !custom || order.has(t.id) })) };
 }
 
-/** Types the class's students can have, in school order; the first one goes to new students. */
+/** Types the class's students can have, in class order; the first one goes to new students. */
 export async function listClassCharacterTypes(db: DbOrTx, classId: string) {
   return (await getClassCharacterTypes(db, classId)).types.filter((t) => t.selected);
 }
@@ -225,7 +233,10 @@ export async function updateClassCharacterTypes(
 ) {
   return db.transaction(async (tx) => {
     const before = await getClassCharacterTypes(tx, classId);
-    const offered = typeIds ? before.types.filter((t) => typeIds.includes(t.id)) : before.types;
+    // In the order the teacher gave.
+    const offered = typeIds
+      ? [...new Set(typeIds)].flatMap((id) => before.types.filter((t) => t.id === id))
+      : [...before.types].sort((a, b) => a.sortOrder - b.sortOrder);
     if (typeIds && offered.length !== new Set(typeIds).size) {
       throw new UserError("Bu karakter türü şu an kullanılamıyor.");
     }
@@ -233,7 +244,9 @@ export async function updateClassCharacterTypes(
 
     await tx.delete(classCharacterType).where(eq(classCharacterType.classId, classId));
     if (typeIds) {
-      await tx.insert(classCharacterType).values(offered.map((t) => ({ classId, characterTypeId: t.id })));
+      await tx
+        .insert(classCharacterType)
+        .values(offered.map((t, sortOrder) => ({ classId, characterTypeId: t.id, sortOrder })));
     }
 
     // Following the school again moves nobody: every active type is offered, and a type the
@@ -274,42 +287,73 @@ export async function updateClassCharacterTypes(
   });
 }
 
-/** Stage names and pictures per type and level; missing stages fall back to a placeholder. */
-export async function getStageMap(db: DbOrTx, typeIds: string[]): Promise<StageMap> {
-  const map: StageMap = new Map();
+/**
+ * Stage names and pictures per type and level (missing stages fall back to a placeholder), and the
+ * stage names teachers gave in the given classes.
+ */
+export async function getStageMap(db: DbOrTx, typeIds: string[], classIds: string[] = []): Promise<StageMap> {
+  const map: StageMap = { stages: new Map(), classNames: new Map() };
   if (typeIds.length === 0) return map;
-  const rows = await db
-    .select()
-    .from(characterStage)
-    .where(inArray(characterStage.characterTypeId, [...new Set(typeIds)]));
+  const types = [...new Set(typeIds)];
+  const [rows, names] = await Promise.all([
+    db.select().from(characterStage).where(inArray(characterStage.characterTypeId, types)),
+    classIds.length === 0
+      ? []
+      : db
+          .select()
+          .from(classCharacterStageName)
+          .where(
+            and(
+              inArray(classCharacterStageName.classId, [...new Set(classIds)]),
+              inArray(classCharacterStageName.characterTypeId, types),
+            ),
+          ),
+  ]);
   for (const r of rows) {
-    if (!map.has(r.characterTypeId)) map.set(r.characterTypeId, new Map());
-    map.get(r.characterTypeId)!.set(r.level, { name: r.name, assetUrl: r.assetUrl });
+    if (!map.stages.has(r.characterTypeId)) map.stages.set(r.characterTypeId, new Map());
+    map.stages.get(r.characterTypeId)!.set(r.level, { name: r.name, assetUrl: r.assetUrl });
   }
+  for (const n of names) map.classNames.set(nameKey(n.classId, n.characterTypeId, n.level), n.name);
   return map;
 }
 
-export const stageOf = (map: StageMap, typeId: string, level: number): Stage =>
-  map.get(typeId)?.get(level) ?? { name: `${level}. seviye`, assetUrl: PLACEHOLDER_ASSET_URL };
+/** The stage of a type at a level; with a class, the teacher's stage name wins. */
+export function stageOf(map: StageMap, typeId: string, level: number, classId?: string): Stage {
+  const stage = map.stages.get(typeId)?.get(level) ?? { name: `${level}. seviye`, assetUrl: PLACEHOLDER_ASSET_URL };
+  const name = classId ? map.classNames.get(nameKey(classId, typeId, level)) : undefined;
+  return name ? { ...stage, name } : stage;
+}
 
-/** Adds the current stage to student rows. */
-export async function withStages<T extends { characterTypeId: string; characterLevel: number }>(db: DbOrTx, rows: T[]) {
-  const map = await getStageMap(db, rows.map((r) => r.characterTypeId));
-  return rows.map((r) => ({ ...r, stage: stageOf(map, r.characterTypeId, r.characterLevel) }));
+/** Adds the current stage to student rows, named as in each student's class. */
+export async function withStages<T extends { characterTypeId: string; characterLevel: number; classId: string }>(
+  db: DbOrTx,
+  rows: T[],
+) {
+  const map = await getStageMap(
+    db,
+    rows.map((r) => r.characterTypeId),
+    rows.map((r) => r.classId),
+  );
+  return rows.map((r) => ({ ...r, stage: stageOf(map, r.characterTypeId, r.characterLevel, r.classId) }));
 }
 
 export async function describeLevelUps(
   db: DbOrTx,
+  classId: string,
   ups: { studentId: string; characterTypeId: string; fromLevel: number; toLevel: number }[],
 ): Promise<LevelUp[]> {
   if (ups.length === 0) return [];
-  const map = await getStageMap(db, ups.map((u) => u.characterTypeId));
+  const map = await getStageMap(
+    db,
+    ups.map((u) => u.characterTypeId),
+    [classId],
+  );
   return ups.map(({ studentId, characterTypeId, fromLevel, toLevel }) => ({
     studentId,
     fromLevel,
     toLevel,
-    from: stageOf(map, characterTypeId, fromLevel),
-    to: stageOf(map, characterTypeId, toLevel),
+    from: stageOf(map, characterTypeId, fromLevel, classId),
+    to: stageOf(map, characterTypeId, toLevel, classId),
   }));
 }
 
@@ -335,24 +379,81 @@ export async function raiseLevels(
       .set({ characterLevel: sql`greatest(${student.characterLevel}, ${up.toLevel})` })
       .where(eq(student.id, up.studentId));
   }
-  return describeLevelUps(tx, ups);
+  return describeLevelUps(tx, classId, ups);
 }
 
-/** Types available to a school, with all five stages. */
-export async function listCharacterTypes(db: DbOrTx, schoolId: string, opts: { activeOnly?: boolean } = {}) {
+/**
+ * Types available to a school, with all five stages. With a class, stages carry the class's names
+ * and `schoolStageNames` / `classStageNames` (null = school name) tell them apart.
+ */
+export async function listCharacterTypes(
+  db: DbOrTx,
+  schoolId: string,
+  opts: { activeOnly?: boolean; classId?: string } = {},
+) {
   const types = await db
     .select()
     .from(characterType)
     .where(and(availableTo(schoolId), opts.activeOnly ? eq(characterType.active, true) : undefined))
     .orderBy(asc(characterType.sortOrder), asc(characterType.name));
-  const map = await getStageMap(db, types.map((t) => t.id));
+  const { classId } = opts;
+  const map = await getStageMap(
+    db,
+    types.map((t) => t.id),
+    classId ? [classId] : [],
+  );
+  const levels = Array.from({ length: MAX_LEVEL }, (_, i) => i + 1);
+  const ownName = (typeId: string, level: number) =>
+    classId ? (map.classNames.get(nameKey(classId, typeId, level)) ?? null) : null;
   return types.map((t) => ({
     id: t.id,
     name: t.name,
     active: t.active,
+    sortOrder: t.sortOrder,
     editable: t.schoolId === schoolId,
-    stages: Array.from({ length: MAX_LEVEL }, (_, i) => stageOf(map, t.id, i + 1)),
+    stages: levels.map((level) => stageOf(map, t.id, level, classId)),
+    schoolStageNames: levels.map((level) => stageOf(map, t.id, level).name),
+    classStageNames: levels.map((level) => ownName(t.id, level)),
   }));
+}
+
+/**
+ * Call only after assertTeacherOfClass. The class's own stage names for one type; an empty or
+ * null name (or the school's own name) shows the school's name again.
+ */
+export async function updateClassStageNames(
+  db: Db,
+  actor: AuthUser,
+  classId: string,
+  typeId: string,
+  names: (string | null)[],
+  ip?: string | null,
+) {
+  await db.transaction(async (tx) => {
+    const { schoolId, types } = await getClassCharacterTypes(tx, classId);
+    const type = types.find((t) => t.id === typeId);
+    if (!type) throw new UserError("Bu karakter türü şu an kullanılamıyor.");
+
+    const own = names.map((n, i) => {
+      const name = n?.trim() ?? "";
+      return name && name !== type.schoolStageNames[i] ? name : null;
+    });
+    await tx
+      .delete(classCharacterStageName)
+      .where(and(eq(classCharacterStageName.classId, classId), eq(classCharacterStageName.characterTypeId, typeId)));
+    const rows = own.flatMap((name, i) => (name ? [{ classId, characterTypeId: typeId, level: i + 1, name }] : []));
+    if (rows.length > 0) await tx.insert(classCharacterStageName).values(rows);
+
+    await writeAudit(tx, {
+      action: "class.character_stages_update",
+      entity: "class",
+      entityId: classId,
+      actorId: actor.id,
+      schoolId,
+      data: { characterTypeId: typeId, from: type.classStageNames, to: own },
+      ip,
+    });
+  });
 }
 
 /** Call only after assertAdminOfCharacterType. */
@@ -491,7 +592,11 @@ export async function listBoardStudents(db: Db, classId: string) {
       .from(student)
       .where(and(eq(student.classId, classId), eq(student.active, true), isNull(student.deletedAt))),
   ]);
-  const map = await getStageMap(db, rows.map((r) => r.characterTypeId));
+  const map = await getStageMap(
+    db,
+    rows.map((r) => r.characterTypeId),
+    [classId],
+  );
   const maxLevel = thresholds.length;
   return rows
     .map((s) => ({
@@ -501,9 +606,9 @@ export async function listBoardStudents(db: Db, classId: string) {
       characterTypeId: s.characterTypeId,
       level: s.characterLevel,
       maxLevel,
-      stage: stageOf(map, s.characterTypeId, s.characterLevel),
+      stage: stageOf(map, s.characterTypeId, s.characterLevel, classId),
       // "Fidan olmaya çok az kaldı!" on the board: a name, not a number.
-      nextStageName: s.characterLevel < maxLevel ? stageOf(map, s.characterTypeId, s.characterLevel + 1).name : null,
+      nextStageName: s.characterLevel < maxLevel ? stageOf(map, s.characterTypeId, s.characterLevel + 1, classId).name : null,
       progress: levelProgress(thresholds, s.characterLevel, s.xp),
     }))
     .sort(byName);

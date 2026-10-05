@@ -29,6 +29,7 @@ export type AuditAction =
   | "character_type.update"
   | "class.character_levels_update"
   | "class.character_types_update"
+  | "class.character_stages_update"
   | "class.activities_update"
   | "student.character_change"
   | "message.create"

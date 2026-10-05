@@ -26,7 +26,6 @@ export default async function ClassCharactersPage({ params }: PageProps<"/ogretm
   ]);
   const schoolThresholds = await getLevelThresholds(db, levels.schoolId);
   const firstOffered = types.types.find((t) => t.selected);
-  const pickedKey = types.types.map((t) => `${t.id}:${t.selected}`).join(",");
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
@@ -36,17 +35,24 @@ export default async function ClassCharactersPage({ params }: PageProps<"/ogretm
         <CardHeader>
           <CardTitle>Karakter türleri</CardTitle>
           <CardDescription>
-            {types.custom ? "Bu sınıf için seçtiğiniz türler." : "Bu sınıf okulun tüm aktif türlerini kullanıyor."}
+            {types.custom
+              ? "Bu sınıf için seçtiğiniz türler ve sıraları."
+              : "Bu sınıf okulun tüm aktif türlerini okulun sırasıyla kullanıyor."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ClassCharacterTypesForm
-            // Remount after a save or reset so the checkboxes follow the server.
-            key={`${types.custom}-${pickedKey}`}
             classId={sinifId}
             custom={types.custom}
             maxLevel={levels.thresholds.length}
-            types={types.types.map(({ id, name, selected, stages }) => ({ id, name, selected, stages }))}
+            types={types.types.map(({ id, name, selected, stages, schoolStageNames, classStageNames }) => ({
+              id,
+              name,
+              selected,
+              stages,
+              schoolStageNames,
+              classStageNames,
+            }))}
             studentsByType={counts.byType}
           />
         </CardContent>
@@ -63,7 +69,6 @@ export default async function ClassCharactersPage({ params }: PageProps<"/ogretm
         </CardHeader>
         <CardContent>
           <ClassLevelsForm
-            key={`${levels.custom}-${levels.thresholds.join(",")}`}
             classId={sinifId}
             thresholds={levels.thresholds}
             custom={levels.custom}

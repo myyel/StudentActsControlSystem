@@ -25,7 +25,9 @@ import {
   updateCharacterType,
   updateClassCharacterTypes,
   updateClassLevels,
+  updateClassStageNames,
   updateLevelThresholds,
+  withStages,
 } from "@/server/services/character";
 import { addStudents } from "@/server/services/student";
 import { seedAuthFixture } from "../helpers/fixtures";
@@ -369,5 +371,72 @@ describe("class character settings", () => {
     expect(await updateClassCharacterTypes(db, fx.users.teacherB, B(), null)).toEqual({ moved: 0 });
     expect((await listClassCharacterTypes(db, B())).map((t) => t.id)).toEqual([dragonId, owlId]);
     expect(await state(top)).toMatchObject({ typeId: owlId });
+  });
+});
+
+describe("class character order and stage names", () => {
+  const A = () => fx.classes.classA.id;
+  const B = () => fx.classes.classB.id;
+
+  it("keeps the teacher's order; the first type goes to new students", async () => {
+    await updateClassCharacterTypes(db, fx.users.teacherB, B(), [owlId, dragonId]);
+    expect((await listClassCharacterTypes(db, B())).map((t) => t.id)).toEqual([owlId, dragonId]);
+    const [created] = await addStudents(db, fx.users.teacherB, B(), [{ firstName: "Gül", lastInitial: null }], 2);
+    expect(await state(created!.id)).toMatchObject({ typeId: owlId });
+
+    await updateClassCharacterTypes(db, fx.users.teacherB, B(), [dragonId, owlId]);
+    expect((await listClassCharacterTypes(db, B())).map((t) => t.id)).toEqual([dragonId, owlId]);
+    // Class A still follows the school order.
+    expect((await listClassCharacterTypes(db, A())).map((t) => t.id)).toEqual([dragonId, owlId]);
+  });
+
+  it("shows the class's stage names in that class only", async () => {
+    const names = ["Sihirli yumurta", "", "Genç", "  ", "Ejder kral"];
+    await updateClassStageNames(db, fx.users.teacherB, B(), dragonId, names);
+
+    const types = await getClassCharacterTypes(db, B());
+    const dragon = types.types.find((t) => t.id === dragonId)!;
+    // "Genç" equals the school name, so it is not stored as the class's own.
+    expect(dragon.classStageNames).toEqual(["Sihirli yumurta", null, null, null, "Ejder kral"]);
+    expect(dragon.stages.map((s) => s.name)).toEqual(["Sihirli yumurta", "Yavru", "Genç", "Güçlü", "Ejder kral"]);
+    expect(dragon.stages[0]!.assetUrl).toBe("/characters/ejderha/1.svg");
+
+    const [audit] = await db.select().from(auditLog).where(eq(auditLog.action, "class.character_stages_update"));
+    expect(audit).toMatchObject({ entityId: B(), data: { characterTypeId: dragonId, to: ["Sihirli yumurta", null, null, null, "Ejder kral"] } });
+
+    const [inB] = await db.insert(student).values({ classId: B(), firstName: "Hale", gradeLevel: 2, characterTypeId: dragonId }).returning();
+    const [withB] = await withStages(db, [{ ...inB!, classId: B() }]);
+    expect(withB!.stage.name).toBe("Sihirli yumurta");
+    expect((await listBoardStudents(db, B())).find((s) => s.id === inB!.id)!.stage.name).toBe("Sihirli yumurta");
+
+    // Class A keeps the school names.
+    const [inA] = await withStages(db, [{ characterTypeId: dragonId, characterLevel: 1, classId: A() }]);
+    expect(inA!.stage.name).toBe("Yumurta");
+    expect((await getClassCharacterTypes(db, A())).types.find((t) => t.id === dragonId)!.stages[0]!.name).toBe("Yumurta");
+  });
+
+  it("names the level-up celebration with the class's names", async () => {
+    const [kid] = await db
+      .insert(student)
+      .values({ classId: B(), firstName: "İpek", gradeLevel: 2, characterTypeId: dragonId, xp: 0 })
+      .returning();
+    const behaviorId = (await listBehaviorTypes(db, B())).find((t) => t.name === "Harika iş")!.id;
+    await db.update(student).set({ xp: 499 }).where(eq(student.id, kid!.id)); // school levels: 500 for level 2
+    const result = await giveBehavior(db, fx.users.teacherB, B(), {
+      studentIds: [kid!.id],
+      behaviorTypeId: behaviorId,
+      note: null,
+      batchId: newUuid(),
+    });
+    expect(result.levelUps[0]).toMatchObject({ from: { name: "Sihirli yumurta" }, to: { name: "Yavru" } });
+  });
+
+  it("goes back to the school names and rejects types the class cannot use", async () => {
+    await updateClassStageNames(db, fx.users.teacherB, B(), dragonId, ["", "", "", "", ""]);
+    const dragon = (await getClassCharacterTypes(db, B())).types.find((t) => t.id === dragonId)!;
+    expect(dragon.classStageNames).toEqual([null, null, null, null, null]);
+    expect(dragon.stages[0]!.name).toBe("Yumurta");
+
+    await expect(updateClassStageNames(db, fx.users.teacherB, B(), robotId, STAGE_NAMES)).rejects.toBeInstanceOf(UserError);
   });
 });

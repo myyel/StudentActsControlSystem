@@ -59,6 +59,8 @@ const childColumns = {
   relation: parentStudent.relation,
   characterTypeId: student.characterTypeId,
   characterLevel: student.characterLevel,
+  // Stage names follow the child's class (teacher's own names).
+  classId: student.classId,
 };
 
 /** Only the parent's own, non-deleted children. Every parent query goes through parent_student. */

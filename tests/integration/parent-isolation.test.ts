@@ -79,10 +79,12 @@ describe("Veli A, öğrenci B'yi göremez", () => {
 
   it("returns only the fields a parent may see", async () => {
     const child = await getChildForParent(db, fx.users.parentA.id, fx.students.studentA1.id);
-    // The character (type, level) is shown in the child switcher; XP, balance and notes are not here.
+    // The character (type, level; stage names follow the class) is shown in the child switcher;
+    // XP, balance and notes are not here.
     expect(Object.keys(child).sort()).toEqual([
       "characterLevel",
       "characterTypeId",
+      "classId",
       "className",
       "firstName",
       "id",

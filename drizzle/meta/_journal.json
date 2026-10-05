@@ -99,6 +99,13 @@
       "when": 1791238813941,
       "tag": "0013_more_characters",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791239339480,
+      "tag": "0014_class_character_order_names",
+      "breakpoints": true
     }
   ]
 }

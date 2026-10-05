@@ -41,7 +41,7 @@ export async function getParentDashboard(db: Db, parentId: string, studentId: st
 
   const [thresholds, stageMap, week, recent, roadmap, homeTypes, todayHomeXp, todayCounts, [top]] = await Promise.all([
     getClassLevelThresholds(db, child.classId),
-    getStageMap(db, [child.characterTypeId]),
+    getStageMap(db, [child.characterTypeId], [child.classId]),
     getLast7Days(db, studentId, child.timeZone, now),
     db
       .select({
@@ -92,8 +92,8 @@ export async function getParentDashboard(db: Db, parentId: string, studentId: st
       level,
       maxLevel,
       xp: child.xp,
-      stage: stageOf(stageMap, child.characterTypeId, level),
-      nextStageName: level < maxLevel ? stageOf(stageMap, child.characterTypeId, level + 1).name : null,
+      stage: stageOf(stageMap, child.characterTypeId, level, child.classId),
+      nextStageName: level < maxLevel ? stageOf(stageMap, child.characterTypeId, level + 1, child.classId).name : null,
       progress: levelProgress(thresholds, level, child.xp),
       nextThreshold: level < maxLevel ? thresholds[level]! : null,
     },

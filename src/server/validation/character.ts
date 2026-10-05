@@ -27,6 +27,13 @@ export const classLevelsSchema = z.object({
   ),
 });
 
+/** A class's stage names for one type; an empty name shows the school's name. */
+export const classStageNamesSchema = z.object({
+  names: z
+    .array(z.string().trim().max(40, "Aşama adı en fazla 40 karakter olabilir."))
+    .length(MAX_LEVEL, `${MAX_LEVEL} aşamanın adını gönderin.`),
+});
+
 export const classCharacterTypesSchema = z.object({
   typeIds: z.array(z.uuid("Bir karakter seçin.")).min(1, "En az bir karakter türü seçin.").max(50),
 });

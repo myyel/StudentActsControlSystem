@@ -32,6 +32,14 @@ export function ClassLevelsForm({ classId, thresholds, custom, schoolThresholds,
   const [values, setValues] = useState(() => thresholds.map(String));
   const pending = saving || resetting;
 
+  // Follow the server after a save or reset without remounting (the message stays visible).
+  const signature = `${custom}:${thresholds.join(",")}`;
+  const [seen, setSeen] = useState(signature);
+  if (signature !== seen) {
+    setSeen(signature);
+    setValues(thresholds.map(String));
+  }
+
   const count = values.length;
   const above = Object.entries(studentsByLevel)
     .filter(([level]) => Number(level) > count)
@@ -52,9 +60,7 @@ export function ClassLevelsForm({ classId, thresholds, custom, schoolThresholds,
 
   function reset() {
     start(async () => {
-      const result = await resetClassLevelsAction(classId);
-      if (result.ok) setValues(schoolThresholds.map(String));
-      setResetState(result);
+      setResetState(await resetClassLevelsAction(classId));
     });
   }
 

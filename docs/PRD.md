@@ -108,6 +108,8 @@
 - **Sınıf karakter ayarı (2026-10-06).** Öğretmen sınıfın "Karakterler" sekmesinden okul ayarının yerine sınıfa özel ayar koyabilir; ayar konmayan sınıf okulunkini kullanır, "Okul ayarına dön" sınıf ayarını kaldırır. Değişiklikler audit log'a düşer.
   - **Seviyeler:** 2–5 seviye ve her seviyenin eşiği (aynı kurallar: 1. eşik 0, artan). N seviyeli sınıfta her türün 1…N aşaması kullanılır. Eşik düşerse yeni eşiğe ulaşanlar hemen yükselir; seviye sayısı azaltılırsa üstteki öğrenciler seviyesini ve görselini korur, en yüksek seviyede görünür (karakter geri gitmez). Okul eşiği değişikliği kendi seviye ayarı olan sınıfları etkilemez.
   - **Türler:** okulun aktif türlerinden istediği kadarı (en az bir). Seçilmeyen türler öğrenci detayında ve tahtadaki seçim ekranında görünmez; yeni öğrenciler ilk seçili türle (okul sırasına göre) başlar. Seçimden çıkarılan türü kullanan öğrenciler, kaydetmeden önce onay alınarak ilk seçili türe geçer; seviyeleri korunur. Okula dönmek kimseyi taşımaz. Yönetici seçili türlerin hepsini pasif yaparsa sınıf okulun aktif türlerine döner.
+  - **Sıralama (2026-10-06):** öğretmen seçili türleri yukarı/aşağı düğmeleriyle sıralar; sıra öğrenci detayında ve tahtadaki seçim ekranında geçerlidir, 1. sıradaki tür yeni öğrencilere verilir. Okul ayarına dönmek okul sırasını geri getirir.
+  - **Aşama adları (2026-10-06):** öğretmen her türün aşama adlarını yalnızca kendi sınıfı için değiştirebilir (en fazla 40 karakter; boş bırakılan ya da okulunkiyle aynı olan ad okulun adıyla görünür; "Okul adlarına dön"). Sınıfın adları o sınıfın tüm ekranlarında görünür: öğretmen ekranları, tahta, seviye kutlaması, seviye bildirimi, veli paneli ve macera haritası. Okulun adlarını yine yönetici belirler. Değişiklik audit log'a düşer.
 - Her tür, her seviye için kendi görselini ve adını (evrim aşaması) sağlar; tür değişse de seviye aynı kalır.
   - Admin okulunun türlerini adlandırır, aşama adlarını değiştirir, aktif/pasif yapar. En az bir tür aktif kalmalıdır. Pasif tür yeni seçimlerde görünmez; kullanan öğrencinin karakteri değişmez. Genel (okula ait olmayan) türler salt okunurdur.
   - Yeni tür ekleme ve görsel yükleme henüz yoktur; görseller kodla gelir (`public/characters/<tür>/<seviye>.svg`).
@@ -212,8 +214,10 @@ CharacterLevel(schoolId, level 1–5, xpThreshold ≥ 0)              PK(schoolI
   -- okulda kayıt yoksa varsayılan eşikler (src/lib/character.ts) kullanılır
 ClassCharacterLevel(classId, level 1–5, xpThreshold ≥ 0)          PK(classId, level); satır sayısı = seviye sayısı (2–5)
   -- sınıfta kayıt yoksa okulun eşikleri kullanılır
-ClassCharacterType(classId, characterTypeId)                      PK(classId, characterTypeId)
+ClassCharacterType(classId, characterTypeId, sortOrder)           PK(classId, characterTypeId); sortOrder = öğretmenin sırası
   -- sınıfta (aktif) kayıt yoksa okulun tüm aktif türleri sunulur
+ClassCharacterStageName(classId, characterTypeId, level 1–5, name ≤40)  PK(classId, characterTypeId, level)
+  -- kayıt yoksa okulun aşama adı (CharacterStage.name) gösterilir
 CharacterStage(id, characterTypeId, level 1–5, name, assetUrl)    unique(characterTypeId, level)
   -- aşama yoksa genel yer tutucu görsel gösterilir
 Student(id, classId, firstName, lastInitial?, gradeLevel 1–4 (sınıfın düzeylerinden biri), characterTypeId, xp=0, balance=0,
