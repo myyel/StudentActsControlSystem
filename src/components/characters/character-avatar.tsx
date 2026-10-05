@@ -10,7 +10,7 @@ const RING: Record<string, string> = {
   robot: "#2e7fd6",
   tohum: "#3fa34d",
   kedi: "#e98a2e",
-  tavsan: "#e27fa3",
+  tavsan: "#2a9d8f",
   penguen: "#3d5a80",
   tilki: "#e8642c",
   kaplumbaga: "#3f9a55",
