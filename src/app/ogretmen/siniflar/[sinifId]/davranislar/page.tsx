@@ -27,7 +27,7 @@ export default async function BehaviorTypesPage({
   const base = `/ogretmen/siniflar/${sinifId}/davranislar`;
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <ClassNav classId={sinifId} className={cls.name} active="davranislar" />
 
       {allTypes.length === 0 && (

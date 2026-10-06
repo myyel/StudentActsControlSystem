@@ -29,7 +29,7 @@ export default async function ClassMessagesPage({ params, searchParams }: PagePr
   const preselected = typeof ogrenci === "string" && options.some((s) => s.id === ogrenci) ? ogrenci : undefined;
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <ClassNav classId={sinifId} className={cls.name} active="mesajlar" />
 
       <Card>

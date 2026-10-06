@@ -19,7 +19,7 @@ export default async function CurriculumPage({ params }: PageProps<"/ogretmen/si
   ]);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <ClassNav classId={sinifId} className={cls.name} active="duraklar" />
       <p className="text-sm text-muted-foreground">
         Ders → Konu → Durak. Sıralamak için tutamaçtan sürükleyin (klavyede: boşluk ve ok tuşları). Arşivlenen öğeler

@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.42.1 | 2026-10-06 | fix | Öğretmenin Davranışlar, Duraklar, Mesajlar ve Davetler sayfaları geniş ekranda daha geniş (`max-w-6xl`) | Pilot |
 | 0.42.0 | 2026-10-06 | feat | **Müfredat düzenleyicisi yeni görünüm:** her ders kendi renginde kart (kitap simgesi, konu/durak sayısı), konular sol kenarı renkli bloklar, duraklar numaralı rozetli satırlar; `SortableList` satır çerçevesi ve sıra numarası alabilir | Pilot |
 | 0.41.2 | 2026-10-06 | fix | Tavşanın ilerleme halkası pembe yerine yeni zeminle uyumlu turkuaz (`#2a9d8f`, beyaz kartta 3,3:1) | Pilot |
 | 0.41.1 | 2026-10-06 | fix | Tavşan karakterinin arka planı pembe yerine açık nane yeşili (`#dcf3ee`); 5 görsel yeniden üretildi | Pilot |

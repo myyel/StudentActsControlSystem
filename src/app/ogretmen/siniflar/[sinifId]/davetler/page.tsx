@@ -12,7 +12,7 @@ export default async function ClassInvitesPage({ params }: PageProps<"/ogretmen/
   const cls = await getClass(db, sinifId);
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6">
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <ClassNav classId={sinifId} className={cls.name} active="davetler" />
       <div className="print:hidden">
         <p className="text-muted-foreground">
