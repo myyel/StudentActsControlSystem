@@ -47,6 +47,7 @@ const SCREENS: Partial<Record<Role | "guest", Screen[]>> = {
   parent: [
     { name: "veli paneli", path: async () => `/veli/${await studentId("Ada", "Y")}` },
     { name: "macera haritası", path: async () => `/veli/${await studentId("Ada", "Y")}/yol-haritasi` },
+    { name: "davranışlar", path: async () => `/veli/${await studentId("Ada", "Y")}/davranislar` },
     { name: "hoş geldiniz", path: async () => `/veli/${await studentId("Ada", "Y")}?hosgeldin=1` },
     { name: "mesajlar", path: async () => "/veli/mesajlar" },
     {

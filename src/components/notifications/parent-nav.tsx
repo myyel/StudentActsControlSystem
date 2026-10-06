@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Mail, Settings } from "lucide-react";
+import { Bell, House, Mail, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -11,7 +11,10 @@ type Badges = { notifications: number; messages: number };
 
 const countLabel = (n: number) => (n > 99 ? "99+" : String(n));
 
-/** Messages, notifications and settings links with unread counts. */
+/** "/veli/<child id>/…" → the child id; other parent pages (mesajlar, ayarlar…) have none. */
+const CHILD_PATH = /^\/veli\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i;
+
+/** Home (the current child's dashboard), then messages, notifications and settings with unread counts. */
 export function ParentNav({ initial }: { initial: Badges }) {
   const pathname = usePathname();
   const [badges, setBadges] = useState(initial);
@@ -33,8 +36,25 @@ export function ParentNav({ initial }: { initial: Badges }) {
     { href: "/veli/ayarlar", label: "Ayarlar", icon: Settings, count: 0, unread: "" },
   ];
 
+  const childId = CHILD_PATH.exec(pathname)?.[1];
+  // "/veli" itself redirects to the first child.
+  const homeHref = childId ? `/veli/${childId}` : "/veli";
+  const atHome = pathname === homeHref;
+
   return (
     <nav aria-label="Veli menüsü" className="flex items-center gap-1">
+      <Link
+        href={homeHref}
+        aria-current={atHome ? "page" : undefined}
+        aria-label="Ana sayfa"
+        className={cn(
+          "mr-1 flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl px-2.5 text-sm font-extrabold transition-colors sm:px-4",
+          atHome ? "bg-primary-foreground text-primary" : "bg-white/12 text-primary-foreground hover:bg-white/20",
+        )}
+      >
+        <House className="size-5" aria-hidden />
+        <span className="hidden sm:inline">Ana sayfa</span>
+      </Link>
       {items.map(({ href, label, icon: Icon, count, unread }) => {
         const current = pathname === href || pathname.startsWith(`${href}/`);
         return (

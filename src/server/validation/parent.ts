@@ -29,3 +29,8 @@ export const registerParentSchema = z.object({
 export const linkChildSchema = z.object({ code, relation, ...consentFields });
 
 export type RegisterParentInput = z.infer<typeof registerParentSchema>;
+
+/** `?hafta=N` on the parent's behavior page: N weeks back; anything invalid falls back to this week. */
+export const behaviorWeekQuerySchema = z.object({
+  hafta: z.coerce.number().int().min(0).max(52).optional().catch(undefined),
+});

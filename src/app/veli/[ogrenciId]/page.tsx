@@ -1,4 +1,4 @@
-import { Mail } from "lucide-react";
+import { ChevronRight, Mail } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CharacterAvatar } from "@/components/characters/character-avatar";
@@ -69,10 +69,18 @@ export default async function ParentDashboardPage({ params, searchParams }: Page
       <div className="grid gap-6 md:grid-cols-2">
         <CharacterHero childName={name} className={child.className} character={character} />
 
-        <Card>
+        {/* The whole card opens the behavior page; the title link stretches over it. */}
+        <Card className="relative transition-transform has-[a[data-main]:hover]:-translate-y-0.5 has-[a[data-main]:focus-visible]:outline-2 has-[a[data-main]:focus-visible]:outline-ring">
           <CardHeader>
             <CardTitle className="flex items-center justify-between gap-2">
-              Bu hafta
+              <Link
+                href={`/veli/${child.id}/davranislar`}
+                data-main
+                aria-label="Bu hafta: her davranışın grafiği"
+                className="outline-none after:absolute after:inset-0 after:rounded-xl after:content-['']"
+              >
+                Bu hafta
+              </Link>
               {weekPositive > 0 && (
                 <span className="rounded-full bg-grass-soft px-3 py-1 text-sm font-extrabold text-grass-strong">
                   +{weekPositive} olumlu
@@ -98,6 +106,10 @@ export default async function ParentDashboardPage({ params, searchParams }: Page
                 ({weekTop.count} kez)
               </p>
             )}
+            <span aria-hidden className="flex items-center gap-1 self-end text-sm font-bold text-sky-ink">
+              Her davranışın grafiği
+              <ChevronRight className="size-4" />
+            </span>
           </CardContent>
         </Card>
       </div>
