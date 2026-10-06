@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { BEHAVIOR_ICON_CHOICES } from "@/content/default-behaviors";
+import { BEHAVIOR_ICON_GROUPS } from "@/content/default-behaviors";
 import { FormMessage } from "@/components/form-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,21 +33,28 @@ export function BehaviorTypeForm({ scope, action, initial, submitLabel, onDone }
       <input type="hidden" name="scope" value={scope} />
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-2 text-sm font-medium">Simge</legend>
-        <div className="flex flex-wrap gap-1">
-          {BEHAVIOR_ICON_CHOICES.map((choice) => (
-            <button
-              key={choice}
-              type="button"
-              onClick={() => setIcon(choice)}
-              aria-pressed={icon === choice}
-              aria-label={`Simge ${choice}`}
-              className={cn(
-                "flex size-11 items-center justify-center rounded-md border text-xl",
-                icon === choice ? "border-primary bg-primary/10" : "border-transparent hover:bg-accent",
-              )}
-            >
-              {choice}
-            </button>
+        <div className="flex max-h-72 flex-col gap-3 overflow-y-auto rounded-md border p-2">
+          {BEHAVIOR_ICON_GROUPS.map((group) => (
+            <div key={group.label} role="group" aria-label={group.label} className="flex flex-col gap-1">
+              <p className="text-xs font-medium text-muted-foreground">{group.label}</p>
+              <div className="flex flex-wrap gap-1">
+                {group.icons.map((choice) => (
+                  <button
+                    key={choice}
+                    type="button"
+                    onClick={() => setIcon(choice)}
+                    aria-pressed={icon === choice}
+                    aria-label={`Simge ${choice}`}
+                    className={cn(
+                      "flex size-11 items-center justify-center rounded-md border text-xl",
+                      icon === choice ? "border-primary bg-primary/10" : "border-transparent hover:bg-accent",
+                    )}
+                  >
+                    {choice}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
         <div className="flex items-center gap-2">

@@ -20,8 +20,39 @@ export const DEFAULT_BEHAVIORS: DefaultBehavior[] = [
   { name: "Dişlerini fırçaladı", icon: "🪥", points: 1, scope: "home" },
 ];
 
-/** Quick picks in the behavior type form; any emoji can still be typed. */
-export const BEHAVIOR_ICON_CHOICES = [
-  "⭐", "🤝", "✋", "📚", "💛", "⏳", "🧹", "🎨", "🧠", "🏃", "🎵", "🌱",
-  "🔇", "💔", "📝", "⚠️", "🛏️", "📖", "🍽️", "🪥", "🧸", "🚲",
+/**
+ * Quick picks in the behavior type form, grouped for scanning; any emoji can still be typed.
+ * Kept to emoji that render on older Android/Windows devices (Unicode 13 and earlier).
+ */
+export const BEHAVIOR_ICON_GROUPS: { label: string; icons: string[] }[] = [
+  {
+    label: "Ders ve başarı",
+    icons: ["⭐", "📚", "📝", "✏️", "📖", "🧠", "💡", "🔢", "🔬", "🌍", "💻", "🎨", "🎵", "🎭", "🏆", "🎯", "✅", "🚀"],
+  },
+  {
+    label: "Katılım",
+    icons: ["✋", "🙋", "🗣️", "👂", "🤔", "💬", "👀"],
+  },
+  {
+    label: "Arkadaşlık ve değerler",
+    icons: ["🤝", "💛", "❤️", "🙏", "👏", "🤗", "😊", "🌈", "🕊️", "🧩", "🎁", "🌟"],
+  },
+  {
+    label: "Düzen ve sorumluluk",
+    icons: ["🧹", "⏳", "⏰", "🎒", "🗂️", "🗑️", "♻️", "🌱", "🧼", "📅", "🚶"],
+  },
+  {
+    label: "Hareket ve oyun",
+    icons: ["🏃", "⚽", "🏀", "🚲", "🤸", "🧸", "🎲", "🏅"],
+  },
+  {
+    label: "Ev",
+    icons: ["🛏️", "🍽️", "🪥", "🥦", "🍎", "💧", "👕", "🧦", "🐶", "🪴", "🛁", "😴"],
+  },
+  {
+    label: "Uyarı",
+    icons: ["⚠️", "🔇", "💔", "🚫", "🐢", "📵", "🗯️", "🙉"],
+  },
 ];
+
+export const BEHAVIOR_ICON_CHOICES = BEHAVIOR_ICON_GROUPS.flatMap((group) => group.icons);
