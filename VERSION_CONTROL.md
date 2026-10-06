@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.45.0 | 2026-10-06 | feat | **Macera haritası sahneleri:** her konu adası sırayla çayır, deniz, uzay veya dağ temalı özgün arka plan alır (`IslandScene`); liste görünümünde her ders kendi renginde kart, yüzde ve ilerleme çubuğuyla | Pilot |
 | 0.44.0 | 2026-10-06 | feat | **Yönetim paneli yeni görünüm:** üst menüde bölüm gezinmesi (`AdminNav`), panelde renkli bölüm kartları (bekleyen silme talebi rozetiyle), Karakterler, Silme talepleri ve Denetim kaydı sayfaları ortak başlık ve kart stiliyle | Pilot |
 | 0.43.0 | 2026-10-06 | feat | **Daha fazla davranış simgesi:** hazır emoji 22'den 76'ya çıktı ve başlıklarla gruplandı (Ders ve başarı, Katılım, Arkadaşlık ve değerler, Düzen ve sorumluluk, Hareket ve oyun, Ev, Uyarı); seçim alanı kendi içinde kaydırılır; yalnızca eski cihazlarda da görünen emoji (Unicode ≤ 13) | Pilot |
 | 0.42.1 | 2026-10-06 | fix | Öğretmenin Davranışlar, Duraklar, Mesajlar ve Davetler sayfaları geniş ekranda daha geniş (`max-w-6xl`) | Pilot |

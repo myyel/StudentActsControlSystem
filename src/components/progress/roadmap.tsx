@@ -1,6 +1,16 @@
+import { BookOpen, Check } from "lucide-react";
 import { STATUS_LABEL } from "@/lib/progress";
 import { cn } from "@/lib/utils";
-import type { RoadmapSubject } from "@/server/services/progress";
+import type { RoadmapStage, RoadmapSubject } from "@/server/services/progress";
+import { Stars } from "./status-icon";
+
+/** Per-subject colour; bright tones are fills only, text stays ink for AA contrast. */
+const TONES = [
+  { band: "bg-sky-soft", badge: "bg-sky" },
+  { band: "bg-grass-soft", badge: "bg-grass" },
+  { band: "bg-lav-soft", badge: "bg-lav" },
+  { band: "bg-sun-soft", badge: "bg-sun" },
+] as const;
 
 /**
  * A path of stages per subject. Only the child's own progress is shown: no negatives,
@@ -12,77 +22,115 @@ export function Roadmap({ subjects }: { subjects: RoadmapSubject[] }) {
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      {subjects.map((s) => {
+    <div className="grid items-start gap-6 md:grid-cols-2">
+      {subjects.map((s, i) => {
+        const tone = TONES[i % TONES.length]!;
         const percent = s.total === 0 ? 0 : Math.round((s.completed / s.total) * 100);
         return (
-          <section key={s.id} className="flex flex-col gap-4 rounded-2xl border p-4">
-            <header className="flex flex-col gap-2">
-              <h2 className="text-xl font-semibold">{s.name}</h2>
+          <section key={s.id} className="overflow-hidden rounded-[1.75rem] bg-card shadow-[0_6px_0_var(--kid-shadow)]">
+            <header className={cn("flex flex-col gap-3 p-4 sm:p-5", tone.band)}>
+              <div className="flex items-center gap-3">
+                <span
+                  aria-hidden
+                  className={cn(
+                    "flex size-12 shrink-0 items-center justify-center rounded-2xl text-ink shadow-[0_3px_0_rgb(0_0_0/0.12)]",
+                    tone.badge,
+                  )}
+                >
+                  <BookOpen className="size-6" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-display text-2xl leading-tight font-extrabold">{s.name}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {s.completed} / {s.total} durak tamamlandı
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full bg-card px-3 py-1 text-sm font-extrabold">%{percent}</span>
+              </div>
               <div
                 role="progressbar"
                 aria-valuemin={0}
                 aria-valuemax={s.total}
                 aria-valuenow={s.completed}
                 aria-label={`${s.name}: ${s.total} duraktan ${s.completed} tamamlandı`}
-                className="h-3 overflow-hidden rounded-full bg-muted"
+                className="h-4 overflow-hidden rounded-full bg-card"
               >
-                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${percent}%` }} />
+                <div className="h-full rounded-full bg-grass" style={{ width: `${percent}%` }} />
               </div>
-              <p className="text-sm text-muted-foreground">
-                {s.completed} / {s.total} durak tamamlandı
-              </p>
             </header>
 
-            {s.topics.map((t) => (
-              <div key={t.id} className="flex flex-col gap-1">
-                <h3 className="font-medium">{t.name}</h3>
-                <ol className="relative ml-4 border-l-2 border-dashed border-muted-foreground/30">
-                  {t.stages.map((st) => (
-                    <li
-                      key={st.id}
-                      className="relative flex min-h-11 items-center gap-3 py-1 pl-6"
-                    >
-                      <span
-                        aria-hidden
-                        className={cn(
-                          "absolute -left-[11px] flex size-5 items-center justify-center rounded-full border-2 bg-background text-[10px] text-white",
-                          st.status === "completed" && "border-emerald-600 bg-emerald-600",
-                          st.status === "in_progress" && "size-6 -left-[13px] border-amber-500 ring-4 ring-amber-200 dark:ring-amber-900",
-                          st.status === "not_started" && "border-muted-foreground/40",
-                        )}
-                      >
-                        {st.status === "completed" && "✓"}
+            <div className="flex flex-col gap-5 p-4 sm:p-5">
+              {s.topics.length === 0 && <p className="text-sm text-muted-foreground">Bu derste henüz durak yok.</p>}
+              {s.topics.map((t) => {
+                const done = t.stages.filter((st) => st.status === "completed").length;
+                return (
+                  <div key={t.id} className="flex flex-col gap-2">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <h3 className="font-display text-lg font-extrabold">{t.name}</h3>
+                      <span className="shrink-0 text-sm text-muted-foreground">
+                        {done}/{t.stages.length}
                       </span>
-                      <span
-                        className={cn(
-                          "min-w-0 flex-1",
-                          st.status === "in_progress" && "font-semibold",
-                          // Muted text keeps AA contrast (opacity would not).
-                          st.status === "not_started" && "text-muted-foreground",
-                        )}
-                      >
-                        {st.name}
-                      </span>
-                      {st.status === "in_progress" && (
-                        <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-900 dark:text-amber-100">
-                          Şu an burada
-                        </span>
-                      )}
-                      {st.status === "completed" && st.stars ? (
-                        <span className="shrink-0 text-amber-500" aria-label={`${st.stars} yıldız`}>
-                          {"★".repeat(st.stars)}
-                        </span>
-                      ) : null}
-                      <span className="sr-only">{STATUS_LABEL[st.status]}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            ))}
+                    </div>
+                    {t.stages.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Bu konuda henüz durak yok.</p>
+                    ) : (
+                      <ol className="flex flex-col gap-2">
+                        {t.stages.map((st) => (
+                          <StageRow key={st.id} stage={st} />
+                        ))}
+                      </ol>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </section>
         );
       })}
     </div>
+  );
+}
+
+function StageRow({ stage }: { stage: RoadmapStage }) {
+  const { status, stars, name } = stage;
+  return (
+    <li
+      className={cn(
+        "flex min-h-14 items-center gap-3 rounded-2xl px-3 py-2",
+        status === "completed" && "bg-grass-soft",
+        status === "in_progress" && "border-2 border-sun bg-sun-soft",
+        status === "not_started" && "border-2 border-dashed border-input",
+      )}
+    >
+      {status === "completed" ? (
+        <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-full bg-grass-strong text-white">
+          <Check className="size-5" strokeWidth={3.5} />
+        </span>
+      ) : status === "in_progress" ? (
+        <span aria-hidden className="block size-9 shrink-0 rounded-full border-[5px] border-sun bg-white" />
+      ) : (
+        <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-lg">
+          ☁️
+        </span>
+      )}
+      <span
+        className={cn(
+          "min-w-0 flex-1 break-words",
+          status === "not_started" ? "text-muted-foreground" : "font-bold",
+        )}
+      >
+        {name}
+      </span>
+      {status === "in_progress" && (
+        <span className="shrink-0 rounded-full bg-primary px-2.5 py-0.5 text-xs font-extrabold text-primary-foreground">
+          Şu an burada
+        </span>
+      )}
+      {status === "completed" && stars ? <Stars count={stars} className="shrink-0 [&_svg]:size-4" /> : null}
+      <span className="sr-only">
+        {STATUS_LABEL[status]}
+        {stars ? `, ${stars} yıldız` : ""}
+      </span>
+    </li>
   );
 }

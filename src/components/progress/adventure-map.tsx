@@ -1,11 +1,12 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, List, Map as MapIcon } from "lucide-react";
 import { useState } from "react";
 import { CharacterImage } from "@/components/characters/character-image";
 import { STATUS_LABEL } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 import type { RoadmapStage, RoadmapSubject } from "@/server/services/progress";
+import { ISLAND_EMOJI, ISLAND_THEMES, IslandScene, SCENE_BAND, islandBackground } from "./island-scene";
 import { Roadmap } from "./roadmap";
 import { Stars } from "./status-icon";
 
@@ -13,7 +14,6 @@ type Props = { subjects: RoadmapSubject[]; stage: { name: string; assetUrl: stri
 
 const ROW = 92; // px per stop
 const XS = [24, 64, 34, 72, 44]; // winding path, % of the island width
-const ISLANDS = ["bg-sky-soft", "bg-sun-soft", "bg-lav-soft", "bg-grass-soft"];
 
 /**
  * The roadmap as an adventure: subject tabs, topics as islands, stops on a dashed path, the
@@ -30,7 +30,7 @@ export function AdventureMap({ subjects, stage, childName }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div role="group" aria-label="Görünüm" className="flex gap-1 rounded-full bg-muted p-1">
+        <div role="group" aria-label="Görünüm" className="flex gap-1 rounded-full bg-card p-1 shadow-[0_3px_0_var(--kid-shadow)]">
           {(["map", "list"] as const).map((v) => (
             <button
               key={v}
@@ -38,10 +38,11 @@ export function AdventureMap({ subjects, stage, childName }: Props) {
               aria-pressed={view === v}
               onClick={() => setView(v)}
               className={cn(
-                "min-h-11 rounded-full px-4 text-sm font-bold",
+                "flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-bold",
                 view === v ? "bg-primary text-primary-foreground" : "hover:bg-accent",
               )}
             >
+              {v === "map" ? <MapIcon aria-hidden className="size-4" /> : <List aria-hidden className="size-4" />}
               {v === "map" ? "Harita" : "Liste"}
             </button>
           ))}
@@ -60,8 +61,10 @@ export function AdventureMap({ subjects, stage, childName }: Props) {
                 aria-pressed={s.id === subject.id}
                 onClick={() => setSubjectId(s.id)}
                 className={cn(
-                  "flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-bold",
-                  s.id === subject.id ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-accent",
+                  "flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-bold",
+                  s.id === subject.id
+                    ? "bg-primary text-primary-foreground shadow-[0_3px_0_rgb(0_0_0/0.15)]"
+                    : "bg-card shadow-[0_3px_0_var(--kid-shadow)] hover:bg-accent",
                 )}
               >
                 {s.name}
@@ -74,15 +77,30 @@ export function AdventureMap({ subjects, stage, childName }: Props) {
 
           <h2 className="sr-only">{subject.name}</h2>
           {subject.topics.length === 0 && <p className="text-muted-foreground">Bu derste henüz durak yok.</p>}
-          {subject.topics.map((t, i) => (
-            <section key={t.id} aria-labelledby={`island-${t.id}`} className={cn("rounded-[2.5rem] p-4 pb-2", ISLANDS[i % ISLANDS.length])}>
-              <h3 id={`island-${t.id}`} className="font-display text-lg font-extrabold">
-                <span aria-hidden>🏝️ </span>
-                {t.name}
-              </h3>
-              <Path stages={t.stages} stage={stage} childName={childName} />
-            </section>
-          ))}
+          {subject.topics.map((t, i) => {
+            const theme = ISLAND_THEMES[i % ISLAND_THEMES.length]!;
+            return (
+              <section
+                key={t.id}
+                aria-labelledby={`island-${t.id}`}
+                className={cn(
+                  "relative isolate overflow-hidden rounded-[2.5rem] p-4 shadow-[0_6px_0_var(--kid-shadow)]",
+                  islandBackground(theme),
+                )}
+                style={{ paddingBottom: SCENE_BAND }}
+              >
+                <IslandScene theme={theme} />
+                <h3
+                  id={`island-${t.id}`}
+                  className="relative inline-flex items-center gap-2 rounded-full bg-card/90 px-4 py-1.5 font-display text-lg font-extrabold shadow-[0_3px_0_rgb(0_0_0/0.08)]"
+                >
+                  <span aria-hidden>{ISLAND_EMOJI[theme]}</span>
+                  {t.name}
+                </h3>
+                <Path stages={t.stages} stage={stage} childName={childName} />
+              </section>
+            );
+          })}
         </>
       )}
     </div>
@@ -90,7 +108,9 @@ export function AdventureMap({ subjects, stage, childName }: Props) {
 }
 
 function Path({ stages, stage, childName }: { stages: RoadmapStage[]; stage: Props["stage"]; childName: string }) {
-  if (stages.length === 0) return <p className="py-2 text-sm text-muted-foreground">Bu konuda henüz durak yok.</p>;
+  if (stages.length === 0) {
+    return <p className="relative mt-3 w-fit rounded-xl bg-card/90 px-3 py-1.5 text-sm text-muted-foreground">Bu konuda henüz durak yok.</p>;
+  }
   const height = stages.length * ROW;
   const points = stages.map((_, i) => [XS[i % XS.length]!, i * ROW + ROW / 2] as const);
 
@@ -100,11 +120,11 @@ function Path({ stages, stage, childName }: { stages: RoadmapStage[]; stage: Pro
         <polyline
           points={points.map(([x, y]) => `${x},${y}`).join(" ")}
           fill="none"
-          strokeWidth={4}
-          strokeDasharray="2 8"
+          strokeWidth={6}
+          strokeDasharray="1 11"
           strokeLinecap="round"
           vectorEffect="non-scaling-stroke"
-          className="stroke-[#d8ccb6] dark:stroke-[#4a4d6a]"
+          className="stroke-white"
         />
       </svg>
       {stages.map((st, i) => {
@@ -135,7 +155,12 @@ function Path({ stages, stage, childName }: { stages: RoadmapStage[]; stage: Pro
               )}
               style={left ? { left: `calc(${x}% + 34px)`, right: 8 } : { right: `calc(${100 - x}% + 34px)`, left: 8 }}
             >
-              <span className={cn("leading-tight font-bold", st.status === "not_started" && "font-semibold text-muted-foreground")}>
+              <span
+                className={cn(
+                  "rounded-xl bg-card/90 px-2.5 py-1 leading-tight font-bold shadow-[0_2px_0_rgb(0_0_0/0.06)]",
+                  st.status === "not_started" && "font-semibold text-muted-foreground",
+                )}
+              >
                 {st.name}
               </span>
               {st.status === "in_progress" && (
@@ -159,16 +184,16 @@ function Path({ stages, stage, childName }: { stages: RoadmapStage[]; stage: Pro
 function Node({ stage }: { stage: RoadmapStage }) {
   if (stage.status === "completed") {
     return (
-      <span aria-hidden className="flex size-12 items-center justify-center rounded-full border-4 border-white bg-grass-strong text-white shadow dark:border-card dark:text-ink">
+      <span aria-hidden className="flex size-12 items-center justify-center rounded-full border-4 border-white bg-grass-strong text-white shadow">
         <Check className="size-6" strokeWidth={3.5} />
       </span>
     );
   }
   if (stage.status === "in_progress") {
-    return <span aria-hidden className="block size-14 rounded-full border-[6px] border-sun bg-white shadow-[0_0_0_6px_rgb(255_200_61/0.3)] dark:bg-card" />;
+    return <span aria-hidden className="block size-14 rounded-full border-[6px] border-sun bg-white shadow-[0_0_0_6px_rgb(255_200_61/0.3)]" />;
   }
   return (
-    <span aria-hidden className="flex size-11 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/50 bg-card/70 text-xl">
+    <span aria-hidden className="flex size-11 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/50 bg-card/90 text-xl">
       ☁️
     </span>
   );
