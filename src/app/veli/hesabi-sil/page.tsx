@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { BackLink } from "@/components/layout/back-link";
 import { DeleteAccountForm } from "@/components/privacy/delete-account-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatStudentName } from "@/lib/student-names";
@@ -19,7 +18,6 @@ export default async function DeleteAccountPage() {
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
-      <BackLink href="/veli/ayarlar">Ayarlar</BackLink>
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Hesabı sil</CardTitle>

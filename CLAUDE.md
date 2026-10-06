@@ -50,7 +50,7 @@ docs/PRD.md
 ## UI kuralları
 - Tüm arayüz metinleri **Türkçe**; kod, değişken ve commit mesajları İngilizce.
 - Mobil öncelikli. Kırılımlar: 360 / 768 / 1280 / 1920px. Yatay kaydırma yok.
-- Dokunma hedefleri en az 44×44px; tahta modunda en az 80px. shadcn `Button`/`Input` dokunmatikte (`pointer-coarse:`) kendiliğinden 44px olur; özel düğme ve bağlantılarda `min-h-11` kullan, geri bağlantıları için `BackLink`. Soluk metin için `opacity` değil `text-muted-foreground` (kontrast).
+- Dokunma hedefleri en az 44×44px; tahta modunda en az 80px. shadcn `Button`/`Input` dokunmatikte (`pointer-coarse:`) kendiliğinden 44px olur; özel düğme ve bağlantılarda `min-h-11` kullan. Sayfalara "← üst sayfa" geri bağlantısı konmaz. Soluk metin için `opacity` değil `text-muted-foreground` (kontrast).
 - Renk kontrastı WCAG AA. Arayüz her zaman açık moddadır; karanlık mod ve sistem teması desteklenmez (`dark:` sınıfı yazma).
 - Çocuk dostu, sıcak ama sade görünüm; öğretmen ekranları hızlı ve az dokunuşlu.
 - **Görsel dil** (`docs/Cocuk-Odakli-Arayuz-Onerileri.pdf`, PRD §2): renk token'ları `src/app/globals.css`'te (`grass`, `sun`, `sky`, `lav`, `coral`, krem zemin, mürekkep metin). Parlak tonlar dolgu içindir; metinde AA için `text-grass-strong`, `text-sky-ink`, `text-coral-ink` kullan. Başlıklar `font-display` (Baloo 2), metin Nunito.

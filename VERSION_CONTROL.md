@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.46.1 | 2026-10-06 | refactor | "← üst sayfa" geri bağlantıları kaldırıldı (öğrenci sayfası, veli mesajı, hesabı sil, çocuk ekle, yol haritası); `BackLink` bileşeni silindi, CLAUDE.md güncellendi | Pilot |
 | 0.46.0 | 2026-10-06 | feat | **Veli davranış grafikleri:** yeni `/veli/[ogrenciId]/davranislar` sayfası; davranışlar **Okulda** ve **Evde** olarak ayrılır, her bölümün kendi haftalık özeti ve davranış başına gün gün kartları var (aynı adlı davranış okulda ve evde ayrı kart); kartlar tek satırda yana kaydırılır (dokunma, fareyle sürükleme, klavye); haftalar arası gezinme (`?hafta=N`, en çok 52); panelde "Bu hafta" kartı bu sayfaya gider; veli üst menüsüne "Ana sayfa" düğmesi; `WeekChart` yalnızca olumlu modu | Pilot |
 | 0.45.0 | 2026-10-06 | feat | **Macera haritası sahneleri:** her konu adası sırayla çayır, deniz, uzay veya dağ temalı özgün arka plan alır (`IslandScene`); liste görünümünde her ders kendi renginde kart, yüzde ve ilerleme çubuğuyla | Pilot |
 | 0.44.0 | 2026-10-06 | feat | **Yönetim paneli yeni görünüm:** üst menüde bölüm gezinmesi (`AdminNav`), panelde renkli bölüm kartları (bekleyen silme talebi rozetiyle), Karakterler, Silme talepleri ve Denetim kaydı sayfaları ortak başlık ve kart stiliyle | Pilot |

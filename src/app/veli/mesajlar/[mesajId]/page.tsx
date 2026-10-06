@@ -1,6 +1,5 @@
 import { Megaphone, User } from "lucide-react";
 import type { Metadata } from "next";
-import { BackLink } from "@/components/layout/back-link";
 import { MessageReactions } from "@/components/messages/message-reactions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +20,6 @@ export default async function ParentMessagePage({ params }: PageProps<"/veli/mes
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
-      <BackLink href="/veli/mesajlar">Mesajlar</BackLink>
       <Card>
         <CardHeader className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
