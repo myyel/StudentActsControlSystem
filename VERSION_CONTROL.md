@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.44.0 | 2026-10-06 | feat | **Yönetim paneli yeni görünüm:** üst menüde bölüm gezinmesi (`AdminNav`), panelde renkli bölüm kartları (bekleyen silme talebi rozetiyle), Karakterler, Silme talepleri ve Denetim kaydı sayfaları ortak başlık ve kart stiliyle | Pilot |
 | 0.43.0 | 2026-10-06 | feat | **Daha fazla davranış simgesi:** hazır emoji 22'den 76'ya çıktı ve başlıklarla gruplandı (Ders ve başarı, Katılım, Arkadaşlık ve değerler, Düzen ve sorumluluk, Hareket ve oyun, Ev, Uyarı); seçim alanı kendi içinde kaydırılır; yalnızca eski cihazlarda da görünen emoji (Unicode ≤ 13) | Pilot |
 | 0.42.1 | 2026-10-06 | fix | Öğretmenin Davranışlar, Duraklar, Mesajlar ve Davetler sayfaları geniş ekranda daha geniş (`max-w-6xl`) | Pilot |
 | 0.42.0 | 2026-10-06 | feat | **Müfredat düzenleyicisi yeni görünüm:** her ders kendi renginde kart (kitap simgesi, konu/durak sayısı), konular sol kenarı renkli bloklar, duraklar numaralı rozetli satırlar; `SortableList` satır çerçevesi ve sıra numarası alabilir | Pilot |

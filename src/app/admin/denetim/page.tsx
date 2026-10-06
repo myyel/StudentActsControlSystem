@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Clock, Filter, SearchX, UserRound } from "lucide-react";
 import Link from "next/link";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { ADMIN_SECTIONS, adminCardClass } from "@/components/admin/admin-sections";
 import { selectClassName } from "@/components/form-message";
-import { BackLink } from "@/components/layout/back-link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,15 +43,20 @@ export default async function AuditPage({ searchParams }: PageProps<"/admin/dene
   };
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-4">
-      <BackLink href="/admin">Yönetim paneli</BackLink>
-      <h1 className="text-2xl font-semibold">Denetim kaydı</h1>
-      <p className="text-sm text-muted-foreground">
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      <AdminPageHeader section={ADMIN_SECTIONS.audit}>
         Puan verme/silme, ilerleme, veli bağlama, silme ve dışa aktarma gibi kritik işlemler. Kayıtlar değiştirilemez;
         silinen öğrencilerin adları kayıtlardan çıkarılır.
-      </p>
+      </AdminPageHeader>
 
-      <form className="grid gap-3 rounded-xl border p-4 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
+      <form
+        aria-label="Kayıtları filtrele"
+        className={cn(adminCardClass, "grid gap-3 p-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-5 lg:items-end")}
+      >
+        <p className="flex items-center gap-2 font-display text-xl font-extrabold sm:col-span-2 lg:col-span-5">
+          <Filter aria-hidden className="size-5 text-grass-strong" />
+          Filtreler
+        </p>
         <div className="flex flex-col gap-2 lg:col-span-2">
           <Label htmlFor="islem">İşlem</Label>
           <select id="islem" name="islem" defaultValue={filters.islem ?? ""} className={selectClassName}>
@@ -84,26 +91,38 @@ export default async function AuditPage({ searchParams }: PageProps<"/admin/dene
       </form>
 
       {result.rows.length === 0 ? (
-        <p className="text-muted-foreground">Kayıt bulunamadı.</p>
+        <div className={cn(adminCardClass, "flex flex-col items-center gap-2 p-8 text-center")}>
+          <span aria-hidden className="flex size-14 items-center justify-center rounded-2xl bg-grass-soft text-grass-strong">
+            <SearchX className="size-7" />
+          </span>
+          <p className="font-display text-xl font-extrabold">Kayıt bulunamadı.</p>
+        </div>
       ) : (
-        <ol className="flex flex-col divide-y rounded-xl border">
+        <ol className={cn(adminCardClass, "flex flex-col divide-y overflow-hidden")}>
           {result.rows.map((r) => (
-            <li key={r.id} className="flex flex-col gap-1 p-3">
+            <li key={r.id} className="flex flex-col gap-1.5 px-4 py-3 hover:bg-grass-soft/40 sm:px-6">
               <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                <span className="font-medium">{auditActionLabel(r.action)}</span>
-                <time dateTime={r.createdAt.toISOString()} className="text-sm text-muted-foreground">
+                <span className="font-bold">{auditActionLabel(r.action)}</span>
+                <time
+                  dateTime={r.createdAt.toISOString()}
+                  className="flex items-center gap-1 text-sm text-muted-foreground tabular-nums"
+                >
+                  <Clock aria-hidden className="size-3.5" />
                   {formatDate(r.createdAt)}
                 </time>
               </div>
-              <p className="text-sm break-words">
+              <p className="flex items-start gap-2 text-sm break-words">
+                <UserRound aria-hidden className="mt-0.5 size-4 shrink-0 text-sky-ink" />
+                <span className="min-w-0">
                 {r.actorName && r.actorRole
                   ? `${r.actorName} (${ROLE_LABEL[r.actorRole]}, ${r.actorEmail})`
                   : "Silinmiş kullanıcı veya sistem"}
                 {r.ip && <span className="text-muted-foreground"> · IP {r.ip}</span>}
+                </span>
               </p>
               <details className="text-sm">
                 <summary className="inline-flex min-h-11 min-w-11 cursor-pointer items-center text-muted-foreground">Ayrıntı</summary>
-                <pre className="overflow-x-auto rounded-md bg-muted p-2 text-xs">
+                <pre className="overflow-x-auto rounded-2xl bg-muted p-3 text-xs">
                   {JSON.stringify({ kayit: `${r.entity}/${r.entityId}`, ...r.data }, null, 2)}
                 </pre>
               </details>

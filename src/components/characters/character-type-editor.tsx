@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { adminCardClass } from "@/components/admin/admin-sections";
+import { cn } from "@/lib/utils";
 import { CharacterImage } from "./character-image";
 
 type Props = {
@@ -25,9 +27,9 @@ export function CharacterTypeEditor({ type }: Props) {
 
   if (!type.editable) {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border p-4">
+      <div className={cn(adminCardClass, "flex flex-col gap-4 p-4 sm:p-6")}>
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-lg font-semibold">{type.name}</h3>
+          <h3 className="font-display text-xl font-extrabold">{type.name}</h3>
           <Badge variant="secondary">Genel tür</Badge>
           {!type.active && <Badge variant="secondary">Pasif</Badge>}
         </div>
@@ -37,7 +39,11 @@ export function CharacterTypeEditor({ type }: Props) {
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-4 rounded-xl border p-4">
+    <form action={formAction} className={cn(adminCardClass, "flex flex-col gap-4 p-4 sm:p-6")}>
+      <div className="flex flex-wrap items-center gap-2">
+        <h3 className="font-display text-xl font-extrabold">{type.name}</h3>
+        {!type.active && <Badge variant="secondary">Pasif</Badge>}
+      </div>
       <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
         <div className="flex flex-col gap-2">
           <Label htmlFor={id("name")}>Tür adı</Label>
@@ -50,7 +56,7 @@ export function CharacterTypeEditor({ type }: Props) {
       </div>
       <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {type.stages.map((stage, i) => (
-          <li key={i} className="flex flex-col items-center gap-2 rounded-lg bg-muted/40 p-2">
+          <li key={i} className="flex flex-col items-center gap-2 rounded-2xl bg-lav-soft/60 p-3">
             <CharacterImage stage={stage} size={96} decorative />
             <Label htmlFor={id(`stage-${i}`)} className="self-start">
               {i + 1}. seviye
@@ -78,7 +84,7 @@ function StageRow({ stages }: { stages: { name: string; assetUrl: string }[] }) 
   return (
     <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {stages.map((stage, i) => (
-        <li key={i} className="flex flex-col items-center gap-1 text-center text-sm">
+        <li key={i} className="flex flex-col items-center gap-1 rounded-2xl bg-lav-soft/60 p-3 text-center text-sm">
           <CharacterImage stage={stage} size={96} decorative />
           <span className="text-muted-foreground">{i + 1}. seviye</span>
           <span className="font-medium">{stage.name}</span>
