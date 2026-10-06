@@ -28,8 +28,11 @@ type Props<T extends Item> = {
   items: T[];
   /** Persists the new order; returns an error message on failure. */
   onReorder: (ids: string[]) => Promise<string | null>;
-  renderItem: (item: T) => React.ReactNode;
+  /** Receives the item's current (optimistic) position, starting from 0. */
+  renderItem: (item: T, index: number) => React.ReactNode;
   className?: string;
+  /** Replaces the default row frame (border and background). */
+  rowClassName?: string;
 };
 
 const screenReaderInstructions = {
@@ -49,7 +52,13 @@ function announcements(items: Item[]): Announcements {
 }
 
 /** Vertical drag-and-drop list with a handle; works with pointer, touch and keyboard. */
-export function SortableList<T extends Item>({ items: initial, onReorder, renderItem, className }: Props<T>) {
+export function SortableList<T extends Item>({
+  items: initial,
+  onReorder,
+  renderItem,
+  className,
+  rowClassName = "rounded-xl border bg-background",
+}: Props<T>) {
   // The parent remounts this list (via key) whenever the server order changes.
   const [items, setItems] = useState(initial);
   const [error, setError] = useState<string | null>(null);
@@ -88,9 +97,9 @@ export function SortableList<T extends Item>({ items: initial, onReorder, render
       >
         <SortableContext items={items} strategy={verticalListSortingStrategy}>
           <ul className={cn("flex flex-col gap-2", className)}>
-            {items.map((item) => (
-              <SortableRow key={item.id} id={item.id} label={item.name}>
-                {renderItem(item)}
+            {items.map((item, index) => (
+              <SortableRow key={item.id} id={item.id} label={item.name} className={rowClassName}>
+                {renderItem(item, index)}
               </SortableRow>
             ))}
           </ul>
@@ -105,7 +114,17 @@ export function SortableList<T extends Item>({ items: initial, onReorder, render
   );
 }
 
-function SortableRow({ id, label, children }: { id: string; label: string; children: React.ReactNode }) {
+function SortableRow({
+  id,
+  label,
+  className,
+  children,
+}: {
+  id: string;
+  label: string;
+  className: string;
+  children: React.ReactNode;
+}) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id,
   });
@@ -113,7 +132,7 @@ function SortableRow({ id, label, children }: { id: string; label: string; child
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn("flex items-start gap-1 rounded-xl border bg-background", isDragging && "relative z-10 shadow-lg")}
+      className={cn("flex items-start gap-1", className, isDragging && "relative z-10 shadow-lg")}
     >
       <button
         type="button"

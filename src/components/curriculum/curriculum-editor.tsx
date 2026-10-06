@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Pencil, Plus } from "lucide-react";
+import { Archive, BookOpen, Pencil, Plus } from "lucide-react";
 import { useActionState, useState, useTransition } from "react";
 import {
   createNodeAction,
@@ -13,8 +13,25 @@ import { GradeLevelSelect } from "@/components/classes/grade-level-select";
 import { selectClassName } from "@/components/form-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import type { NodeKind, SubjectNode, TopicNode } from "@/server/services/curriculum";
 import { SortableList } from "./sortable-list";
+
+/** Per-subject colour set; bright tones are fills only, text uses the AA "ink" shades. */
+const TONES = [
+  { icon: "bg-grass-soft text-grass-strong", topic: "bg-grass-soft/60 border-grass", badge: "border-grass text-grass-strong" },
+  { icon: "bg-sky-soft text-sky-ink", topic: "bg-sky-soft/60 border-sky", badge: "border-sky text-sky-ink" },
+  { icon: "bg-lav-soft text-lav-ink", topic: "bg-lav-soft/60 border-lav", badge: "border-lav text-lav-ink" },
+  { icon: "bg-sun-soft text-ink", topic: "bg-sun-soft/60 border-sun", badge: "border-sun-press text-ink" },
+] as const;
+type Tone = (typeof TONES)[number];
+
+/** Stable colour per subject, so it does not jump around while reordering. */
+function toneFor(id: string): Tone {
+  let hash = 0;
+  for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
+  return TONES[Math.abs(hash) % TONES.length] ?? TONES[0];
+}
 
 const LABEL: Record<NodeKind, string> = { subject: "Ders", topic: "Konu", stage: "Durak" };
 const PLACEHOLDER: Record<NodeKind, string> = {
@@ -79,8 +96,28 @@ function NameForm({
   );
 }
 
+const NAME_CLASS: Record<NodeKind, string> = {
+  subject: "font-display text-xl font-bold leading-tight",
+  topic: "text-base font-bold",
+  stage: "",
+};
+
 /** Name with rename and archive controls. */
-function NodeHeader({ kind, id, name, heading }: { kind: NodeKind; id: string; name: string; heading?: boolean }) {
+function NodeHeader({
+  kind,
+  id,
+  name,
+  leading,
+  meta,
+}: {
+  kind: NodeKind;
+  id: string;
+  name: string;
+  /** Icon or order badge before the name. */
+  leading?: React.ReactNode;
+  /** Short summary under the name, e.g. child counts. */
+  meta?: string;
+}) {
   const [editing, setEditing] = useState(false);
   const [pending, start] = useTransition();
 
@@ -98,7 +135,11 @@ function NodeHeader({ kind, id, name, heading }: { kind: NodeKind; id: string; n
   }
   return (
     <div className="flex min-h-11 items-center gap-1">
-      <span className={heading ? "min-w-0 flex-1 text-lg font-semibold" : "min-w-0 flex-1"}>{name}</span>
+      {leading}
+      <div className={cn("flex min-w-0 flex-1 flex-col", leading && "ml-2")}>
+        <span className={cn("break-words", NAME_CLASS[kind])}>{name}</span>
+        {meta && <span className="text-sm text-muted-foreground">{meta}</span>}
+      </div>
       <Button variant="ghost" size="icon" className="size-11" aria-label={`${name}: adını değiştir`} onClick={() => setEditing(true)}>
         <Pencil />
       </Button>
@@ -141,16 +182,39 @@ function AddChild({ kind, parentId, gradeLevels = [] }: { kind: NodeKind; parent
   );
 }
 
-function TopicBlock({ topic }: { topic: TopicNode }) {
+function TopicBlock({ topic, tone }: { topic: TopicNode; tone: Tone }) {
   return (
-    <div className="flex flex-col gap-2">
-      <NodeHeader kind="topic" id={topic.id} name={topic.name} />
+    <div className="flex flex-col gap-2 pb-1">
+      <NodeHeader
+        kind="topic"
+        id={topic.id}
+        name={topic.name}
+        meta={topic.stages.length > 0 ? `${topic.stages.length} durak` : "Henüz durak yok"}
+      />
       {topic.stages.length > 0 && (
         <SortableList
           key={topic.stages.map((s) => s.id).join()}
           items={topic.stages}
           onReorder={reorder("stage", topic.id)}
-          renderItem={(s) => <NodeHeader kind="stage" id={s.id} name={s.name} />}
+          rowClassName="rounded-xl border bg-card shadow-xs"
+          renderItem={(s, index) => (
+            <NodeHeader
+              kind="stage"
+              id={s.id}
+              name={s.name}
+              leading={
+                <span
+                  aria-hidden
+                  className={cn(
+                    "flex size-8 shrink-0 items-center justify-center rounded-full border-2 bg-card text-sm font-bold",
+                    tone.badge,
+                  )}
+                >
+                  {index + 1}
+                </span>
+              }
+            />
+          )}
         />
       )}
       <AddChild kind="stage" parentId={topic.id} />
@@ -198,16 +262,30 @@ function SubjectGrade({ subject, gradeLevels }: { subject: SubjectNode; gradeLev
 }
 
 function SubjectBlock({ subject, gradeLevels }: { subject: SubjectNode; gradeLevels: number[] }) {
+  const tone = toneFor(subject.id);
+  const stageCount = subject.topics.reduce((sum, t) => sum + t.stages.length, 0);
   return (
     <div className="flex flex-col gap-3 py-2">
-      <NodeHeader kind="subject" id={subject.id} name={subject.name} heading />
+      <NodeHeader
+        kind="subject"
+        id={subject.id}
+        name={subject.name}
+        meta={`${subject.topics.length} konu · ${stageCount} durak`}
+        leading={
+          <span aria-hidden className={cn("flex size-11 shrink-0 items-center justify-center rounded-2xl", tone.icon)}>
+            <BookOpen className="size-6" />
+          </span>
+        }
+      />
       {gradeLevels.length > 1 && <SubjectGrade subject={subject} gradeLevels={gradeLevels} />}
       {subject.topics.length > 0 && (
         <SortableList
           key={subject.topics.map((t) => t.id).join()}
           items={subject.topics}
           onReorder={reorder("topic", subject.id)}
-          renderItem={(t) => <TopicBlock topic={t} />}
+          className="gap-3"
+          rowClassName={cn("rounded-xl border-l-4", tone.topic)}
+          renderItem={(t) => <TopicBlock topic={t} tone={tone} />}
         />
       )}
       <AddChild kind="topic" parentId={subject.id} />
@@ -235,7 +313,8 @@ export function CurriculumEditor({
           items={subjects}
           onReorder={reorder("subject", classId)}
           renderItem={(s) => <SubjectBlock subject={s} gradeLevels={gradeLevels} />}
-          className="gap-4"
+          className="gap-5"
+          rowClassName="rounded-2xl border bg-card p-1 shadow-sm sm:p-2"
         />
       )}
       <AddChild kind="subject" parentId={classId} gradeLevels={gradeLevels} />

@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.42.0 | 2026-10-06 | feat | **Müfredat düzenleyicisi yeni görünüm:** her ders kendi renginde kart (kitap simgesi, konu/durak sayısı), konular sol kenarı renkli bloklar, duraklar numaralı rozetli satırlar; `SortableList` satır çerçevesi ve sıra numarası alabilir | Pilot |
 | 0.41.2 | 2026-10-06 | fix | Tavşanın ilerleme halkası pembe yerine yeni zeminle uyumlu turkuaz (`#2a9d8f`, beyaz kartta 3,3:1) | Pilot |
 | 0.41.1 | 2026-10-06 | fix | Tavşan karakterinin arka planı pembe yerine açık nane yeşili (`#dcf3ee`); 5 görsel yeniden üretildi | Pilot |
 | 0.41.0 | 2026-10-06 | feat | **Sınıfa özel karakter sırası ve aşama adları:** öğretmen Karakterler sekmesinde seçili türleri yukarı/aşağı düğmeleriyle sıralar (1. tür yeni öğrencilere; öğrenci detayı ve tahta seçimi bu sırayla) ve her türün aşama adlarını yalnızca kendi sınıfı için değiştirir (boş = okul adı, "Okul adlarına dön"); adlar o sınıfın tahta, kutlama, bildirim, veli paneli ve macera haritasında görünür; migration 0014 (`class_character_type.sort_order`, `class_character_stage_name`), audit `class.character_stages_update`; Karakterler formlarında kayıttan sonra mesajın kaybolması giderildi | Pilot |
