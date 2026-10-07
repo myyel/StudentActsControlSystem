@@ -19,7 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
-import { useId, useState, useTransition } from "react";
+import { createContext, useContext, useId, useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
 
 type Item = { id: string; name: string };
@@ -51,7 +51,7 @@ function announcements(items: Item[]): Announcements {
   };
 }
 
-/** Vertical drag-and-drop list with a handle; works with pointer, touch and keyboard. */
+/** Vertical drag-and-drop list; each item renders its own `SortableHandle`. Works with pointer, touch and keyboard. */
 export function SortableList<T extends Item>({
   items: initial,
   onReorder,
@@ -128,23 +128,35 @@ function SortableRow({
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id,
   });
+  const handle = (
+    <button
+      type="button"
+      ref={setActivatorNodeRef}
+      {...attributes}
+      {...listeners}
+      aria-label={`${label}: sürükleyerek sırala`}
+      className="flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-accent active:cursor-grabbing"
+    >
+      <GripVertical className="size-5" />
+    </button>
+  );
   return (
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn("flex items-start gap-1", className, isDragging && "relative z-10 shadow-lg")}
+      className={cn("py-1 pr-1 xl:pr-2", className, isDragging && "relative z-10 shadow-lg")}
     >
-      <button
-        type="button"
-        ref={setActivatorNodeRef}
-        {...attributes}
-        {...listeners}
-        aria-label={`${label}: sürükleyerek sırala`}
-        className="flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-accent active:cursor-grabbing"
-      >
-        <GripVertical className="size-5" />
-      </button>
-      <div className="min-w-0 flex-1 py-1 pr-2">{children}</div>
+      <HandleContext value={handle}>{children}</HandleContext>
     </li>
   );
+}
+
+const HandleContext = createContext<React.ReactNode>(null);
+
+/**
+ * The drag handle of the row being rendered. The item places it in its own header line, so nested
+ * lists do not lose a handle-wide column per level on narrow screens.
+ */
+export function SortableHandle() {
+  return useContext(HandleContext);
 }

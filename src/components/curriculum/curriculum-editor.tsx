@@ -15,7 +15,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { NodeKind, SubjectNode, TopicNode } from "@/server/services/curriculum";
-import { SortableList } from "./sortable-list";
+import { SortableHandle, SortableList } from "./sortable-list";
+
+/**
+ * Children sit under their parent's header. Below xl they use the full width (three handle-wide
+ * indents would leave a phone no room for stage names); from xl they line up after the handle.
+ */
+const CHILDREN = "flex flex-col pl-1 xl:pl-12";
 
 /** Per-subject colour set; bright tones are fills only, text uses the AA "ink" shades. */
 const TONES = [
@@ -123,18 +129,24 @@ function NodeHeader({
 
   if (editing) {
     return (
-      <NameForm
-        kind={kind}
-        action={renameNodeAction.bind(null, kind, id)}
-        defaultValue={name}
-        submitLabel="Kaydet"
-        onDone={() => setEditing(false)}
-        autoFocus
-      />
+      <div className="flex items-start gap-1">
+        <SortableHandle />
+        <div className="min-w-0 flex-1">
+          <NameForm
+            kind={kind}
+            action={renameNodeAction.bind(null, kind, id)}
+            defaultValue={name}
+            submitLabel="Kaydet"
+            onDone={() => setEditing(false)}
+            autoFocus
+          />
+        </div>
+      </div>
     );
   }
   return (
     <div className="flex min-h-11 items-center gap-1">
+      <SortableHandle />
       {leading}
       <div className={cn("flex min-w-0 flex-1 flex-col", leading && "ml-2")}>
         <span className={cn("break-words", NAME_CLASS[kind])}>{name}</span>
@@ -191,33 +203,35 @@ function TopicBlock({ topic, tone }: { topic: TopicNode; tone: Tone }) {
         name={topic.name}
         meta={topic.stages.length > 0 ? `${topic.stages.length} durak` : "Henüz durak yok"}
       />
-      {topic.stages.length > 0 && (
-        <SortableList
-          key={topic.stages.map((s) => s.id).join()}
-          items={topic.stages}
-          onReorder={reorder("stage", topic.id)}
-          rowClassName="rounded-xl border bg-card shadow-xs"
-          renderItem={(s, index) => (
-            <NodeHeader
-              kind="stage"
-              id={s.id}
-              name={s.name}
-              leading={
-                <span
-                  aria-hidden
-                  className={cn(
-                    "flex size-8 shrink-0 items-center justify-center rounded-full border-2 bg-card text-sm font-bold",
-                    tone.badge,
-                  )}
-                >
-                  {index + 1}
-                </span>
-              }
-            />
-          )}
-        />
-      )}
-      <AddChild kind="stage" parentId={topic.id} />
+      <div className={cn(CHILDREN, "gap-2")}>
+        {topic.stages.length > 0 && (
+          <SortableList
+            key={topic.stages.map((s) => s.id).join()}
+            items={topic.stages}
+            onReorder={reorder("stage", topic.id)}
+            rowClassName="rounded-xl border bg-card shadow-xs"
+            renderItem={(s, index) => (
+              <NodeHeader
+                kind="stage"
+                id={s.id}
+                name={s.name}
+                leading={
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "flex size-8 shrink-0 items-center justify-center rounded-full border-2 bg-card text-sm font-bold",
+                      tone.badge,
+                    )}
+                  >
+                    {index + 1}
+                  </span>
+                }
+              />
+            )}
+          />
+        )}
+        <AddChild kind="stage" parentId={topic.id} />
+      </div>
     </div>
   );
 }
@@ -277,18 +291,20 @@ function SubjectBlock({ subject, gradeLevels }: { subject: SubjectNode; gradeLev
           </span>
         }
       />
-      {gradeLevels.length > 1 && <SubjectGrade subject={subject} gradeLevels={gradeLevels} />}
-      {subject.topics.length > 0 && (
-        <SortableList
-          key={subject.topics.map((t) => t.id).join()}
-          items={subject.topics}
-          onReorder={reorder("topic", subject.id)}
-          className="gap-3"
-          rowClassName={cn("rounded-xl border-l-4", tone.topic)}
-          renderItem={(t) => <TopicBlock topic={t} tone={tone} />}
-        />
-      )}
-      <AddChild kind="topic" parentId={subject.id} />
+      <div className={cn(CHILDREN, "gap-3")}>
+        {gradeLevels.length > 1 && <SubjectGrade subject={subject} gradeLevels={gradeLevels} />}
+        {subject.topics.length > 0 && (
+          <SortableList
+            key={subject.topics.map((t) => t.id).join()}
+            items={subject.topics}
+            onReorder={reorder("topic", subject.id)}
+            className="gap-3"
+            rowClassName={cn("rounded-xl border-l-4", tone.topic)}
+            renderItem={(t) => <TopicBlock topic={t} tone={tone} />}
+          />
+        )}
+        <AddChild kind="topic" parentId={subject.id} />
+      </div>
     </div>
   );
 }
