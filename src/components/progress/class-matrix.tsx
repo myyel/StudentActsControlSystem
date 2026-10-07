@@ -197,9 +197,13 @@ export function ClassMatrix({ classId, subject, students, progress }: Props) {
                       title={stage.name}
                       aria-label={`${stage.name}: toplu işaretle`}
                       // Same height for every stage, so the vertical names sit centred in their column.
-                      className="flex h-40 w-12 items-center justify-center p-1 text-center text-sm font-normal hover:bg-white/15 [writing-mode:vertical-rl] rotate-180"
+                      className="flex h-40 w-12 items-center justify-center p-1 text-center text-sm font-normal hover:bg-white/15"
                     >
-                      <span className="line-clamp-2">{stage.name}</span>
+                      {/* Vertical text on a plain span, cut to two lines by size: Safari ignores writing-mode on
+                          <button> and inside line-clamp, leaving only the rotation (upside-down names). */}
+                      <span className="max-h-full max-w-10 overflow-hidden leading-5 rotate-180 [writing-mode:vertical-rl]">
+                        {stage.name}
+                      </span>
                     </button>
                   </th>
                 )),
