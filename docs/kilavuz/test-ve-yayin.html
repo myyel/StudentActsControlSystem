@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><title>Test ve Yayın Raporu</title>
+<style>
+@page { size: A4; margin: 18mm 16mm 20mm; }
+:root { --ink: #2b2d42; --muted: #5d6175; --line: #e3ddd0; --cream: #fff8ec; --grass: #13734a; --grass-soft: #e3f7e8; --sky: #1f5fad; --sky-soft: #e2f0ff; --sun-soft: #fff1c9; --coral: #b4362a; --coral-soft: #ffedea; }
+* { box-sizing: border-box; }
+body { font-family: "Segoe UI", "Noto Sans", Arial, sans-serif; color: var(--ink); font-size: 10pt; line-height: 1.5; margin: 0; }
+code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 9pt; background: #f4efe4; border-radius: 3px; padding: 0 1mm; }
+pre { font-family: Consolas, "Cascadia Mono", monospace; font-size: 8.8pt; background: var(--ink); color: #f1f2f8; border-radius: 5px; padding: 2.5mm 4mm; margin: 1.5mm 0 2mm; white-space: pre-wrap; page-break-inside: avoid; }
+h1 { font-size: 20pt; margin: 0 0 2mm; line-height: 1.15; }
+h2 { font-size: 13pt; margin: 7mm 0 2mm; page-break-after: avoid; }
+h3 { font-size: 11pt; margin: 0; }
+p { margin: 1.5mm 0 2.5mm; }
+ul, ol { margin: 1mm 0 3mm; padding-left: 6mm; }
+li { margin: .8mm 0; }
+.lead { color: var(--muted); font-size: 11pt; margin: 0 0 5mm; }
+.cover { height: 257mm; display: flex; flex-direction: column; justify-content: center; page-break-after: always; }
+.cover .band { background: var(--cream); border-radius: 12px; padding: 16mm 14mm; border: 1px solid var(--line); }
+.cover .brand { display: flex; align-items: center; gap: 5mm; font-size: 15pt; font-weight: 700; }
+.cover h1 { font-size: 30pt; margin: 12mm 0 3mm; }
+.cover .sub { font-size: 13pt; color: var(--muted); max-width: 130mm; }
+.cover dl { display: grid; grid-template-columns: 38mm 1fr; gap: 1.5mm 4mm; margin: 14mm 0 0; font-size: 10pt; }
+.cover dt { color: var(--muted); } .cover dd { margin: 0; font-weight: 600; }
+section { page-break-before: always; }
+.flow { display: flex; align-items: stretch; gap: 1.5mm; margin: 3mm 0 2mm; }
+.flow .step { flex: 1; border-radius: 6px; padding: 2.5mm 2mm; text-align: center; font-size: 8.6pt; line-height: 1.25; }
+.flow .step b { display: block; font-size: 11pt; }
+.flow.test .step { background: var(--sky-soft); color: var(--sky); }
+.flow.deploy .step { background: var(--grass-soft); color: var(--grass); }
+.flow .arrow { align-self: center; font-style: normal; color: var(--muted); font-size: 12pt; }
+.between { text-align: center; color: var(--muted); font-size: 9.5pt; margin: 2mm 0; }
+table { border-collapse: collapse; width: 100%; margin: 2mm 0 4mm; font-size: 9.3pt; }
+tr { page-break-inside: avoid; }
+th, td { border: 1px solid var(--line); padding: 1.8mm 3mm; text-align: left; vertical-align: top; }
+th { background: var(--cream); font-weight: 700; }
+td.id { font-weight: 800; white-space: nowrap; width: 11mm; }
+td.num { white-space: nowrap; }
+.pill { display: inline-block; border-radius: 10px; padding: 0 2.5mm; font-weight: 700; font-size: 8.8pt; white-space: nowrap; }
+.pill.ok { background: var(--grass-soft); color: var(--grass); }
+.pill.bad { background: var(--coral-soft); color: var(--coral); }
+.pill.skip { background: #f1eee6; color: var(--muted); }
+.stage { border: 1px solid var(--line); border-radius: 7px; margin: 0 0 4mm; page-break-inside: avoid; overflow: hidden; }
+.stage-head { display: flex; align-items: baseline; gap: 3mm; padding: 2mm 4mm; border-bottom: 1px solid var(--line); }
+.stage.t .stage-head { background: var(--sky-soft); } .stage.d .stage-head { background: var(--grass-soft); }
+.stage-head .sid { font-weight: 800; font-size: 11pt; }
+.stage-head h3 { flex: 1; }
+.stage-head .where { font-size: 8.6pt; color: var(--muted); white-space: nowrap; }
+.stage-body { padding: 2mm 4mm 2.5mm; font-size: 9.5pt; }
+.stage-body p { margin: 1mm 0; }
+.kv { display: grid; grid-template-columns: 26mm 1fr; gap: .8mm 3mm; margin-top: 1.5mm; font-size: 9.2pt; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; }
+.tip, .note { border-radius: 6px; padding: 3mm 4mm; margin: 3mm 0 4mm; font-size: 9.6pt; page-break-inside: avoid; }
+.tip { background: var(--sky-soft); border-left: 4px solid var(--sky); }
+.note { background: var(--sun-soft); border-left: 4px solid #c98a00; }
+.tip strong, .note strong { display: block; margin-bottom: .5mm; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+.cols > div { border: 1px solid var(--line); border-radius: 7px; padding: 3mm 4mm; page-break-inside: avoid; }
+.cols h3 { margin-bottom: 1.5mm; }
+ul.check { list-style: none; padding-left: 0; }
+ul.check li { padding-left: 7mm; position: relative; margin: 1.6mm 0; }
+ul.check li::before { content: ""; position: absolute; left: 0; top: .6mm; width: 3.6mm; height: 3.6mm; border: 1.3px solid var(--ink); border-radius: 1mm; }
+</style></head><body>
+
+<div class="cover">
+  <div class="band">
+    <div class="brand"><svg viewBox="0 0 120 120" width="64" height="64"><rect width="120" height="120" rx="28" fill="#2b2d42"/>
+<path d="M28 94 C64 94 72 74 52 64 C32 54 46 36 82 34" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-dasharray="0.1 11"/>
+<circle cx="28" cy="94" r="10" fill="#2dbe7e"/><circle cx="52" cy="64" r="10" fill="#4fa8ff"/>
+<polygon transform="translate(86 33) scale(1.05)" points="0,-17 4.41,-6.07 16.17,-5.25 7.13,2.32 9.99,13.75 0,7.5 -9.99,13.75 -7.13,2.32 -16.17,-5.25 -4.41,-6.07" fill="#ffc83d" stroke="#ffc83d" stroke-width="4" stroke-linejoin="round"/></svg><span>Gelişim Yolculuğu</span></div>
+    <h1>Test ve Yayın Raporu</h1>
+    <div class="sub">Claude Code ile projenin test edilmesi ve üretim sunucusuna alınması: aşamalar, komutlar ve son çalıştırmanın sonuçları.</div>
+    <dl>
+      <dt>Sürüm</dt><dd>v0.47.0</dd>
+      <dt>Tarih</dt><dd>8 Ekim 2026</dd>
+      <dt>Test ortamı</dt><dd>Windows 11, Node 22, Docker Desktop</dd>
+      <dt>Komutlar</dt><dd><code>/test</code> ve <code>/deploy</code> (<code>.claude/skills/</code>)</dd>
+    </dl>
+  </div>
+</div>
+
+<section style="page-break-before: auto">
+<h1>1. Özet</h1>
+<p class="lead">Test tarafı hazır ve bugün baştan sona çalıştırıldı. Yayın tarafı tanımlandı ama denenmedi, çünkü henüz bir üretim sunucusu yok.</p>
+
+<p>Projeye iki Claude Code komutu eklendi. Claude Code'da proje klasöründeyken yazmanız yeterli:</p>
+<table>
+<tr><th style="width:42mm">Komut</th><th>Ne yapar</th><th style="width:40mm">Durum</th></tr>
+<tr><td><code>/test</code></td><td>Altı test aşamasını sırayla çalıştırır, kalanın nedenini bulur, sonuç tablosu verir.</td><td><span class="pill ok">geçti</span> aşamaları bugün elle çalıştırıldı</td></tr>
+<tr><td><code>/deploy vX.Y.Z sunucu</code></td><td>Etiketli sürümü sunucuya kurar: ön denetim, yedek, güncelleme, doğrulama, gerekirse geri dönüş.</td><td><span class="pill skip">denenmedi</span> sunucu yok</td></tr>
+</table>
+
+<h2>Akış</h2>
+<div class="flow test"><div class="step"><b>T1</b><span>Lint</span></div><i class="arrow">›</i><div class="step"><b>T2</b><span>Tip denetimi</span></div><i class="arrow">›</i><div class="step"><b>T3</b><span>Birim ve entegrasyon</span></div><i class="arrow">›</i><div class="step"><b>T4</b><span>Migration eşitliği</span></div><i class="arrow">›</i><div class="step"><b>T5</b><span>Uçtan uca (e2e)</span></div><i class="arrow">›</i><div class="step"><b>T6</b><span>Üretim imajı</span></div></div>
+<div class="between">hepsi geçerse → sürüm satırı, commit, <code>vX.Y.Z</code> etiketi, <code>git push --follow-tags</code> →</div>
+<div class="flow deploy"><div class="step"><b>D1</b><span>Ön denetim</span></div><i class="arrow">›</i><div class="step"><b>D2</b><span>Yedek</span></div><i class="arrow">›</i><div class="step"><b>D3</b><span>Güncelleme</span></div><i class="arrow">›</i><div class="step"><b>D4</b><span>Doğrulama</span></div><i class="arrow">›</i><div class="step"><b>D5</b><span>Geri dönüş</span></div><i class="arrow">›</i><div class="step"><b>D6</b><span>Rapor</span></div></div>
+
+<h2>Son çalıştırma (8 Ekim 2026, v0.47.0)</h2>
+<table>
+<tr><th style="width:11mm">#</th><th>Aşama</th><th style="width:24mm">Sonuç</th><th>Ayrıntı</th><th style="width:22mm">Süre</th></tr>
+<tr><td class="id">T1</td><td>Lint</td><td><span class="pill ok">geçti</span></td><td>hata ve uyarı yok</td><td class="num">10 sn</td></tr>
+<tr><td class="id">T2</td><td>Tip denetimi</td><td><span class="pill ok">geçti</span></td><td>hata yok</td><td class="num">3 sn</td></tr>
+<tr><td class="id">T3</td><td>Birim ve entegrasyon</td><td><span class="pill ok">geçti</span></td><td>31 dosya, 290 test</td><td class="num">22 sn</td></tr>
+<tr><td class="id">T4</td><td>Migration eşitliği</td><td><span class="pill ok">geçti</span></td><td>şema değişikliği yok (14 migration)</td><td class="num">birkaç sn</td></tr>
+<tr><td class="id">T5</td><td>Uçtan uca (e2e)</td><td><span class="pill ok">geçti</span></td><td>173 test geçti; 12 atlandı (ortak veriyi değiştiren 4 test yalnızca tek ekranda koşar)</td><td class="num">2 dk</td></tr>
+<tr><td class="id">T6</td><td>Üretim imajı</td><td><span class="pill ok">geçti</span></td><td>app 315 MB, tools 1,25 GB (katmanlar önbellekten)</td><td class="num">36 sn</td></tr>
+</table>
+
+<div class="note"><strong>Yayından önce sizin yapmanız gerekenler</strong>Sunucu ve alan adı, <code>.env</code> sırları, okulun onayladığı KVKK metinleri ve gerçek cihaz denemeleri bu komutların dışında kalır. Liste 5. bölümde.</div>
+</section>
+
+<section>
+<h1>2. Test aşamaları</h1>
+<p class="lead"><code>/test</code> komutu bu aşamaları çalıştırır. Kapsamı bir kelimeyle seçersiniz.</p>
+
+<table>
+<tr><th style="width:30mm">Yazdığınız</th><th style="width:24mm">Aşamalar</th><th>Ne zaman</th></tr>
+<tr><td><code>/test hizli</code></td><td>T1–T3</td><td>Küçük bir değişiklikten sonra, commit öncesi. Docker gerekmez.</td></tr>
+<tr><td><code>/test</code></td><td>T1–T5</td><td>Bir işi bitirirken. Varsayılan.</td></tr>
+<tr><td><code>/test yayin</code></td><td>T1–T6</td><td>Sürüm etiketlemeden ve yayına almadan önce.</td></tr>
+</table>
+
+<div class="stage t"><div class="stage-head"><span class="sid">T1</span><h3>Lint</h3><span class="where">Gerekli: —</span></div>
+<div class="stage-body"><pre>pnpm lint</pre><dl class="kv"><dt>Neyi denetler</dt><dd>ESLint kuralları: kullanılmayan kod, React ve Next.js hataları, erişilebilirlik kuralları.</dd><dt>Geçme ölçütü</dt><dd>Hata ve uyarı yok.</dd></dl></div></div>
+<div class="stage t"><div class="stage-head"><span class="sid">T2</span><h3>Tip denetimi</h3><span class="where">Gerekli: —</span></div>
+<div class="stage-body"><pre>pnpm typecheck</pre><dl class="kv"><dt>Neyi denetler</dt><dd>Rota tiplerini üretir, sonra TypeScript'i katı modda derlemeden denetler.</dd><dt>Geçme ölçütü</dt><dd>Hata yok.</dd></dl></div></div>
+<div class="stage t"><div class="stage-head"><span class="sid">T3</span><h3>Birim ve entegrasyon</h3><span class="where">Gerekli: —</span></div>
+<div class="stage-body"><pre>pnpm test</pre><dl class="kv"><dt>Neyi denetler</dt><dd>Vitest. İş mantığı (puan, XP, seviye, günlük tavan), yetki (veli başka çocuğu göremez, öğretmen başka sınıfı değiştiremez), davet, mesaj, bildirim, KVKK silme ve dışa aktarma. Veritabanı bellek içi Postgres (PGlite).</dd><dt>Geçme ölçütü</dt><dd>Tüm testler geçer.</dd></dl></div></div>
+<div class="stage t"><div class="stage-head"><span class="sid">T4</span><h3>Migration eşitliği</h3><span class="where">Gerekli: —</span></div>
+<div class="stage-body"><pre>pnpm db:generate</pre><dl class="kv"><dt>Neyi denetler</dt><dd>Drizzle şeması ile <code>drizzle/</code> altındaki migration'lar aynı mı. Unutulmuş bir migration burada yakalanır.</dd><dt>Geçme ölçütü</dt><dd>"No schema changes"; yeni dosya oluşmaz.</dd></dl></div></div>
+<div class="stage t"><div class="stage-head"><span class="sid">T5</span><h3>Uçtan uca (e2e)</h3><span class="where">Gerekli: Docker (Postgres)</span></div>
+<div class="stage-body"><pre>pnpm test:e2e</pre><dl class="kv"><dt>Neyi denetler</dt><dd>Playwright. Üretim derlemesi dört ekranda çalıştırılır: telefon 360, tablet 768, masaüstü 1280, akıllı tahta 1920 piksel. Her ekran için yatay kaydırma, dokunma hedefi boyutu ve axe erişilebilirlik taraması; ayrıca giriş, puanlama, veli kaydı, mesaj akışları, klavye kullanımı, veri silme ve PWA.</dd><dt>Geçme ölçütü</dt><dd>Dört projenin tümü geçer.</dd></dl></div></div>
+<div class="stage t"><div class="stage-head"><span class="sid">T6</span><h3>Üretim imajı</h3><span class="where">Gerekli: Docker</span></div>
+<div class="stage-body"><pre>docker build --target app -t gelisim-app:test .
+docker build --target tools -t gelisim-tools:test .</pre><dl class="kv"><dt>Neyi denetler</dt><dd>Sunucuda çalışacak iki Docker imajı (uygulama ve migration/yönetim) temiz bir ortamda derlenebiliyor mu.</dd><dt>Geçme ölçütü</dt><dd>İki hedef de derlenir.</dd></dl></div></div>
+
+<h2>Bir aşama kalırsa</h2>
+<ul>
+<li>Claude Code çıktıyı okur, nedeni bulur. Hata o oturumdaki değişiklikten geliyorsa düzeltir ve yalnızca o aşamayı yeniden çalıştırır.</li>
+<li>Bir testi geçirmek için testi zayıflatmaz ya da atlamaz. Testin kendisi yanlışsa nedenini açıklayıp size sorar.</li>
+<li>Bir kez kalıp sonra geçen e2e testini "geçti" diye yazmaz; "kararsız" olarak adıyla bildirir.</li>
+<li>T1–T4'ten biri kaldıysa uzun süren T5 ve T6'yı çalıştırmaz.</li>
+</ul>
+
+<div class="tip"><strong>e2e geliştirme verinize dokunmaz</strong>T5 kendi veritabanını (<code>class_attitude_e2e</code>) ve 3100 portunu kullanır. <code>pnpm dev</code> açıkken de çalıştırabilirsiniz.</div>
+
+<h2>Otomatik testlerin kapsamadıkları</h2>
+<p>Bunlar gerçek cihazda elle denenir; adımları <code>docs/Test-Senaryolari.pdf</code> içinde (64 senaryo):</p>
+<ul>
+<li>iPhone/iPad Safari ve Android Chrome'da ana ekrana ekleme ve anlık bildirim (HTTPS gerekir, yani yayından sonra).</li>
+<li>Akıllı tahtada dokunmatik kullanım.</li>
+<li>Huawei Tarayıcı: kendi koyu modunu sitenin isteğine bakmadan uygular; tarayıcı ayarından kapatılır.</li>
+<li>Otomatik testler Chromium'da koşar. Safari (WebKit) ve Firefox'ta sayfa taşması 7 Ekim'de ayrıca elle tarandı (360 denetim, taşma yok); bu tarama <code>/test</code>'in parçası değildir.</li>
+</ul>
+</section>
+
+<section>
+<h1>3. Yayın aşamaları</h1>
+<p class="lead"><code>/deploy vX.Y.Z sunucu</code> komutu, kurulu bir sunucuyu yeni sürüme geçirir. Kaynağı <code>docs/DEPLOY.md</code> belgesinin "Güncelleme" bölümüdür.</p>
+
+<div class="note"><strong>İlk kurulum bu komutun işi değil</strong>Sunucunun hazırlanması, alan adı, <code>.env</code> dosyası ve ilk yönetici hesabı bir kez, <code>docs/DEPLOY.md</code> §1–4 izlenerek elle yapılır. <code>/deploy</code> ondan sonraki her güncelleme içindir.</div>
+
+<div class="stage d"><div class="stage-head"><span class="sid">D1</span><h3>Ön denetim</h3><span class="where">Yerel + sunucu (yalnızca okuma)</span></div>
+<div class="stage-body"><p>Çalışma dizini temiz mi, etiket var mı ve GitHub'a gönderilmiş mi, sürüm satırı yazılmış mı, <code>/test yayin</code> bu commit için geçti mi. Sunucuda şu an hangi sürümün çalıştığı, servislerin durumu ve boş disk okunur. Eski ve yeni sürüm arasında migration olup olmadığına bakılır.</p><dl class="kv"><dt>Durma noktası</dt><dd>Plan size gösterilir. <b>Onayınız olmadan sunucuda hiçbir şey değişmez.</b></dd></dl></div></div>
+<div class="stage d"><div class="stage-head"><span class="sid">D2</span><h3>Yedek</h3><span class="where">Sunucu</span></div>
+<div class="stage-body"><pre>docker compose -f docker-compose.prod.yml run --rm backup backup.sh</pre><p>Güncellemeden hemen önce şifreli veritabanı yedeği alınır ve dosyanın oluştuğu denetlenir.</p><dl class="kv"><dt>Durma noktası</dt><dd>Yedek alınamazsa yayın durur.</dd></dl></div></div>
+<div class="stage d"><div class="stage-head"><span class="sid">D3</span><h3>Güncelleme</h3><span class="where">Sunucu</span></div>
+<div class="stage-body"><pre>git fetch --tags
+git checkout vX.Y.Z
+docker compose -f docker-compose.prod.yml up -d --build</pre><p>Etiketli sürüm çekilir ve imajlar yeniden derlenir. <code>tools</code> servisi migration'ları uygular; uygulama ancak migration başarıyla bitince başlar.</p></div></div>
+<div class="stage d"><div class="stage-head"><span class="sid">D4</span><h3>Doğrulama</h3><span class="where">Sunucu + dışarıdan</span></div>
+<div class="stage-body"><p>Servis durumları (<code>tools</code> "exited (0)", <code>app</code> "healthy"), son 5 dakikanın günlükleri, dışarıdan <code>/giris</code> (200 ve HSTS başlığı), <code>/manifest.webmanifest</code>, <code>/sw.js</code>, <code>/icon/192</code> ve HTTP'den HTTPS'e yönlendirme.</p><dl class="kv"><dt>Durma noktası</dt><dd>Biri bile kalırsa D5.</dd></dl></div></div>
+<div class="stage d"><div class="stage-head"><span class="sid">D5</span><h3>Geri dönüş</h3><span class="where">Sunucu</span></div>
+<div class="stage-body"><pre>git checkout vÖNCEKİ
+docker compose -f docker-compose.prod.yml up -d --build</pre><p>Yalnızca doğrulama kalırsa. Migration yoksa önceki etikete dönülür. Migration uygulandıysa eski kod yeni şemayla çalışmayabilir: ileri düzeltme ya da D2 yedeğinden dönme seçenekleri size sunulur.</p><dl class="kv"><dt>Durma noktası</dt><dd>Yedekten dönme tüm veriyi değiştirir; <b>ayrı ve açık onay</b> ister.</dd></dl></div></div>
+<div class="stage d"><div class="stage-head"><span class="sid">D6</span><h3>Rapor</h3><span class="where">—</span></div>
+<div class="stage-body"><p>Eski ve yeni sürüm, alınan yedeğin adı, her denetimin sonucu ve süre. Elle bakılması gerekenler (gerçek hesapla giriş, anlık bildirim) ayrıca belirtilir.</p></div></div>
+
+<h2>Komutun hiçbir koşulda yapmayacakları</h2>
+<ul>
+<li>Sunucuda <code>pnpm db:seed</code> ya da <code>pnpm db:reset</code> çalıştırmaz (örnek veri, gerçek veriyi siler).</li>
+<li><code>.env</code> dosyasını okumaz, yazdırmaz, kopyalamaz. Tek istisna alan adını öğrenmek için <code>DOMAIN=</code> satırıdır.</li>
+<li>Açık onayınız olmadan yedekten geri yükleme yapmaz.</li>
+<li>Güvenlik duvarına ve portlara dokunmaz; uygulamayı Caddy'yi atlayarak dışarı açmaz.</li>
+<li>Kendiliğinden çalışmaz: yalnızca siz <code>/deploy</code> yazdığınızda başlar.</li>
+</ul>
+</section>
+
+<section>
+<h1>4. Claude Code ile kullanım</h1>
+<p class="lead">Günlük akış üç adım: test et, sürümle, yayına al.</p>
+
+<pre>/test yayin
+    → T1–T6 çalışır, sonuç tablosu gelir
+
+"versiyonlayıp commit edelim"
+    → VERSION_CONTROL.md satırı, commit, vX.Y.Z etiketi, push
+
+/deploy v0.47.0 gelisim@sunucu
+    → plan gösterilir, onaylarsınız, yedek + güncelleme + doğrulama</pre>
+
+<div class="cols">
+<div><h3>Claude Code yapar</h3>
+<ul>
+<li>Aşamaları sırayla çalıştırır, çıktıları okur.</li>
+<li>Kalan testin nedenini bulur, kendi değişikliğinden kaynaklanıyorsa düzeltir.</li>
+<li>Sunucuda yedek alır, sürümü günceller, servisleri ve adresleri denetler.</li>
+<li>Çalıştırmadığı ya da doğrulayamadığı şeyi raporda açıkça yazar.</li>
+</ul></div>
+<div><h3>Siz yaparsınız</h3>
+<ul>
+<li>Yayın planını onaylarsınız (D1'in sonunda).</li>
+<li>Sunucuya SSH anahtarıyla erişimi siz kurarsınız; Claude Code sizin anahtarınızı kullanır.</li>
+<li>Geri yükleme gibi veriyi değiştiren kararları siz verirsiniz.</li>
+<li>Yayından sonra bir hesapla girip bir sayfa açarsınız.</li>
+</ul></div>
+</div>
+
+<h2>SSH erişimi</h2>
+<p>Claude Code sunucuya sizin bilgisayarınızdaki <code>ssh</code> komutuyla bağlanır. Parola sormayan, anahtarla giriş kurulu olmalı. <code>~/.ssh/config</code> dosyasına bir ad tanımlarsanız komut kısalır:</p>
+<pre>Host gelisim
+    HostName 203.0.113.10        # sunucunuzun IP adresi
+    User gelisim
+    IdentityFile ~/.ssh/id_ed25519</pre>
+<p>Sonra: <code>/deploy v0.47.0 gelisim</code>. Sunucudaki klasör <code>~/gelisim</code> değilse üçüncü kelime olarak yazılır.</p>
+
+<div class="tip"><strong>İzinler</strong>Claude Code sunucuda komut çalıştırmadan önce izin ister. Yayın sırasında her komutu tek tek onaylamak istemezseniz yalnızca o oturum için izin verin; kalıcı izin tanımlamayın.</div>
+</section>
+
+<section>
+<h1>5. İlk yayından önce</h1>
+<p class="lead">Bunlar tamamlanmadan <code>/deploy</code> çalıştırılamaz ya da pilot başlatılmamalıdır.</p>
+
+<h2>Sunucu ve erişim</h2>
+<ul class="check">
+<li>Türkiye'de barındırılan bir VPS: en az 2 vCPU, 4 GB RAM, 40 GB disk (KVKK; <code>docs/DEPLOY.md</code> §1).</li>
+<li>Alan adı alındı ve A kaydı sunucunun IP adresini gösteriyor. (<code>gelisimyolculugu.com</code> ve <code>.com.tr</code> başkasında; <code>.tr</code>, <code>.net</code>, <code>.app</code> 7 Ekim'de boştu.)</li>
+<li>SSH yalnızca anahtarla; parola ile giriş kapalı. Güvenlik duvarında yalnızca 22, 80, 443 açık.</li>
+<li>Docker ve depo sunucuda kurulu; <code>.env</code> dolduruldu ve izinleri <code>600</code>.</li>
+</ul>
+
+<h2>Sırlar</h2>
+<ul class="check">
+<li><code>POSTGRES_PASSWORD</code> ve <code>BETTER_AUTH_SECRET</code> rastgele üretildi (<code>openssl rand -base64 32</code>).</li>
+<li><code>BACKUP_PASSPHRASE</code> sunucu dışında, bir parola yöneticisinde saklanıyor. Kaybolursa yedekler açılamaz.</li>
+<li>Anlık bildirim istenecekse <code>VAPID_*</code> anahtarları üretildi.</li>
+<li>Uzak yedek (<code>RCLONE_*</code>) ayarlandı; sunucu kaybolursa yerel yedek de kaybolur.</li>
+</ul>
+
+<h2>İçerik ve hukuk</h2>
+<ul class="check">
+<li>KVKK aydınlatma ve açık rıza metinleri şu an taslak (<code>src/content/kvkk.ts</code>). Okulun hukuken onayladığı metinlerle değiştirildi ve sürümü artırıldı.</li>
+<li>Aydınlatma metninde yedeklerin 14 gün saklandığı belirtildi.</li>
+<li>İlk yönetici ve öğretmen hesapları açıldı (<code>docs/DEPLOY.md</code> §4).</li>
+</ul>
+
+<h2>Yayından hemen sonra</h2>
+<ul class="check">
+<li>Bir öğretmen ve bir veli hesabıyla gerçek telefonda giriş yapıldı.</li>
+<li>iPhone ve Android'de ana ekrana eklendi, anlık bildirim geldi.</li>
+<li>Elle bir yedek alındı ve ayrı bir makinede geri yükleme denendi. Çalışan bir yedeğin tek kanıtı budur.</li>
+</ul>
+
+<div class="note"><strong>Bu raporda doğrulanmayanlar</strong>Yayın aşamaları (D1–D6) gerçek bir sunucuda çalıştırılmadı; komutlar <code>docs/DEPLOY.md</code> ile aynıdır ama <code>/deploy</code>'un ilk kullanımı bir denemedir. İlk seferinde her adımı tek tek onaylayarak ilerleyin.</div>
+</section>
+
+</body></html>

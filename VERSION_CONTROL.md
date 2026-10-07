@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.47.1 | 2026-10-08 | docs | Claude Code ile test ve yayın: `/test` (T1–T6: lint, typecheck, Vitest, migration eşitliği, e2e, üretim imajı; `hizli`/`tam`/`yayin`) ve `/deploy vX.Y.Z sunucu` (D1–D6: ön denetim, yedek, güncelleme, doğrulama, geri dönüş, rapor; yalnızca elle çağrılır, onaysız sunucuda değişiklik yapmaz) komutları `.claude/skills/` altında; `docs/Test-ve-Yayin-Raporu.pdf` (8 sayfa, v0.47.0 sonuçlarıyla) ve üretici betiği `scripts/kilavuz/test-ve-yayin.mjs` | Pilot |
 | 0.47.0 | 2026-10-08 | feat | **Yeni logo "Durak yolu":** iki duraktan geçip yıldıza varan noktalı yol (`LogoMark`, özgün SVG); üst çubukta, giriş ekranında ve uygulama simgelerinde (192/512, iOS) yeşil kare + yıldızın yerini aldı; bildirim rozeti beyaz yıldız olarak kaldı; çevrimdışı önbellek `offline-v3` (eski simge yenilenir). İsim "Gelişim Yolculuğu" olarak kaldı | Pilot |
 | 0.46.6 | 2026-10-08 | fix | Açık mod bildirimi `only light` oldu (CSS ve meta): Chrome'un Android'deki otomatik koyu teması sayfayı artık karartmıyor. Huawei Tarayıcı kendi koyu modunu hiçbir bildirime uymadan uyguluyor; orada koyu mod tarayıcı ayarından kapatılır | Pilot |
 | 0.46.5 | 2026-10-08 | fix | Veli panelindeki "Bu hafta" kartının tamamı grafik sayfasını açıyor: gerilmiş bağlantı `CardHeader` (container) içinde kaldığı için yalnızca başlık şeridi tıklanabiliyordu; bağlantı kartın doğrudan çocuğu oldu | Pilot |
