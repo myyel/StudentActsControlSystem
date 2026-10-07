@@ -52,7 +52,8 @@
 }
 
 :root {
-  color-scheme: light;
+  /* "only": also opts out of forced darkening (Chrome auto dark theme, Samsung Internet). */
+  color-scheme: only light;
   --radius: 0.875rem;
   /* Palette (docs/Cocuk-Odakli-Arayuz-Onerileri.pdf). Bright tones are fills; text uses the *-ink tones (AA). */
   --grass: #2dbe7e;

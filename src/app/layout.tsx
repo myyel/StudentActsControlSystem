@@ -18,8 +18,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: "#059669",
-  // Light only, even when the OS prefers dark.
-  colorScheme: "light",
+  // Light only, even when the OS prefers dark. "only" also opts out of the forced darkening some
+  // Android browsers apply to light pages (Chrome's auto dark theme, Samsung Internet).
+  colorScheme: "only light",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

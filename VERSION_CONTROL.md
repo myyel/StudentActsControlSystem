@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.46.6 | 2026-10-08 | fix | Açık mod bildirimi `only light` oldu (CSS ve meta): Chrome'un Android'deki otomatik koyu teması sayfayı artık karartmıyor. Huawei Tarayıcı kendi koyu modunu hiçbir bildirime uymadan uyguluyor; orada koyu mod tarayıcı ayarından kapatılır | Pilot |
 | 0.46.5 | 2026-10-08 | fix | Veli panelindeki "Bu hafta" kartının tamamı grafik sayfasını açıyor: gerilmiş bağlantı `CardHeader` (container) içinde kaldığı için yalnızca başlık şeridi tıklanabiliyordu; bağlantı kartın doğrudan çocuğu oldu | Pilot |
 | 0.46.4 | 2026-10-08 | fix | Veli Davranışlar sayfası Android'de (Chromium) yana kayıyordu: ekran dışındaki kartların `sr-only` açıklamaları kaydırma alanından taşıp sayfayı genişletiyordu (412px'te 956px); kart sırası artık `relative` | Pilot |
 | 0.46.3 | 2026-10-08 | fix | Duraklar ekranı telefon ve tablette: sürükleme tutamacı her öğenin kendi başlık satırına girdi (`SortableHandle`), alt öğeler girintisiz tam genişlikte; durak adına 360px'te ~108px kalıyor (önce ~20px, harf harf kırılıyordu); 1280px ve üstünde girintili düzen aynı | Pilot |
