@@ -23,6 +23,7 @@ Commit hash'i, commit'in kendi içinde yazılamayacağı için tabloda tutulmaz;
 
 | Sürüm | Tarih | Tür | Özet | Faz |
 |---|---|---|---|---|
+| 0.46.5 | 2026-10-08 | fix | Veli panelindeki "Bu hafta" kartının tamamı grafik sayfasını açıyor: gerilmiş bağlantı `CardHeader` (container) içinde kaldığı için yalnızca başlık şeridi tıklanabiliyordu; bağlantı kartın doğrudan çocuğu oldu | Pilot |
 | 0.46.4 | 2026-10-08 | fix | Veli Davranışlar sayfası Android'de (Chromium) yana kayıyordu: ekran dışındaki kartların `sr-only` açıklamaları kaydırma alanından taşıp sayfayı genişletiyordu (412px'te 956px); kart sırası artık `relative` | Pilot |
 | 0.46.3 | 2026-10-08 | fix | Duraklar ekranı telefon ve tablette: sürükleme tutamacı her öğenin kendi başlık satırına girdi (`SortableHandle`), alt öğeler girintisiz tam genişlikte; durak adına 360px'te ~108px kalıyor (önce ~20px, harf harf kırılıyordu); 1280px ve üstünde girintili düzen aynı | Pilot |
 | 0.46.2 | 2026-10-08 | fix | Ölçekte durak adları Safari'de (iPhone/iPad) baş aşağı ve üst üste görünüyordu: dikey yazı `<button>` ve `line-clamp` içinde uygulanmıyor, yalnızca 180° döndürme kalıyordu; ad artık düz bir dikey `span`, iki satıra boyutla sınırlanır | Pilot |

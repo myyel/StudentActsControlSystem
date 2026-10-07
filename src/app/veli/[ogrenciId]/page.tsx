@@ -69,18 +69,20 @@ export default async function ParentDashboardPage({ params, searchParams }: Page
       <div className="grid gap-6 md:grid-cols-2">
         <CharacterHero childName={name} className={child.className} character={character} />
 
-        {/* The whole card opens the behavior page; the title link stretches over it. */}
+        {/*
+          The whole card opens the behavior page. The link is the card's own child: CardHeader is a
+          container (a containing block), so a link stretched from inside it would cover the header only.
+        */}
         <Card className="relative transition-transform has-[a[data-main]:hover]:-translate-y-0.5 has-[a[data-main]:focus-visible]:outline-2 has-[a[data-main]:focus-visible]:outline-ring">
+          <Link
+            href={`/veli/${child.id}/davranislar`}
+            data-main
+            aria-label="Bu hafta: her davranışın grafiği"
+            className="absolute inset-0 z-10 rounded-xl outline-none"
+          />
           <CardHeader>
             <CardTitle className="flex items-center justify-between gap-2">
-              <Link
-                href={`/veli/${child.id}/davranislar`}
-                data-main
-                aria-label="Bu hafta: her davranışın grafiği"
-                className="outline-none after:absolute after:inset-0 after:rounded-xl after:content-['']"
-              >
-                Bu hafta
-              </Link>
+              Bu hafta
               {weekPositive > 0 && (
                 <span className="rounded-full bg-grass-soft px-3 py-1 text-sm font-extrabold text-grass-strong">
                   +{weekPositive} olumlu
