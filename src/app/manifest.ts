@@ -19,7 +19,7 @@ export default function manifest(): MetadataRoute.Manifest {
     icons: [
       { src: "/icon/192", sizes: "192x192", type: "image/png" },
       { src: "/icon/512", sizes: "512x512", type: "image/png" },
-      // The star sits inside the central 80% safe zone (AppIconArt), so the same art is maskable.
+      // The mark sits inside the central 80% safe zone (AppIconArt), so the same art is maskable.
       { src: "/icon/512", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };

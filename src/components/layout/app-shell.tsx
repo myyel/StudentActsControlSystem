@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { STAR_PATH } from "@/components/app-icon";
+import { LogoMark } from "@/components/app-icon";
 import { ROLE_HOME, ROLE_LABEL } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/server/db/schema";
@@ -27,11 +27,7 @@ export function AppShell({ user, nav, className, children }: AppShellProps) {
           aria-label="Gelişim Yolculuğu ana sayfa"
           className="flex min-h-11 shrink-0 items-center gap-2 rounded-xl pr-1"
         >
-          <span aria-hidden className="flex size-10 items-center justify-center rounded-xl bg-brand">
-            <svg viewBox="0 0 24 24" className="size-6 fill-sun">
-              <path d={STAR_PATH} />
-            </svg>
-          </span>
+          <LogoMark aria-hidden className="size-10" />
           <span className="hidden font-display text-lg leading-none font-extrabold md:inline">Gelişim Yolculuğu</span>
         </Link>
         <div className="flex min-w-0 flex-1 items-center justify-end gap-2">

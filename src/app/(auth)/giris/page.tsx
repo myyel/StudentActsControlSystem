@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { MapIcon, MessageCircleHeart, Star } from "lucide-react";
-import { STAR_PATH } from "@/components/app-icon";
+import { LogoMark, STAR_PATH } from "@/components/app-icon";
 import { CharacterImage } from "@/components/characters/character-image";
 import { stageAssetUrl } from "@/content/characters";
 import { ROLE_HOME } from "@/lib/roles";
@@ -50,7 +50,10 @@ export default async function LoginPage({ searchParams }: PageProps<"/giris">) {
             ))}
           </ul>
           <div className="flex flex-col gap-2">
-            <p className="font-display text-lg font-extrabold text-grass-strong sm:text-xl">Gelişim Yolculuğu</p>
+            <p className="flex items-center justify-center gap-2 font-display text-lg font-extrabold text-grass-strong sm:text-xl lg:justify-start">
+              <LogoMark tile aria-hidden className="size-10 shrink-0" />
+              Gelişim Yolculuğu
+            </p>
             <h1 className="font-display text-3xl leading-tight font-extrabold sm:text-4xl xl:text-5xl">
               Her gün bir adım ileri!
             </h1>

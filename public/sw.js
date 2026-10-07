@@ -3,7 +3,7 @@
 // static offline page and the files it needs are stored. Push payload: PushMessage in
 // src/server/services/push.ts.
 
-const OFFLINE_CACHE = "offline-v2";
+const OFFLINE_CACHE = "offline-v3";
 const OFFLINE_URL = "/cevrimdisi";
 
 /** Stores the offline page with its CSS/JS/fonts, character picture and icon, replacing the previous set. */
