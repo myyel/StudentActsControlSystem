@@ -1,22 +1,27 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { BehaviorWeekView } from "@/components/timeline/behavior-week-view";
 import { possessiveName } from "@/lib/student-names";
 import { db } from "@/server/db";
-import { assertParentOfStudent } from "@/server/auth/guards";
+import { assertTeacherOfStudent } from "@/server/auth/guards";
 import { orNotFound, requirePageRole } from "@/server/auth/session";
-import { getBehaviorWeekForParent } from "@/server/services/parent-behaviors";
+import { getBehaviorWeekForTeacher } from "@/server/services/behavior-week";
 import { behaviorWeekQuerySchema } from "@/server/validation/parent";
 
 export const metadata: Metadata = { title: "Davranışlar" };
 
-export default async function ParentBehaviorsPage({ params, searchParams }: PageProps<"/veli/[ogrenciId]/davranislar">) {
-  const { ogrenciId } = await params;
+export default async function StudentBehaviorsPage({
+  params,
+  searchParams,
+}: PageProps<"/ogretmen/siniflar/[sinifId]/ogrenciler/[ogrenciId]/davranislar">) {
+  const { sinifId, ogrenciId } = await params;
   const { hafta = 0 } = behaviorWeekQuerySchema.parse(await searchParams);
-  const { user } = await requirePageRole("parent");
-  // Another child's id renders 404; the service filters through parent_student as well.
-  await orNotFound(assertParentOfStudent(user, ogrenciId));
-  const week = await orNotFound(getBehaviorWeekForParent(db, user.id, ogrenciId, hafta));
+  const { user } = await requirePageRole("teacher");
+  await orNotFound(assertTeacherOfStudent(user, ogrenciId));
+  const week = await orNotFound(getBehaviorWeekForTeacher(db, ogrenciId, hafta));
   const { child } = week;
+  // The URL's class must be the student's class.
+  if (child.classId !== sinifId) notFound();
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
@@ -26,8 +31,8 @@ export default async function ParentBehaviorsPage({ params, searchParams }: Page
       </div>
       <BehaviorWeekView
         week={week}
-        baseHref={`/veli/${child.id}/davranislar`}
-        negativeNote="Yalnızca siz ve öğretmen görürsünüz."
+        baseHref={`/ogretmen/siniflar/${sinifId}/ogrenciler/${child.id}/davranislar`}
+        negativeNote="Yalnızca siz ve veli görür."
       />
     </div>
   );

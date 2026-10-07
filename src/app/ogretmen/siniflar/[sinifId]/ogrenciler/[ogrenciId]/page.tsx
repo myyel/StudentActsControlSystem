@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StudentCharacter } from "@/components/characters/student-character";
@@ -72,8 +73,19 @@ export default async function StudentPage({
         </CardContent>
       </Card>
 
-      <Card className="print:hidden">
+      {/* The whole card opens the behavior page; the link is the card's own child (see the parent dashboard). */}
+      <Card className="relative transition-transform has-[a[data-main]:hover]:-translate-y-0.5 has-[a[data-main]:focus-visible]:outline-2 has-[a[data-main]:focus-visible]:outline-ring print:hidden">
+        <Link
+          href={`${base}/davranislar`}
+          data-main
+          aria-label="Son 7 gün: her davranışın grafiği"
+          className="absolute inset-0 z-10 rounded-xl outline-none"
+        />
         <CardHeader>
+          <span aria-hidden className="flex items-center gap-1 self-end text-sm font-bold text-sky-ink">
+            Her davranışın grafiği
+            <ChevronRight className="size-4" />
+          </span>
           <CardTitle>Son 7 gün</CardTitle>
         </CardHeader>
         <CardContent>

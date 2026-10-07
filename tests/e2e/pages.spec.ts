@@ -39,9 +39,8 @@ const SCREENS: Partial<Record<Role | "guest", Screen[]>> = {
     },
     { name: "tahta", path: async () => `/tahta/${await classId("2-A")}`, board: true },
     {
-      name: "tahtada karakter seçimi",
-      path: async () => `/tahta/${await classId("2-A")}?karakter=${await studentId("Ada", "Y")}`,
-      board: true,
+      name: "öğrenci davranışları",
+      path: async () => `/ogretmen/siniflar/${await classId("2-A")}/ogrenciler/${await studentId("Ada", "Y")}/davranislar`,
     },
   ],
   parent: [

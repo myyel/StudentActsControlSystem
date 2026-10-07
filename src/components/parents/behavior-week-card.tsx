@@ -1,7 +1,7 @@
 import { weekday } from "@/components/timeline/week-chart";
 import { behaviorTone, formatPoints } from "@/lib/behavior";
 import { cn } from "@/lib/utils";
-import type { BehaviorWeekRow } from "@/server/services/parent-behaviors";
+import type { BehaviorWeekRow } from "@/server/services/behavior-week";
 
 type Props = {
   behavior: BehaviorWeekRow;

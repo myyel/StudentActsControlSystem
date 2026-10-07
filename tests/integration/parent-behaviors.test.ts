@@ -2,6 +2,8 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import { newUuid } from "@/lib/uuid";
 import { db } from "@/server/db";
 import { behaviorEvent } from "@/server/db/schema";
+import { assertTeacherOfStudent } from "@/server/auth/guards";
+import { getBehaviorWeekForTeacher } from "@/server/services/behavior-week";
 import { getBehaviorWeekForParent, MAX_WEEK_OFFSET } from "@/server/services/parent-behaviors";
 import { behaviorWeekQuerySchema } from "@/server/validation/parent";
 import { seedAuthFixture } from "../helpers/fixtures";
@@ -131,6 +133,28 @@ describe("getBehaviorWeekForParent", () => {
     await expect(
       getBehaviorWeekForParent(db, fx.users.parentA.id, fx.students.deletedStudent.id, 0, NOW),
     ).rejects.toMatchObject(FORBIDDEN);
+  });
+});
+
+describe("getBehaviorWeekForTeacher", () => {
+  it("returns the same week the parent sees, with the student's class", async () => {
+    const a1 = fx.students.studentA1.id;
+    const teacher = await getBehaviorWeekForTeacher(db, a1, 0, NOW);
+    const { child, ...parentWeek } = await getBehaviorWeekForParent(db, fx.users.parentA.id, a1, 0, NOW);
+    expect(teacher).toEqual({ ...parentWeek, child: { ...child, classId: fx.classes.classA.id } });
+    expect(JSON.stringify(teacher)).not.toContain("Gizli");
+  });
+
+  it("is reached only by the teacher of the student's class", async () => {
+    // The page runs this guard before the service.
+    await expect(assertTeacherOfStudent(fx.users.teacherA, fx.students.studentA1.id)).resolves.toBeUndefined();
+    await expect(assertTeacherOfStudent(fx.users.teacherB, fx.students.studentA1.id)).rejects.toMatchObject(FORBIDDEN);
+    await expect(assertTeacherOfStudent(fx.users.parentA, fx.students.studentA1.id)).rejects.toMatchObject(FORBIDDEN);
+  });
+
+  it("refuses a deleted or unknown student", async () => {
+    await expect(getBehaviorWeekForTeacher(db, fx.students.deletedStudent.id, 0, NOW)).rejects.toMatchObject(FORBIDDEN);
+    await expect(getBehaviorWeekForTeacher(db, newUuid(), 0, NOW)).rejects.toMatchObject(FORBIDDEN);
   });
 });
 

@@ -176,6 +176,7 @@
 - Öğretmen sınıfın "Etkinlik saati" sekmesinden her hafta günü (Pazartesi–Pazar) için **en fazla bir** etkinlik saati ve adı (en fazla 60 karakter, ör. "Kitap okuma saati") belirler; program her hafta tekrar eder. Kapalı günde alarm yoktur. "Pazartesiyi hafta içine kopyala" kısayolu vardır. Değişiklik audit log'a düşer.
 - Saat okulun saat dilimine göredir. Saat geldiğinde **tahta modu açıksa** tam ekran bir çocuk kartı çıkar: sallanan zil, zıplayan sınıf karakterleri, "Etkinlik zamanı!" ve etkinliğin adı. Tarayıcıda üretilen kısa bir zil sesi (ses dosyası yok) 30 sn boyunca birkaç saniyede bir çalar; kart öğretmen "Tamam"a (80px) basana kadar kalır. Açıkken tahta sayfası kaymaz. Hareketi azalt ayarında zil ve karakterler hareket etmez.
   - Tahta saatten sonraki 5 dakika içinde açılırsa da çalar; aynı gün o tarayıcıda bir kez çalar.
+  - Grafik kartı öğrencinin davranış sayfasını açar (`…/ogrenciler/[ogrenciId]/davranislar`): velinin gördüğüyle aynı görünüm; **Okulda** ve **Evde** ayrı, her davranış için gün gün kart, haftalar arası gezinme (en çok 52 hafta).
   - Tarayıcılar sesi yalnızca sayfaya bir kez dokunulduktan sonra çalar; dokunulmamışsa yalnızca kart görünür.
   - Program tahta açılırken yüklenir; tahta açıkken yapılan değişiklik tahta yeniden açılınca geçerli olur.
 
