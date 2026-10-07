@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 # Yayına alma aşamaları
 
-Kaynak belge `docs/DEPLOY.md`'dir; bu dosya onun **§5 Güncelleme** bölümünü adım adım uygular. İlk kurulum (sunucu, alan adı, `.env`, ilk hesaplar: DEPLOY.md §1–4) bu komutun işi değildir; onu kullanıcı belgeyi izleyerek yapar.
+Kaynak belge `docs/DEPLOY.md`'dir; bu dosya onun **§5 Güncelleme** bölümünü adım adım uygular. İlk kurulum (sunucu, alan adı, `.env`, ilk hesaplar: DEPLOY.md §1–4) bu komutun işi değildir; onu `/kurulum` kullanıcıyı adım adım yönlendirerek yapar.
 
 Argümanlar: sürüm etiketi (ör. `v0.47.0`), SSH hedefi (ör. `gelisim@sunucu` ya da `~/.ssh/config`'deki ad), sunucudaki klasör (varsayılan `~/gelisim`). Etiket ya da SSH hedefi verilmediyse sor; tahmin etme.
 

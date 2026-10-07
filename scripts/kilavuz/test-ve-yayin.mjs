@@ -1,5 +1,5 @@
-// Test ve yayına alma raporunu (docs/Test-ve-Yayin-Raporu.pdf) üretir: Claude Code'un /test ve
-// /deploy komutlarının (.claude/skills/) aşamaları ve son çalıştırmanın sonuçları.
+// Test ve yayına alma raporunu (docs/Test-ve-Yayin-Raporu.pdf) üretir: Claude Code'un /test,
+// /deploy ve /kurulum komutlarının (.claude/skills/) aşamaları ve son çalıştırmanın sonuçları.
 //   node scripts/kilavuz/test-ve-yayin.mjs
 import { writeFileSync } from "node:fs";
 import path from "node:path";
@@ -14,6 +14,8 @@ const OUT_PDF = path.resolve("docs/Test-ve-Yayin-Raporu.pdf");
 const RUN = {
   date: "8 Ekim 2026",
   version: "v0.47.0",
+  // Raporun kendisi (metin, komutlar) en son bu sürümde düzenlendi; test sonuçları `version` içindir.
+  revised: "v0.49.1",
   machine: "Windows 11, Node 22, Docker Desktop",
   stages: {
     T1: { result: "geçti", detail: "hata ve uyarı yok", time: "10 sn" },
@@ -136,6 +138,75 @@ const DEPLOY_STAGES = [
   },
 ];
 
+// .claude/skills/kurulum/SKILL.md ile aynı adımlar.
+const SETUP_STAGES = [
+  {
+    id: "K1",
+    name: "Sunucu",
+    you: "Türkiye'de barındırılan bir VPS alırsınız: en az 2 vCPU, 4 GB RAM, 40 GB disk, Ubuntu 24.04 ya da Debian 12. IP adresini Claude'a verirsiniz.",
+    claude: "Ölçütleri söyler (sağlayıcı önermez). Bilgisayarınızda SSH anahtarı yoksa üretir, sağlayıcı paneline ekleyeceğiniz açık anahtarı gösterir.",
+    done: "Claude sunucuya bağlanıp işlemci, bellek, disk ve işletim sistemini okur; gereksinim karşılanıyor.",
+  },
+  {
+    id: "K2",
+    name: "Erişim ve sıkılaştırma",
+    you: "Anahtar panelden eklenemediyse bir kez parolayla yüklersiniz (Claude komutu verir). Her değişikliği onaylarsınız.",
+    claude: "Güncellemeleri ve Docker'ı kurar, <code>gelisim</code> kullanıcısını açar, <code>~/.ssh/config</code> kaydını yazar, güvenlik duvarını açar, parolayla girişi kapatır. Erişimi kesebilecek komuttan önce anahtarla girişi yeni bir bağlantıda dener.",
+    done: "<code>ssh gelisim</code> çalışır, parolayla giriş reddedilir, yalnızca 22, 80, 443 açıktır.",
+  },
+  {
+    id: "K3",
+    name: "Alan adı",
+    you: "Alan adını alırsınız (okulun <code>k12.tr</code> alt alanı da olur) ve A kaydını sunucunun IP adresine yönlendirirsiniz. <code>gelisimyolculugu.com</code> ve <code>.com.tr</code> başkasında; <code>.tr</code>, <code>.net</code>, <code>.app</code> 7 Ekim'de boştu.",
+    claude: "Panelde hangi kaydı hangi değerle gireceğinizi yazar. Yayılmayı beklerken K4'e geçer.",
+    done: "Alan adı iki ayrı DNS sunucusunda da sunucunun IP adresini döner.",
+  },
+  {
+    id: "K4",
+    name: "Depo, .env ve sırlar",
+    you: "<code>BACKUP_PASSPHRASE</code>'i parola yöneticinizde üretip saklar, <code>.env</code>'e kendiniz yazarsınız. Anlık bildirim istiyorsanız <code>pnpm push:keys</code>'i kendi terminalinizde çalıştırıp anahtarları aynı yolla yazarsınız.",
+    claude: "Depoyu etiketli sürümle çeker, <code>.env</code>'i <code>600</code> izniyle oluşturur, alan adı ve e-postayı yazar. <code>POSTGRES_PASSWORD</code> ve <code>BETTER_AUTH_SECRET</code>'ı sunucuda üretip ekrana basmadan dosyaya yazar.",
+    done: "Zorunlu beş ayar dolu (Claude değerleri değil, yalnızca adları ve dolu/boş bilgisini görür), dosya izni <code>600</code>.",
+  },
+  {
+    id: "K5",
+    name: "İlk başlatma",
+    you: "Planı onaylarsınız. K3 bitmeden başlatılmaz: sertifika alınamaz.",
+    claude: "İmajları derler ve servisleri başlatır (ilk derleme 5–10 dakika), sonra <code>/deploy</code>'un D4 aşamasındaki denetimleri yapar.",
+    done: "Servisler sağlıklı, günlükte hata yok, <code>https://alan-adınız/giris</code> 200 ve HSTS başlığıyla açılıyor.",
+  },
+  {
+    id: "K6",
+    name: "KVKK metinleri",
+    you: "Okulun hukuken onayladığı aydınlatma ve açık rıza metinlerini verirsiniz. <b>Bu adım bitmeden hiçbir veli davet edilmez.</b>",
+    claude: "Metni <code>src/content/kvkk.ts</code>'e birebir aktarır (hukuki metni kendisi yazmaz, değiştirmez), sürümünü artırır. Veri sorumlusu bilgisi, kalan yer tutucu ve yedeklerin 14 gün saklandığı bilgisini denetler. Test eder, sürümler, <code>/deploy</code> ile yayınlar.",
+    done: "Yayındaki kayıt ekranında yeni metin görünüyor.",
+  },
+  {
+    id: "K7",
+    name: "İlk hesaplar",
+    you: "Claude'un hazırladığı komutları kendi terminalinizde çalıştırırsınız: geçici şifre ekrana bir kez yazılır ve sohbete girmemelidir. Şifreleri kişilere güvenli bir yoldan iletirsiniz.",
+    claude: "Yönetici ve öğretmen hesapları için komutları sizin bilgilerinizle hazırlar, sonra okulun oluştuğunu denetler.",
+    done: "Okul listeleniyor; yönetici hesabıyla giriş yapabildiniz.",
+  },
+  {
+    id: "K8",
+    name: "Yedek",
+    you: "Türkiye'de S3 uyumlu bir depolama hesabı açar, erişim anahtarını <code>.env</code>'e kendiniz yazarsınız. Geri yükleme denemesinde yedek parolasını kendi terminalinizde girersiniz.",
+    claude: "Elle bir yedek alır, uzak kopyanın gittiğini günlükten doğrular. Yedeği bilgisayarınızda geçici bir veritabanına geri yükletir, kayıt sayılarını karşılaştırır, sonra indirilen dosyayı ve geçici veritabanını siler.",
+    done: "Yedek alındı, uzak kopya gitti, ayrı makinede geri yüklendi ve sayılar tutuyor. Çalışan bir yedeğin tek kanıtı budur.",
+  },
+  {
+    id: "K9",
+    name: "Gerçek cihaz denemeleri",
+    you: "Telefonda ve akıllı tahtada denersiniz: öğretmen ve veli girişi, iPhone ve Android'de ana ekrana ekleme ve anlık bildirim, tahtada dokunmatik.",
+    claude: "Senaryoları tek tek sorar, her birinde ne yapacağınızı ve ne görmeniz gerektiğini yazar, sonucu kaydeder. Kalan olursa düzeltmeyi ayrı bir iş olarak önerir.",
+    done: "Beş senaryo geçti; deneme için açılan sınıf ve hesaplar silindi.",
+  },
+];
+
+const SETUP_NEEDS = { K1: "—", K2: "K1", K3: "—", K4: "K2", K5: "K3, K4", K6: "—", K7: "K5", K8: "K5", K9: "K5, K7" };
+
 const flow = (items, cls) =>
   `<div class="flow ${cls}">${items.map((s) => `<div class="step"><b>${s.id}</b><span>${s.name}</span></div>`).join('<i class="arrow">›</i>')}</div>`;
 
@@ -143,7 +214,7 @@ const html = `<!doctype html>
 <html lang="tr"><head><meta charset="utf-8"><title>Test ve Yayın Raporu</title>
 <style>
 @page { size: A4; margin: 18mm 16mm 20mm; }
-:root { --ink: #2b2d42; --muted: #5d6175; --line: #e3ddd0; --cream: #fff8ec; --grass: #13734a; --grass-soft: #e3f7e8; --sky: #1f5fad; --sky-soft: #e2f0ff; --sun-soft: #fff1c9; --coral: #b4362a; --coral-soft: #ffedea; }
+:root { --ink: #2b2d42; --muted: #5d6175; --line: #e3ddd0; --cream: #fff8ec; --grass: #13734a; --grass-soft: #e3f7e8; --sky: #1f5fad; --sky-soft: #e2f0ff; --sun-soft: #fff1c9; --sun-ink: #7a5200; --coral: #b4362a; --coral-soft: #ffedea; }
 * { box-sizing: border-box; }
 body { font-family: "Segoe UI", "Noto Sans", Arial, sans-serif; color: var(--ink); font-size: 10pt; line-height: 1.5; margin: 0; }
 code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 9pt; background: #f4efe4; border-radius: 3px; padding: 0 1mm; }
@@ -168,6 +239,7 @@ section { page-break-before: always; }
 .flow .step b { display: block; font-size: 11pt; }
 .flow.test .step { background: var(--sky-soft); color: var(--sky); }
 .flow.deploy .step { background: var(--grass-soft); color: var(--grass); }
+.flow.setup .step { background: var(--sun-soft); color: var(--sun-ink); padding: 2.5mm 1mm; font-size: 7.6pt; }
 .flow .arrow { align-self: center; font-style: normal; color: var(--muted); font-size: 12pt; }
 .between { text-align: center; color: var(--muted); font-size: 9.5pt; margin: 2mm 0; }
 table { border-collapse: collapse; width: 100%; margin: 2mm 0 4mm; font-size: 9.3pt; }
@@ -182,7 +254,7 @@ td.num { white-space: nowrap; }
 .pill.skip { background: #f1eee6; color: var(--muted); }
 .stage { border: 1px solid var(--line); border-radius: 7px; margin: 0 0 4mm; page-break-inside: avoid; overflow: hidden; }
 .stage-head { display: flex; align-items: baseline; gap: 3mm; padding: 2mm 4mm; border-bottom: 1px solid var(--line); }
-.stage.t .stage-head { background: var(--sky-soft); } .stage.d .stage-head { background: var(--grass-soft); }
+.stage.t .stage-head { background: var(--sky-soft); } .stage.d .stage-head { background: var(--grass-soft); } .stage.k .stage-head { background: var(--sun-soft); }
 .stage-head .sid { font-weight: 800; font-size: 11pt; }
 .stage-head h3 { flex: 1; }
 .stage-head .where { font-size: 8.6pt; color: var(--muted); white-space: nowrap; }
@@ -206,30 +278,35 @@ ul.check li::before { content: ""; position: absolute; left: 0; top: .6mm; width
   <div class="band">
     <div class="brand">${LOGO}<span>Gelişim Yolculuğu</span></div>
     <h1>Test ve Yayın Raporu</h1>
-    <div class="sub">Claude Code ile projenin test edilmesi ve üretim sunucusuna alınması: aşamalar, komutlar ve son çalıştırmanın sonuçları.</div>
+    <div class="sub">Claude Code ile projenin test edilmesi, sunucunun ilk kurulumu ve üretime alınması: aşamalar, komutlar, son çalıştırmanın sonuçları ve açık kalan işler.</div>
     <dl>
-      <dt>Sürüm</dt><dd>${RUN.version}</dd>
+      <dt>Test edilen sürüm</dt><dd>${RUN.version}</dd>
       <dt>Tarih</dt><dd>${RUN.date}</dd>
+      <dt>Rapor düzenlemesi</dt><dd>${RUN.revised}</dd>
       <dt>Test ortamı</dt><dd>${RUN.machine}</dd>
-      <dt>Komutlar</dt><dd><code>/test</code> ve <code>/deploy</code> (<code>.claude/skills/</code>)</dd>
+      <dt>Komutlar</dt><dd><code>/test</code>, <code>/kurulum</code> ve <code>/deploy</code> (<code>.claude/skills/</code>)</dd>
     </dl>
   </div>
 </div>
 
 <section style="page-break-before: auto">
 <h1>1. Özet</h1>
-<p class="lead">Test tarafı hazır ve bugün baştan sona çalıştırıldı. Yayın tarafı tanımlandı ama denenmedi, çünkü henüz bir üretim sunucusu yok.</p>
+<p class="lead">Test tarafı hazır ve ${RUN.date} günü baştan sona çalıştırıldı. Kurulum ve yayın tarafı tanımlandı ama denenmedi, çünkü henüz bir üretim sunucusu yok. Açık kalan işlerin tümü artık Claude Code'un sizi yönlendirdiği adımlardır.</p>
 
-<p>Projeye iki Claude Code komutu eklendi. Claude Code'da proje klasöründeyken yazmanız yeterli:</p>
+<p>Projede üç Claude Code komutu var. Claude Code'da proje klasöründeyken yazmanız yeterli:</p>
 <table>
 <tr><th style="width:42mm">Komut</th><th>Ne yapar</th><th style="width:40mm">Durum</th></tr>
-<tr><td><code>/test</code></td><td>Altı test aşamasını sırayla çalıştırır, kalanın nedenini bulur, sonuç tablosu verir.</td><td>${pill("geçti")} aşamaları bugün elle çalıştırıldı</td></tr>
-<tr><td><code>/deploy vX.Y.Z sunucu</code></td><td>Etiketli sürümü sunucuya kurar: ön denetim, yedek, güncelleme, doğrulama, gerekirse geri dönüş.</td><td>${pill("denenmedi")} sunucu yok</td></tr>
+<tr><td><code>/test</code></td><td>Altı test aşamasını sırayla çalıştırır, kalanın nedenini bulur, sonuç tablosu verir.</td><td>${pill("geçti")} aşamaları elle çalıştırıldı</td></tr>
+<tr><td><code>/kurulum</code></td><td>İlk yayından önceki açık noktaları dokuz adımda sizinle birlikte tamamlar: sunucu, erişim, alan adı, sırlar, ilk başlatma, KVKK metinleri, hesaplar, yedek, gerçek cihaz. Bir kez yapılır; yarıda bırakılırsa kaldığı yerden sürer.</td><td>${pill("denenmedi")} sunucu yok</td></tr>
+<tr><td><code>/deploy vX.Y.Z sunucu</code></td><td>Kurulu sunucuyu etiketli sürüme geçirir: ön denetim, yedek, güncelleme, doğrulama, gerekirse geri dönüş.</td><td>${pill("denenmedi")} sunucu yok</td></tr>
 </table>
 
 <h2>Akış</h2>
+<div class="between">bir kez: <code>/kurulum</code></div>
+${flow(SETUP_STAGES, "setup")}
+<div class="between">her sürümde: <code>/test yayin</code></div>
 ${flow(TEST_STAGES, "test")}
-<div class="between">hepsi geçerse → sürüm satırı, commit, <code>vX.Y.Z</code> etiketi, <code>git push --follow-tags</code> →</div>
+<div class="between">hepsi geçerse → sürüm satırı, commit, <code>vX.Y.Z</code> etiketi, <code>git push --follow-tags</code> → <code>/deploy</code></div>
 ${flow(DEPLOY_STAGES, "deploy")}
 
 <h2>Son çalıştırma (${RUN.date}, ${RUN.version})</h2>
@@ -241,7 +318,7 @@ ${TEST_STAGES.map((s) => {
 }).join("\n")}
 </table>
 
-${note("Yayından önce sizin yapmanız gerekenler", "Sunucu ve alan adı, <code>.env</code> sırları, okulun onayladığı KVKK metinleri ve gerçek cihaz denemeleri bu komutların dışında kalır. Liste 5. bölümde.")}
+${note("Açık kalan işler", "Sunucu ve alan adı, <code>.env</code> sırları, okulun onayladığı KVKK metinleri, ilk hesaplar, yedek denemesi ve gerçek cihaz denemeleri henüz yapılmadı. Hiçbirini tek başınıza yapmanız gerekmiyor: <code>/kurulum</code> yazın, Claude Code sıradaki adımı söyler, yapabildiğini kendisi yapar, sizin yaptığınızı denetler. Adımlar 5. bölümde.")}
 </section>
 
 <section>
@@ -284,7 +361,7 @@ ${tip("e2e geliştirme verinize dokunmaz", "T5 kendi veritabanını (<code>class
 <h1>3. Yayın aşamaları</h1>
 <p class="lead"><code>/deploy vX.Y.Z sunucu</code> komutu, kurulu bir sunucuyu yeni sürüme geçirir. Kaynağı <code>docs/DEPLOY.md</code> belgesinin "Güncelleme" bölümüdür.</p>
 
-${note("İlk kurulum bu komutun işi değil", "Sunucunun hazırlanması, alan adı, <code>.env</code> dosyası ve ilk yönetici hesabı bir kez, <code>docs/DEPLOY.md</code> §1–4 izlenerek elle yapılır. <code>/deploy</code> ondan sonraki her güncelleme içindir.")}
+${note("İlk kurulum bu komutun işi değil", "Sunucunun hazırlanması, alan adı, <code>.env</code> dosyası ve ilk yönetici hesabı bir kez, <code>/kurulum</code> ile yapılır (5. bölüm). <code>/deploy</code> ondan sonraki her güncelleme içindir.")}
 
 ${DEPLOY_STAGES.map(
   (s) => `<div class="stage d"><div class="stage-head"><span class="sid">${s.id}</span><h3>${s.name}</h3><span class="where">${s.where}</span></div>
@@ -303,7 +380,14 @@ ${DEPLOY_STAGES.map(
 
 <section>
 <h1>4. Claude Code ile kullanım</h1>
-<p class="lead">Günlük akış üç adım: test et, sürümle, yayına al.</p>
+<p class="lead">Bir kez kurulum; sonra her sürümde üç adım: test et, sürümle, yayına al.</p>
+
+${code(`/kurulum                          (bir kez; yarıda kalırsa yeniden yazın)
+    → durum tablosu gelir, Claude sıradaki adımı söyler
+/kurulum durum
+    → yalnızca hangi adımın bittiğini gösterir, bir şey değiştirmez
+/kurulum K6
+    → doğrudan o adıma gider (ör. KVKK metni okuldan geldiğinde)`)}
 
 ${code(`/test yayin
     → T1–T6 çalışır, sonuç tablosu gelir
@@ -317,6 +401,7 @@ ${code(`/test yayin
 <div class="cols">
 <div><h3>Claude Code yapar</h3>
 <ul>
+<li>Sıradaki adımı ve sizden ne beklediğini söyler; "yaptım" dediğinizde denetler.</li>
 <li>Aşamaları sırayla çalıştırır, çıktıları okur.</li>
 <li>Kalan testin nedenini bulur, kendi değişikliğinden kaynaklanıyorsa düzeltir.</li>
 <li>Sunucuda yedek alır, sürümü günceller, servisleri ve adresleri denetler.</li>
@@ -324,15 +409,16 @@ ${code(`/test yayin
 </ul></div>
 <div><h3>Siz yaparsınız</h3>
 <ul>
-<li>Yayın planını onaylarsınız (D1'in sonunda).</li>
-<li>Sunucuya SSH anahtarıyla erişimi siz kurarsınız; Claude Code sizin anahtarınızı kullanır.</li>
+<li>Satın alma ve panel işlerini yaparsınız: sunucu, alan adı, DNS kaydı, depolama hesabı.</li>
+<li>Sırları siz saklarsınız: yedek parolası ve geçici şifreler sohbete yazılmaz.</li>
+<li>Sunucuda değişiklik yapan her adımı ve yayın planını onaylarsınız.</li>
 <li>Geri yükleme gibi veriyi değiştiren kararları siz verirsiniz.</li>
 <li>Yayından sonra bir hesapla girip bir sayfa açarsınız.</li>
 </ul></div>
 </div>
 
 <h2>SSH erişimi</h2>
-<p>Claude Code sunucuya sizin bilgisayarınızdaki <code>ssh</code> komutuyla bağlanır. Parola sormayan, anahtarla giriş kurulu olmalı. <code>~/.ssh/config</code> dosyasına bir ad tanımlarsanız komut kısalır:</p>
+<p>Claude Code sunucuya sizin bilgisayarınızdaki <code>ssh</code> komutuyla, sizin anahtarınızla bağlanır. Anahtarı ve aşağıdaki kaydı <code>/kurulum</code> K2 adımında birlikte kurarsınız; elle yazmanız gerekmez:</p>
 ${code(`Host gelisim
     HostName 203.0.113.10        # sunucunuzun IP adresi
     User gelisim
@@ -343,40 +429,48 @@ ${tip("İzinler", "Claude Code sunucuda komut çalıştırmadan önce izin ister
 </section>
 
 <section>
-<h1>5. İlk yayından önce</h1>
-<p class="lead">Bunlar tamamlanmadan <code>/deploy</code> çalıştırılamaz ya da pilot başlatılmamalıdır.</p>
+<h1>5. Açık noktalar: Claude ile adım adım</h1>
+<p class="lead"><code>/kurulum</code> komutu, ilk yayından önce kalan işleri dokuz adımda sizinle birlikte tamamlar. Sunucu yönetimi bilmeniz gerekmez.</p>
 
-<h2>Sunucu ve erişim</h2>
-<ul class="check">
-<li>Türkiye'de barındırılan bir VPS: en az 2 vCPU, 4 GB RAM, 40 GB disk (KVKK; <code>docs/DEPLOY.md</code> §1).</li>
-<li>Alan adı alındı ve A kaydı sunucunun IP adresini gösteriyor. (<code>gelisimyolculugu.com</code> ve <code>.com.tr</code> başkasında; <code>.tr</code>, <code>.net</code>, <code>.app</code> 7 Ekim'de boştu.)</li>
-<li>SSH yalnızca anahtarla; parola ile giriş kapalı. Güvenlik duvarında yalnızca 22, 80, 443 açık.</li>
-<li>Docker ve depo sunucuda kurulu; <code>.env</code> dolduruldu ve izinleri <code>600</code>.</li>
+<h2>Nasıl ilerler</h2>
+<ul>
+<li><b>Tek adım, tek istek.</b> Claude adımın ne için olduğunu ve sizden ne beklediğini söyler, sonra bekler.</li>
+<li><b>Yapabildiğini Claude yapar.</b> Komutu gösterir, onayınızı alır, çalıştırır. Size yalnızca onun yapamayacağı kalır: satın alma, panel ayarı, parola yöneticisi, gerçek cihaz.</li>
+<li><b>Her adım denetlenir.</b> "Yaptım" demeniz yetmez; Claude adımın "bitti sayılır" denetimini çalıştırır, geçmeden sonraki adıma geçmez.</li>
+<li><b>Yarıda bırakabilirsiniz.</b> Durum <code>docs/Kurulum-Durumu.md</code> dosyasına yazılır (sır ve IP adresi içermez). Yeniden <code>/kurulum</code> yazdığınızda Claude dosyayı ve sunucunun gerçek durumunu okuyup kaldığı yerden sürer.</li>
+<li><b>Bekleyen adım diğerlerini durdurmaz.</b> Örneğin KVKK metni okuldan beklenirken sunucu kurulabilir.</li>
 </ul>
 
-<h2>Sırlar</h2>
-<ul class="check">
-<li><code>POSTGRES_PASSWORD</code> ve <code>BETTER_AUTH_SECRET</code> rastgele üretildi (<code>openssl rand -base64 32</code>).</li>
-<li><code>BACKUP_PASSPHRASE</code> sunucu dışında, bir parola yöneticisinde saklanıyor. Kaybolursa yedekler açılamaz.</li>
-<li>Anlık bildirim istenecekse <code>VAPID_*</code> anahtarları üretildi.</li>
-<li>Uzak yedek (<code>RCLONE_*</code>) ayarlandı; sunucu kaybolursa yerel yedek de kaybolur.</li>
+<table>
+<tr><th style="width:11mm">#</th><th>Adım</th><th style="width:32mm">Önce bitmeli</th><th style="width:24mm">Durum</th></tr>
+${SETUP_STAGES.map((s) => `<tr><td class="id">${s.id}</td><td>${s.name}</td><td>${SETUP_NEEDS[s.id]}</td><td>${pill("bekliyor")}</td></tr>`).join("\n")}
+</table>
+
+${SETUP_STAGES.map(
+  (s) => `<div class="stage k"><div class="stage-head"><span class="sid">${s.id}</span><h3>${s.name}</h3></div>
+<div class="stage-body"><dl class="kv"><dt>Siz</dt><dd>${s.you}</dd><dt>Claude</dt><dd>${s.claude}</dd><dt>Bitti sayılır</dt><dd>${s.done}</dd></dl></div></div>`,
+).join("\n")}
+
+<h2>Sırlar sohbete girmez</h2>
+<ul>
+<li>Claude <code>.env</code> dosyasının içeriğini okumaz ve yazdırmaz; yalnızca hangi ayarın dolu, hangisinin boş olduğuna bakar.</li>
+<li>Rastgele sırlar sunucuda üretilir ve doğrudan dosyaya yazılır; ekranda görünmez.</li>
+<li><code>BACKUP_PASSPHRASE</code> yalnızca sizde ve parola yöneticinizde durur. Kaybolursa yedekler açılamaz.</li>
+<li>Geçici şifre üreten komutları (hesap açma, şifre sıfırlama) kendi terminalinizde çalıştırırsınız.</li>
+<li>Bir sırrı yanlışlıkla sohbete yapıştırırsanız Claude onu kullanmaz ve yeniden üretilmesini ister.</li>
 </ul>
 
-<h2>İçerik ve hukuk</h2>
-<ul class="check">
-<li>KVKK aydınlatma ve açık rıza metinleri şu an taslak (<code>src/content/kvkk.ts</code>). Okulun hukuken onayladığı metinlerle değiştirildi ve sürümü artırıldı.</li>
-<li>Aydınlatma metninde yedeklerin 14 gün saklandığı belirtildi.</li>
-<li>İlk yönetici ve öğretmen hesapları açıldı (<code>docs/DEPLOY.md</code> §4).</li>
+<h2>Komutun hiçbir koşulda yapmayacakları</h2>
+<ul>
+<li>Sunucuda <code>pnpm db:seed</code> ya da <code>pnpm db:reset</code> çalıştırmaz.</li>
+<li>Üretim veritabanına yedekten geri yükleme yapmaz; geri yükleme denemesi ayrı makinede, geçici veritabanında yapılır.</li>
+<li>Anahtarla girişi yeni bir bağlantıda görmeden parolayla girişi kapatmaz.</li>
+<li>22, 80 ve 443 dışında port açmaz; uygulamayı Caddy'yi atlayarak dışarı açmaz.</li>
+<li>KVKK metnini kendisi yazmaz, onaylanmış metni değiştirmez.</li>
+<li>Kendiliğinden çalışmaz: yalnızca siz <code>/kurulum</code> yazdığınızda başlar.</li>
 </ul>
 
-<h2>Yayından hemen sonra</h2>
-<ul class="check">
-<li>Bir öğretmen ve bir veli hesabıyla gerçek telefonda giriş yapıldı.</li>
-<li>iPhone ve Android'de ana ekrana eklendi, anlık bildirim geldi.</li>
-<li>Elle bir yedek alındı ve ayrı bir makinede geri yükleme denendi. Çalışan bir yedeğin tek kanıtı budur.</li>
-</ul>
-
-${note("Bu raporda doğrulanmayanlar", "Yayın aşamaları (D1–D6) gerçek bir sunucuda çalıştırılmadı; komutlar <code>docs/DEPLOY.md</code> ile aynıdır ama <code>/deploy</code>'un ilk kullanımı bir denemedir. İlk seferinde her adımı tek tek onaylayarak ilerleyin.")}
+${note("Bu raporda doğrulanmayanlar", "Kurulum (K1–K9) ve yayın (D1–D6) adımları gerçek bir sunucuda çalıştırılmadı; komutlar <code>docs/DEPLOY.md</code> ile aynıdır ama ilk kullanım bir denemedir. İlk seferinde her komutu tek tek onaylayarak ilerleyin; kalıcı izin tanımlamayın.")}
 </section>
 
 </body></html>`;

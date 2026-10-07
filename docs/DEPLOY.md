@@ -2,6 +2,8 @@
 
 Bu belge uygulamanın bir VPS'e Docker ile kurulmasını, güncellenmesini, yedeklenmesini ve yedekten geri dönülmesini anlatır. Komutlar Ubuntu 24.04 / Debian 12 içindir.
 
+Claude Code kullanıyorsanız ilk kurulumu (§1–4, yedek ve KVKK metinleri dahil) `/kurulum`, sonraki güncellemeleri (§5) `/deploy vX.Y.Z sunucu` komutu sizi yönlendirerek yapar; bu belge ikisinin de kaynağıdır.
+
 ## Mimari
 
 ```
