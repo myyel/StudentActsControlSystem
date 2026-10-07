@@ -75,7 +75,10 @@ export function LevelUpCelebration({ items, onDone, large }: Props) {
   if (!current) return null;
   const { studentName, levelUp } = current;
   const size = large ? 300 : 200;
-  const title = `${possessiveName(studentName)} ${characterNoun(levelUp.to.assetUrl)} büyüdü!`;
+  // A finished character: the old one waves goodbye in scene 1, the next one arrives in scene 3.
+  const title = levelUp.newCharacter
+    ? `${possessiveName(studentName)} ${characterNoun(levelUp.from.assetUrl)} tamamlandı!`
+    : `${possessiveName(studentName)} ${characterNoun(levelUp.to.assetUrl)} büyüdü!`;
 
   return (
     <div
@@ -162,7 +165,7 @@ export function LevelUpCelebration({ items, onDone, large }: Props) {
                 {title}
               </p>
               <p className={cn("mt-2 font-bold", large ? "text-3xl" : "text-lg")}>
-                {levelUp.toLevel}. seviye · {levelUp.to.name}
+                {levelUp.newCharacter ? `Yeni arkadaşı: ${levelUp.to.name}` : `${levelUp.toLevel}. seviye · ${levelUp.to.name}`}
               </p>
             </>
           )}

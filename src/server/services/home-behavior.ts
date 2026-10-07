@@ -66,6 +66,7 @@ async function studentContext(db: DbOrTx, studentId: string, lock: boolean) {
       xp: student.xp,
       characterLevel: student.characterLevel,
       characterTypeId: student.characterTypeId,
+      characterXpBase: student.characterXpBase,
       active: student.active,
       deletedAt: student.deletedAt,
       schoolId: schoolClass.schoolId,
@@ -165,7 +166,13 @@ export async function giveHomeBehavior(
           behaviorTypeId: type.id,
           points: type.points,
           xpDelta,
-          ...(levelUps.length > 0 && { levelUp: { fromLevel: levelUps[0]!.fromLevel, toLevel: levelUps[0]!.toLevel } }),
+          ...(levelUps.length > 0 && {
+            levelUps: levelUps.map(({ fromLevel, toLevel, newCharacter }) => ({
+              fromLevel,
+              toLevel,
+              ...(newCharacter && { newCharacter }),
+            })),
+          }),
         },
         ip,
       });

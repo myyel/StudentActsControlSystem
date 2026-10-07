@@ -36,8 +36,8 @@ export default async function ClassCharactersPage({ params }: PageProps<"/ogretm
           <CardTitle>Karakter türleri</CardTitle>
           <CardDescription>
             {types.custom
-              ? "Bu sınıf için seçtiğiniz türler ve sıraları."
-              : "Bu sınıf okulun tüm aktif türlerini okulun sırasıyla kullanıyor."}
+              ? "Bu sınıf için seçtiğiniz türler ve öğrencilerin izleyeceği sıra."
+              : "Bu sınıf okulun tüm aktif türlerini okulun sırasıyla kullanıyor; öğrenciler bu sırayı izler."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -71,6 +71,7 @@ export default async function ClassCharactersPage({ params }: PageProps<"/ogretm
           <ClassLevelsForm
             classId={sinifId}
             thresholds={levels.thresholds}
+            completeXp={levels.completeXp}
             custom={levels.custom}
             schoolThresholds={schoolThresholds}
             exampleStages={firstOffered?.stages.map((s) => s.name) ?? []}

@@ -1,9 +1,17 @@
 import { and, eq } from "drizzle-orm";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { DEFAULT_LEVEL_THRESHOLDS } from "@/lib/character";
 import { newUuid } from "@/lib/uuid";
 import { db } from "@/server/db";
-import { auditLog, behaviorEvent, characterStage, characterType, student } from "@/server/db/schema";
+import {
+  auditLog,
+  behaviorEvent,
+  characterStage,
+  characterType,
+  notification,
+  student,
+  studentCharacterCompletion,
+} from "@/server/db/schema";
 import { UserError } from "@/server/action-result";
 import {
   assertAdminOfCharacterType,
@@ -21,7 +29,7 @@ import {
   listBoardStudents,
   listCharacterTypes,
   listClassCharacterTypes,
-  setStudentCharacterType,
+  listCompletedCharacters,
   updateCharacterType,
   updateClassCharacterTypes,
   updateClassLevels,
@@ -222,24 +230,135 @@ describe("student character type", () => {
     await expect(assertTeacherOfStudent(fx.users.parentA, A1())).rejects.toMatchObject(FORBIDDEN);
   });
 
-  it("changes the type, keeps the level and writes the audit", async () => {
-    const before = await state(A1());
-    await setStudentCharacterType(db, fx.users.teacherA, A1(), owlId);
-    expect(await state(A1())).toEqual({ ...before, typeId: owlId });
+});
 
-    const [audit] = await db.select().from(auditLog).where(eq(auditLog.action, "student.character_change"));
-    expect(audit).toMatchObject({ entityId: A1(), data: { from: dragonId, to: owlId } });
+describe("finishing a character", () => {
+  // Class A offers dragon then owl; defaults: levels 0/20/50/100/200, a character is finished at 300.
+  const base = async (studentId: string) =>
+    (await db.select({ base: student.characterXpBase }).from(student).where(eq(student.id, studentId)))[0]!.base;
+  const reset = (studentId: string, xp: number, level: number) =>
+    db
+      .update(student)
+      .set({ xp, characterLevel: level, characterTypeId: dragonId, characterXpBase: 0 })
+      .where(eq(student.id, studentId));
+
+  // The tests above leave the school on high thresholds; the ones below expect them back.
+  beforeAll(() => updateLevelThresholds(db, fx.users.admin1, fx.school1.id, [...DEFAULT_LEVEL_THRESHOLDS]));
+  afterAll(() => updateLevelThresholds(db, fx.users.admin1, fx.school1.id, [0, 500, 600, 700, 800]));
+
+  it("stays on the last level until the completion XP, filling the ring towards the next character", async () => {
+    await reset(A1(), 199, 4);
+    const result = await give([A1()], types.plus1);
+    expect(result.levelUps.map((u) => [u.fromLevel, u.toLevel, u.newCharacter])).toEqual([[4, 5, undefined]]);
+    expect(await state(A1())).toMatchObject({ xp: 200, level: 5, typeId: dragonId });
 
     const character = await getStudentCharacter(db, A1());
-    expect(character).toMatchObject({ characterTypeId: owlId, level: before.level, stage: { name: "Dalda" } });
+    expect(character).toMatchObject({ level: 5, xp: 200, nextThreshold: 300, progress: 0, completed: [] });
+    expect(character.nextCharacter).toMatchObject({ name: "Bilge Baykuş" });
   });
 
-  it("rejects another school's type and inactive types", async () => {
-    await expect(setStudentCharacterType(db, fx.users.teacherA, A2(), robotId)).rejects.toMatchObject(FORBIDDEN);
+  it("moves to the first stage of the next character in the class's order", async () => {
+    await reset(A1(), 299, 5);
+    const result = await give([A1()], types.plus1);
 
-    await db.update(characterType).set({ active: false }).where(eq(characterType.id, owlId));
-    await expect(setStudentCharacterType(db, fx.users.teacherA, A2(), owlId)).rejects.toBeInstanceOf(UserError);
-    await db.update(characterType).set({ active: true }).where(eq(characterType.id, owlId));
+    expect(result.levelUps).toEqual([
+      {
+        studentId: A1(),
+        fromLevel: 5,
+        toLevel: 1,
+        newCharacter: true,
+        from: { name: "Bilge", assetUrl: "/characters/ejderha/5.svg" },
+        to: expect.objectContaining({ name: expect.any(String) }),
+      },
+    ]);
+    expect(await state(A1())).toMatchObject({ xp: 300, level: 1, typeId: owlId });
+    expect(await base(A1())).toBe(300);
+
+    const [audit] = await db.select().from(auditLog).where(eq(auditLog.entityId, result.batchId));
+    expect(audit!.data).toMatchObject({ levelUps: [{ studentId: A1(), fromLevel: 5, toLevel: 1, newCharacter: true }] });
+
+    const completed = await listCompletedCharacters(db, A1(), fx.classes.classA.id);
+    expect(completed.map((c) => [c.typeName, c.stage.name])).toEqual([["Ejderha", "Bilge"]]);
+
+    // The parent hears about it.
+    const notes = await db.select().from(notification).where(eq(notification.userId, fx.users.parentA.id));
+    expect(notes.map((n) => n.payload)).toContainEqual(
+      expect.objectContaining({ studentId: A1(), title: expect.stringContaining("karakterini tamamladı") }),
+    );
+
+    // The new character counts its own XP from zero.
+    const character = await getStudentCharacter(db, A1());
+    expect(character).toMatchObject({ characterTypeId: owlId, level: 1, xp: 0, nextThreshold: 20, progress: 0 });
+    expect(character.nextCharacter).toMatchObject({ name: "Ejderha" });
+  });
+
+  it("levels the new character up from its own XP", async () => {
+    await setXp(A1(), 319);
+    const result = await give([A1()], types.plus1);
+    expect(result.levelUps.map((u) => [u.fromLevel, u.toLevel, u.newCharacter])).toEqual([[1, 2, undefined]]);
+    expect(await state(A1())).toMatchObject({ xp: 320, level: 2, typeId: owlId });
+  });
+
+  it("never goes back when events are undone or deleted", async () => {
+    await reset(A2(), 299, 5);
+    const result = await give([A2()], types.plus2);
+    expect(await state(A2())).toMatchObject({ xp: 301, level: 1, typeId: owlId });
+
+    await undoBatch(db, fx.users.teacherA, result.batchId);
+    expect(await state(A2())).toMatchObject({ xp: 299, level: 1, typeId: owlId });
+    expect(await listCompletedCharacters(db, A2(), fx.classes.classA.id)).toHaveLength(1);
+    // Below the character's start: no progress, and no second completion on the way back up.
+    expect((await getStudentCharacter(db, A2())).progress).toBe(0);
+    expect((await give([A2()], types.plus1)).levelUps).toEqual([]);
+    expect(await listCompletedCharacters(db, A2(), fx.classes.classA.id)).toHaveLength(1);
+  });
+
+  it("starts the order again after the last character", async () => {
+    // A1 is on the owl, the last of dragon → owl.
+    await db.update(student).set({ xp: 599, characterLevel: 5 }).where(eq(student.id, A1()));
+    const result = await give([A1()], types.plus1);
+    expect(result.levelUps.at(-1)).toMatchObject({ newCharacter: true, toLevel: 1 });
+    expect(await state(A1())).toMatchObject({ xp: 600, level: 1, typeId: dragonId });
+    expect(await base(A1())).toBe(600);
+    expect((await listCompletedCharacters(db, A1(), fx.classes.classA.id)).map((c) => c.typeName)).toEqual(["Ejderha", "Bilge Baykuş"]);
+  });
+
+  it("reaches the last level and finishes in one score when the XP jumps past both", async () => {
+    await db.delete(studentCharacterCompletion).where(eq(studentCharacterCompletion.studentId, A2()));
+    await reset(A2(), 299, 1);
+    const result = await give([A2()], types.plus1);
+    expect(result.levelUps.map((u) => [u.fromLevel, u.toLevel, u.newCharacter])).toEqual([
+      [1, 5, undefined],
+      [5, 1, true],
+    ]);
+  });
+
+  it("uses the teacher's completion XP and waits for the next positive score after a change", async () => {
+    await db.delete(studentCharacterCompletion).where(eq(studentCharacterCompletion.studentId, A2()));
+    await reset(A2(), 150, 4);
+    // Three levels, finished at 120: the student is already past it, but nothing moves silently.
+    await updateClassLevels(db, fx.users.teacherA, fx.classes.classA.id, [0, 20, 50], null, 120);
+    expect(await getClassLevelSettings(db, fx.classes.classA.id)).toMatchObject({ thresholds: [0, 20, 50], completeXp: 120 });
+    expect(await state(A2())).toMatchObject({ level: 4, typeId: dragonId });
+
+    const result = await give([A2()], types.plus1);
+    expect(result.levelUps).toMatchObject([{ newCharacter: true, fromLevel: 4, toLevel: 1 }, { fromLevel: 1, toLevel: 2 }]);
+    expect(await state(A2())).toMatchObject({ xp: 151, level: 2, typeId: owlId });
+    expect(await base(A2())).toBe(120);
+
+    // A completion XP at or below the last level is ignored in favour of the default.
+    await updateClassLevels(db, fx.users.teacherA, fx.classes.classA.id, [0, 20, 50], null, 50);
+    expect((await getClassLevelSettings(db, fx.classes.classA.id)).completeXp).toBe(80);
+    await updateClassLevels(db, fx.users.teacherA, fx.classes.classA.id, null);
+    expect(await getClassLevelSettings(db, fx.classes.classA.id)).toMatchObject({ custom: false, completeXp: 300 });
+  });
+
+  it("restarts the same character in a class with a single type", async () => {
+    await updateClassCharacterTypes(db, fx.users.teacherA, fx.classes.classA.id, [dragonId]);
+    await reset(A1(), 299, 5);
+    await give([A1()], types.plus1);
+    expect(await state(A1())).toMatchObject({ level: 1, typeId: dragonId });
+    await updateClassCharacterTypes(db, fx.users.teacherA, fx.classes.classA.id, null);
   });
 });
 
@@ -290,17 +409,24 @@ describe("class character settings", () => {
   });
 
   it("sets the level count and thresholds, raising students but lowering nobody", async () => {
-    const { raised } = await updateClassLevels(db, fx.users.teacherB, B(), [0, 3, 6]);
+    // Finishing a character is far away, so these tests are about levels only.
+    const { raised } = await updateClassLevels(db, fx.users.teacherB, B(), [0, 3, 6], null, 1000);
     expect(raised).toBe(1);
     expect(await state(low)).toMatchObject({ level: 2 });
     expect(await state(top)).toMatchObject({ level: 5 }); // above the new count: kept
 
-    expect(await getClassLevelSettings(db, B())).toMatchObject({ custom: true, thresholds: [0, 3, 6] });
-    const [audit] = await db.select().from(auditLog).where(eq(auditLog.action, "class.character_levels_update"));
-    expect(audit).toMatchObject({ entityId: B(), actorId: fx.users.teacherB.id, data: { to: [0, 3, 6], raisedStudents: 1 } });
+    expect(await getClassLevelSettings(db, B())).toMatchObject({ custom: true, thresholds: [0, 3, 6], completeXp: 1000 });
+    const [audit] = await db
+      .select()
+      .from(auditLog)
+      .where(and(eq(auditLog.action, "class.character_levels_update"), eq(auditLog.entityId, B())));
+    expect(audit).toMatchObject({
+      actorId: fx.users.teacherB.id,
+      data: { to: [0, 3, 6], completeXp: { to: 1000 }, raisedStudents: 1 },
+    });
 
     const board = await listBoardStudents(db, B());
-    expect(board.find((s) => s.id === top)).toMatchObject({ level: 5, maxLevel: 3, progress: 1, nextStageName: null });
+    expect(board.find((s) => s.id === top)).toMatchObject({ level: 5, maxLevel: 3, progress: 0, nextStageName: null });
     expect(board.find((s) => s.id === low)).toMatchObject({ level: 2, maxLevel: 3, nextStageName: "Genç" });
   });
 
@@ -350,10 +476,9 @@ describe("class character settings", () => {
     expect((await listClassCharacterTypes(db, fx.classes.classA.id)).map((t) => t.id)).toEqual([dragonId, owlId]);
   });
 
-  it("gives new students the first picked type and rejects types left out", async () => {
+  it("gives new students the first picked type", async () => {
     const [created] = await addStudents(db, fx.users.teacherB, B(), [{ firstName: "Fatma", lastInitial: null }], 2);
     expect(await state(created!.id)).toMatchObject({ typeId: owlId });
-    await expect(setStudentCharacterType(db, fx.users.teacherB, low, dragonId)).rejects.toBeInstanceOf(UserError);
   });
 
   it("rejects another school's type and an empty pick", async () => {

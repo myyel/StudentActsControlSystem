@@ -12,6 +12,7 @@ import {
   schoolClass,
   stage,
   student,
+  studentCharacterCompletion,
   studentProgress,
   subject,
   topic,
@@ -32,8 +33,8 @@ function omit<T extends object, K extends keyof T>(row: T, ...keys: K[]): Omit<T
 }
 
 async function childRecords(db: Db, studentIds: string[], opts: { withNotes: boolean }) {
-  if (studentIds.length === 0) return { events: [], progress: [] };
-  const [events, progress] = await Promise.all([
+  if (studentIds.length === 0) return { events: [], progress: [], completedCharacters: [] };
+  const [events, progress, completedCharacters] = await Promise.all([
     db
       .select({
         studentId: behaviorEvent.studentId,
@@ -64,8 +65,20 @@ async function childRecords(db: Db, studentIds: string[], opts: { withNotes: boo
       .innerJoin(subject, eq(subject.id, topic.subjectId))
       .where(inArray(studentProgress.studentId, studentIds))
       .orderBy(asc(subject.sortOrder), asc(topic.sortOrder), asc(stage.sortOrder)),
+    db
+      .select({
+        studentId: studentCharacterCompletion.studentId,
+        character: characterType.name,
+        level: studentCharacterCompletion.level,
+        completedAt: studentCharacterCompletion.completedAt,
+      })
+      .from(studentCharacterCompletion)
+      .innerJoin(characterType, eq(characterType.id, studentCharacterCompletion.characterTypeId))
+      .where(inArray(studentCharacterCompletion.studentId, studentIds))
+      .orderBy(asc(studentCharacterCompletion.completedAt)),
   ]);
   return {
+    completedCharacters,
     events: events.map((e) => ({ ...omit(e, "note"), source: SOURCE_LABEL[e.source], ...(opts.withNotes && { note: e.note }) })),
     progress,
   };
@@ -153,6 +166,7 @@ export async function exportParentData(db: Db, parentId: string) {
       name: formatStudentName(c),
       behaviorEvents: records.events.filter((e) => e.studentId === c.id).map((e) => omit(e, "studentId")),
       progress: records.progress.filter((p) => p.studentId === c.id).map((p) => omit(p, "studentId")),
+      completedCharacters: records.completedCharacters.filter((x) => x.studentId === c.id).map((x) => omit(x, "studentId")),
       messages: messages
         .filter((m) => m.studentId === c.id || (m.studentId === null && m.classId === c.classId))
         .map((m) => ({ ...omit(m, "studentId", "classId"), kind: m.studentId ? "Özel mesaj" : "Sınıf duyurusu" })),
@@ -198,6 +212,7 @@ export async function exportStudentData(db: Db, studentId: string) {
     consents,
     behaviorEvents: records.events.map((e) => omit(e, "studentId")),
     progress: records.progress.map((p) => omit(p, "studentId")),
+    completedCharacters: records.completedCharacters.map((x) => omit(x, "studentId")),
     messages,
   };
 }

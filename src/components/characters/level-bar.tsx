@@ -3,10 +3,10 @@ import { cn } from "@/lib/utils";
 
 type Props = { level: number; maxLevel?: number; progress: number; className?: string; label?: string };
 
-/** Progress to the next level; the last level shows a full bar. No numbers, so nothing to compare. */
+/** Progress to the next level, or on the last level to the next character. No numbers, so nothing to compare. */
 export function LevelBar({ level, maxLevel = MAX_LEVEL, progress, className, label }: Props) {
   const percent = Math.round(progress * 100);
-  const text = level >= maxLevel ? "Son seviye" : `${level + 1}. seviyeye %${percent}`;
+  const text = level >= maxLevel ? `Yeni karaktere %${percent}` : `${level + 1}. seviyeye %${percent}`;
   return (
     <div
       role="progressbar"

@@ -37,11 +37,11 @@ const SCREENS: Partial<Record<Role | "guest", Screen[]>> = {
       name: "öğrenci detayı",
       path: async () => `/ogretmen/siniflar/${await classId("2-A")}/ogrenciler/${await studentId("Ada", "Y")}`,
     },
-    { name: "tahta", path: async () => `/tahta/${await classId("2-A")}`, board: true },
     {
       name: "öğrenci davranışları",
       path: async () => `/ogretmen/siniflar/${await classId("2-A")}/ogrenciler/${await studentId("Ada", "Y")}/davranislar`,
     },
+    { name: "tahta", path: async () => `/tahta/${await classId("2-A")}`, board: true },
   ],
   parent: [
     { name: "veli paneli", path: async () => `/veli/${await studentId("Ada", "Y")}` },

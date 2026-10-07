@@ -183,8 +183,8 @@ export function ClassCharacterTypesForm({ classId, custom, maxLevel, types, stud
       </fieldset>
 
       <p className="text-sm text-muted-foreground">
-        Seçmediğiniz türler öğrenci detayında ve tahtadaki karakter seçiminde görünmez. Sıralama bu ekranlarda da geçerlidir;
-        yeni öğrenciler 1. sıradaki türle başlar.
+        Her öğrenci 1. sıradaki karakterle başlar. Bir karakteri tamamlayan öğrenci sıradaki karakterin ilk aşamasına
+        geçer; son karakterden sonra yeniden 1. sıradakine döner. Seçmediğiniz türler sıraya girmez.
       </p>
       {picked.length === 0 && (
         <p role="alert" className="text-sm text-destructive">

@@ -56,6 +56,8 @@ export const school = pgTable("school", {
   id: uuid().primaryKey().defaultRandom(),
   name: text().notNull(),
   timezone: text().notNull().default("Europe/Istanbul"),
+  /** Character XP that completes a character (PRD §4.6); null = defaultCompleteXp of the thresholds. */
+  characterCompleteXp: integer(),
   settings: jsonb().$type<Record<string, unknown>>().notNull().default({}),
   createdAt: createdAt(),
 });
@@ -152,6 +154,8 @@ export const schoolClass = pgTable(
     gradeLevels: smallint().array().notNull(),
     academicYear: text().notNull(),
     homeDailyXpCap: integer().notNull().default(10),
+    /** With the class's own levels (class_character_level): the XP that completes a character. */
+    characterCompleteXp: integer(),
     archivedAt: timestamp({ withTimezone: true }),
     createdAt: createdAt(),
   },
@@ -293,7 +297,10 @@ export const student = pgTable(
       .references(() => characterType.id, { onDelete: "restrict" }),
     xp: integer().notNull().default(0),
     balance: integer().notNull().default(0),
+    /** Level of the current character; never drops while the character stays (PRD §4.6). */
     characterLevel: smallint().notNull().default(1),
+    /** Total XP at which the current character started; its own XP is xp - characterXpBase. */
+    characterXpBase: integer().notNull().default(0),
     active: boolean().notNull().default(true),
     createdAt: createdAt(),
     deletedAt: timestamp({ withTimezone: true }),
@@ -304,6 +311,24 @@ export const student = pgTable(
     check("student_grade_level_check", sql`${t.gradeLevel} between 1 and 4`),
     check("student_character_level_check", sql`${t.characterLevel} >= 1`),
   ],
+);
+
+// Characters a student finished, oldest first: the collection on the student and parent screens.
+export const studentCharacterCompletion = pgTable(
+  "student_character_completion",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    studentId: uuid()
+      .notNull()
+      .references(() => student.id, { onDelete: "cascade" }),
+    characterTypeId: uuid()
+      .notNull()
+      .references(() => characterType.id, { onDelete: "restrict" }),
+    /** The stage the character was finished at (the class's last level then). */
+    level: smallint().notNull(),
+    completedAt: createdAt(),
+  },
+  (t) => [index().on(t.studentId)],
 );
 
 export const inviteCode = pgTable(

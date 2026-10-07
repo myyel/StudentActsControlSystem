@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils";
 import { newUuid } from "@/lib/uuid";
 import type { BoardStudent } from "@/server/services/character";
 import { ActivityAlarm } from "./activity-alarm";
-import { CharacterChooser, type BoardCharacterType } from "./character-chooser";
 import { useAutoAdvance, useCardsPerPage } from "./use-board-pages";
 
 type Props = {
@@ -26,9 +25,6 @@ type Props = {
   className: string;
   students: BoardStudent[];
   behaviors: PickerBehavior[];
-  characterTypes: BoardCharacterType[];
-  /** Student whose character is chosen together on the board (opened from the student detail). */
-  chooseFor?: string;
   goal?: React.ReactNode;
   /** Weekly activity times; the board rings at today's (PRD §4.12). */
   activity?: { timeZone: string; activities: Activity[] };
@@ -46,7 +42,7 @@ const iconButton =
  * The board never scrolls: when the class does not fit the screen (windowed or fullscreen), the
  * cards are split into pages that slide every 10 seconds, so every child is shown in turn.
  */
-export function Board({ classId, className, students, behaviors, characterTypes, chooseFor, goal, activity }: Props) {
+export function Board({ classId, className, students, behaviors, goal, activity }: Props) {
   const [targets, setTargets] = useState<string[] | null>(null);
   // Kept after closing so the picker does not switch to "Tüm sınıf" during its close animation.
   const [shownTargets, setShownTargets] = useState<string[]>([]);
@@ -54,7 +50,6 @@ export function Board({ classId, className, students, behaviors, characterTypes,
   const [lastScore, setLastScore] = useState<LastScore | null>(null);
   const [balloon, setBalloon] = useState<Balloon | null>(null);
   const [celebrations, setCelebrations] = useState<{ key: string; items: Celebration[] } | null>(null);
-  const [choosing, setChoosing] = useState<string | null>(chooseFor ?? null);
   const [fullscreen, setFullscreen] = useState(false);
   const [pending, start] = useTransition();
   const [page, setPage] = useState(0);
@@ -68,15 +63,14 @@ export function Board({ classId, className, students, behaviors, characterTypes,
   // One picture per character type around the alarm bell.
   const alarmStages = [...new Map(students.map((s) => [s.characterTypeId, s.stage])).values()].slice(0, 6);
   const single = shownTargets.length === 1 ? byId.get(shownTargets[0]!) : undefined;
-  const chooser = choosing ? byId.get(choosing) : undefined;
 
   const perPage = useCardsPerPage(viewportRef, students.length);
   const pages: BoardStudent[][] = [];
   for (let i = 0; i < students.length; i += perPage) pages.push(students.slice(i, i + perPage));
   const pageCount = pages.length;
   const current = Math.min(page, Math.max(pageCount - 1, 0));
-  // Hold the page while the teacher is scoring, choosing a character, or a celebration or alarm is on.
-  const paused = userPaused || targets !== null || chooser !== undefined || celebrations !== null || alarmOpen;
+  // Hold the page while the teacher is scoring, or a celebration or alarm is on.
+  const paused = userPaused || targets !== null || celebrations !== null || alarmOpen;
   useAutoAdvance(current, pageCount, paused, setPage);
 
   useEffect(() => {
@@ -343,7 +337,6 @@ export function Board({ classId, className, students, behaviors, characterTypes,
           onOpenChange={setAlarmOpen}
         />
       )}
-      {chooser && <CharacterChooser student={chooser} types={characterTypes} onClose={() => setChoosing(null)} />}
       {lastScore && <UndoBar key={lastScore.batchId} score={lastScore} onClose={closeUndo} large />}
       {celebrations && (
         <LevelUpCelebration key={celebrations.key} items={celebrations.items} onDone={closeCelebration} large />

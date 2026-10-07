@@ -6,13 +6,15 @@ import { FormMessage } from "@/components/form-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MAX_LEVEL, MIN_CLASS_LEVELS } from "@/lib/character";
+import { defaultCompleteXp, MAX_LEVEL, MIN_CLASS_LEVELS } from "@/lib/character";
 import { cn } from "@/lib/utils";
 import type { ActionResult } from "@/server/action-result";
 
 type Props = {
   classId: string;
   thresholds: number[];
+  /** Character XP at which a student moves on to the next character. */
+  completeXp: number;
   /** The class has its own levels (false: it follows the school). */
   custom: boolean;
   schoolThresholds: number[];
@@ -22,25 +24,41 @@ type Props = {
   studentsByLevel: Record<number, number>;
 };
 
+/** Empty while the completion XP is the automatic one, so it keeps following the thresholds. */
+const completeField = (thresholds: number[], completeXp: number) =>
+  completeXp === defaultCompleteXp(thresholds) ? "" : String(completeXp);
+
 const COUNTS = Array.from({ length: MAX_LEVEL - MIN_CLASS_LEVELS + 1 }, (_, i) => MIN_CLASS_LEVELS + i);
 
 /** Level count (2–5) and XP thresholds of one class. */
-export function ClassLevelsForm({ classId, thresholds, custom, schoolThresholds, exampleStages, studentsByLevel }: Props) {
+export function ClassLevelsForm({
+  classId,
+  thresholds,
+  completeXp,
+  custom,
+  schoolThresholds,
+  exampleStages,
+  studentsByLevel,
+}: Props) {
   const [state, formAction, saving] = useActionState(updateClassLevelsAction.bind(null, classId), null);
   const [resetState, setResetState] = useState<ActionResult<undefined> | null>(null);
   const [resetting, start] = useTransition();
   const [values, setValues] = useState(() => thresholds.map(String));
+  const [complete, setComplete] = useState(() => completeField(thresholds, completeXp));
   const pending = saving || resetting;
 
   // Follow the server after a save or reset without remounting (the message stays visible).
-  const signature = `${custom}:${thresholds.join(",")}`;
+  const signature = `${custom}:${thresholds.join(",")}:${completeXp}`;
   const [seen, setSeen] = useState(signature);
   if (signature !== seen) {
     setSeen(signature);
     setValues(thresholds.map(String));
+    setComplete(completeField(thresholds, completeXp));
   }
 
   const count = values.length;
+  const numbers = values.map(Number);
+  const automatic = numbers.every((n) => Number.isFinite(n)) ? defaultCompleteXp(numbers) : null;
   const above = Object.entries(studentsByLevel)
     .filter(([level]) => Number(level) > count)
     .reduce((sum, [, n]) => sum + n, 0);
@@ -113,6 +131,25 @@ export function ClassLevelsForm({ classId, thresholds, custom, schoolThresholds,
             </li>
           ))}
         </ol>
+      </fieldset>
+
+      <fieldset className="flex max-w-xs flex-col gap-2" disabled={pending}>
+        <Label htmlFor="class-complete-xp">Yeni karaktere geçiş (XP)</Label>
+        <Input
+          id="class-complete-xp"
+          name="completeXp"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          value={complete}
+          onChange={(e) => setComplete(e.target.value)}
+          placeholder={automatic === null ? "Otomatik" : `Otomatik: ${automatic}`}
+        />
+        <span className="text-xs text-muted-foreground">
+          Öğrenci bir karakterde bu XP&apos;ye ulaşınca karakteri tamamlanır ve sıradaki karakterin ilk aşamasına geçer;
+          son karakterden sonra ilk karaktere döner. Son seviyenin eşiğinden büyük olmalıdır. Boş bırakırsanız son
+          aşama, bir önceki aşama kadar sürer.
+        </span>
       </fieldset>
 
       <p className="text-sm text-muted-foreground">

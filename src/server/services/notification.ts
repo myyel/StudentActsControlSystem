@@ -106,32 +106,40 @@ export async function notifyBehavior(
   );
 }
 
-/** Level ups never revert, so these stay even if the batch that caused them is undone. */
+/**
+ * Level ups and finished characters never revert, so these stay even if the batch that caused
+ * them is undone. One score can bring several: the last level and then the next character.
+ */
 export async function notifyLevelUps(db: DbOrTx, levelUps: LevelUp[], students: StudentRef[]) {
   if (levelUps.length === 0) return [];
   const byId = new Map(students.map((s) => [s.id, s]));
-  const ups = new Map(levelUps.map((u) => [u.studentId, u]));
-  const links = await parentsOf(db, [...ups.keys()]);
+  const links = await parentsOf(db, [...new Set(levelUps.map((u) => u.studentId))]);
   return createNotifications(
     db,
     links.flatMap(({ parentId, studentId }) => {
       const ref = byId.get(studentId);
-      const up = ups.get(studentId)!;
       if (!ref) return [];
       const studentName = formatStudentName(ref);
-      return [
-        {
+      return levelUps
+        .filter((up) => up.studentId === studentId)
+        .map((up) => ({
           userId: parentId,
           type: "level_up" as const,
           url: childUrl(studentId),
-          payload: {
-            studentId,
-            studentName,
-            title: `${studentName} yeni seviyeye ulaştı! 🎉`,
-            body: `Karakteri artık ${up.to.name} (${up.toLevel}. seviye).`,
-          },
-        },
-      ];
+          payload: up.newCharacter
+            ? {
+                studentId,
+                studentName,
+                title: `${studentName} karakterini tamamladı! 🎉`,
+                body: `${up.from.name} koleksiyona eklendi. Yeni arkadaşı: ${up.to.name}.`,
+              }
+            : {
+                studentId,
+                studentName,
+                title: `${studentName} yeni seviyeye ulaştı! 🎉`,
+                body: `Karakteri artık ${up.to.name} (${up.toLevel}. seviye).`,
+              },
+        }));
     }),
   );
 }

@@ -7,13 +7,16 @@ import {
   classCharacterLevel,
   classCharacterStageName,
   classCharacterType,
+  school,
   schoolClass,
   student,
+  studentCharacterCompletion,
 } from "@/server/db/schema";
 import {
+  characterProgress,
   DEFAULT_LEVEL_THRESHOLDS,
+  defaultCompleteXp,
   levelForXp,
-  levelProgress,
   MAX_LEVEL,
   PLACEHOLDER_ASSET_URL,
 } from "@/lib/character";
@@ -30,7 +33,18 @@ export type StageMap = { stages: Map<string, Map<number, Stage>>; classNames: Ma
 
 const nameKey = (classId: string, typeId: string, level: number) => `${classId}:${typeId}:${level}`;
 
-export type LevelUp = { studentId: string; fromLevel: number; toLevel: number; from: Stage; to: Stage };
+export type LevelUp = {
+  studentId: string;
+  fromLevel: number;
+  toLevel: number;
+  from: Stage;
+  to: Stage;
+  /** The character was finished: `from` is its last stage, `to` the first stage of the next one. */
+  newCharacter?: true;
+};
+
+/** A student's own XP on the current character (PRD §4.6). */
+const characterXp = sql`${student.xp} - ${student.characterXpBase}`;
 
 const byName = (a: StudentName, b: StudentName) =>
   a.firstName.localeCompare(b.firstName, "tr") || (a.lastInitial ?? "").localeCompare(b.lastInitial ?? "", "tr");
@@ -48,8 +62,22 @@ export async function getLevelThresholds(db: DbOrTx, schoolId: string): Promise<
   return rows.map((r) => r.xpThreshold);
 }
 
+/** A school's levels and the character XP that finishes a character. */
+export async function getSchoolLevelSettings(db: DbOrTx, schoolId: string) {
+  const [thresholds, [row]] = await Promise.all([
+    getLevelThresholds(db, schoolId),
+    db.select({ completeXp: school.characterCompleteXp }).from(school).where(eq(school.id, schoolId)),
+  ]);
+  return { thresholds, completeXp: validCompleteXp(thresholds, row?.completeXp) };
+}
+
+/** A stored value at or below the last level (thresholds changed since) falls back to the default. */
+function validCompleteXp(thresholds: readonly number[], stored: number | null | undefined) {
+  return stored != null && stored > thresholds[thresholds.length - 1]! ? stored : defaultCompleteXp(thresholds);
+}
+
 /** SQL twin of levelForXp. */
-function levelCase(thresholds: readonly number[], xp: SQL | typeof student.xp): SQL {
+function levelCase(thresholds: readonly number[], xp: SQL): SQL {
   const whens = thresholds
     .map((t, i) => ({ t, level: i + 1 }))
     .slice(1)
@@ -68,16 +96,29 @@ async function classOwnThresholds(db: DbOrTx, classId: string): Promise<number[]
   return rows.length >= 2 ? rows.map((r) => r.xpThreshold) : null;
 }
 
-async function schoolIdOfClass(db: DbOrTx, classId: string) {
-  const [cls] = await db.select({ schoolId: schoolClass.schoolId }).from(schoolClass).where(eq(schoolClass.id, classId));
+async function classRow(db: DbOrTx, classId: string) {
+  const [cls] = await db
+    .select({ schoolId: schoolClass.schoolId, completeXp: schoolClass.characterCompleteXp })
+    .from(schoolClass)
+    .where(eq(schoolClass.id, classId));
   if (!cls) throw forbidden();
-  return cls.schoolId;
+  return cls;
 }
 
-/** Levels of a class: the teacher's own, or the school's. The level count is `thresholds.length`. */
+async function schoolIdOfClass(db: DbOrTx, classId: string) {
+  return (await classRow(db, classId)).schoolId;
+}
+
+/**
+ * Levels of a class: the teacher's own, or the school's. The level count is `thresholds.length`;
+ * `completeXp` is the character XP at which a student moves on to the next character.
+ */
 export async function getClassLevelSettings(db: DbOrTx, classId: string) {
-  const [schoolId, own] = await Promise.all([schoolIdOfClass(db, classId), classOwnThresholds(db, classId)]);
-  return { thresholds: own ?? (await getLevelThresholds(db, schoolId)), custom: own !== null, schoolId };
+  const [cls, own] = await Promise.all([classRow(db, classId), classOwnThresholds(db, classId)]);
+  if (own) {
+    return { thresholds: own, completeXp: validCompleteXp(own, cls.completeXp), custom: true, schoolId: cls.schoolId };
+  }
+  return { ...(await getSchoolLevelSettings(db, cls.schoolId)), custom: false, schoolId: cls.schoolId };
 }
 
 export async function getClassLevelThresholds(db: DbOrTx, classId: string) {
@@ -95,9 +136,12 @@ export async function updateLevelThresholds(
   schoolId: string,
   thresholds: number[],
   ip?: string | null,
+  /** Character XP that finishes a character; null keeps the default (defaultCompleteXp). */
+  completeXp: number | null = null,
 ) {
   return db.transaction(async (tx) => {
-    const previous = await getLevelThresholds(tx, schoolId);
+    const previous = await getSchoolLevelSettings(tx, schoolId);
+    await tx.update(school).set({ characterCompleteXp: completeXp }).where(eq(school.id, schoolId));
     await tx
       .insert(characterLevel)
       .values(thresholds.map((xpThreshold, i) => ({ schoolId, level: i + 1, xpThreshold })))
@@ -106,7 +150,9 @@ export async function updateLevelThresholds(
         set: { xpThreshold: sql`excluded.xp_threshold` },
       });
 
-    const target = levelCase(thresholds, student.xp);
+    // A student past the new completion XP moves on with the next positive score, so the
+    // change of character is celebrated rather than happening silently here.
+    const target = levelCase(thresholds, characterXp);
     const raised = await tx
       .update(student)
       .set({ characterLevel: target })
@@ -125,7 +171,12 @@ export async function updateLevelThresholds(
       entityId: schoolId,
       actorId: actor.id,
       schoolId,
-      data: { from: previous, to: thresholds, raisedStudents: raised.length },
+      data: {
+        from: previous.thresholds,
+        to: thresholds,
+        completeXp: { from: previous.completeXp, to: validCompleteXp(thresholds, completeXp) },
+        raisedStudents: raised.length,
+      },
       ip,
     });
     return { raised: raised.length };
@@ -143,10 +194,16 @@ export async function updateClassLevels(
   classId: string,
   thresholds: number[] | null,
   ip?: string | null,
+  /** With own thresholds: character XP that finishes a character; null keeps the default. */
+  completeXp: number | null = null,
 ) {
   return db.transaction(async (tx) => {
     const previous = await getClassLevelSettings(tx, classId);
     await tx.delete(classCharacterLevel).where(eq(classCharacterLevel.classId, classId));
+    await tx
+      .update(schoolClass)
+      .set({ characterCompleteXp: thresholds ? completeXp : null })
+      .where(eq(schoolClass.id, classId));
     if (thresholds) {
       await tx
         .insert(classCharacterLevel)
@@ -154,7 +211,7 @@ export async function updateClassLevels(
     }
     const effective = thresholds ?? (await getLevelThresholds(tx, previous.schoolId));
 
-    const target = levelCase(effective, student.xp);
+    const target = levelCase(effective, characterXp);
     const raised = await tx
       .update(student)
       .set({ characterLevel: target })
@@ -167,7 +224,12 @@ export async function updateClassLevels(
       entityId: classId,
       actorId: actor.id,
       schoolId: previous.schoolId,
-      data: { from: previous.custom ? previous.thresholds : null, to: thresholds, raisedStudents: raised.length },
+      data: {
+        from: previous.custom ? previous.thresholds : null,
+        to: thresholds,
+        completeXp: { from: previous.completeXp, to: (await getClassLevelSettings(tx, classId)).completeXp },
+        raisedStudents: raised.length,
+      },
       ip,
     });
     return { raised: raised.length };
@@ -337,49 +399,121 @@ export async function withStages<T extends { characterTypeId: string; characterL
   return rows.map((r) => ({ ...r, stage: stageOf(map, r.characterTypeId, r.characterLevel, r.classId) }));
 }
 
-export async function describeLevelUps(
-  db: DbOrTx,
-  classId: string,
-  ups: { studentId: string; characterTypeId: string; fromLevel: number; toLevel: number }[],
-): Promise<LevelUp[]> {
-  if (ups.length === 0) return [];
+type LevelChange = {
+  studentId: string;
+  fromTypeId: string;
+  fromLevel: number;
+  toTypeId: string;
+  toLevel: number;
+  newCharacter?: true;
+};
+
+async function describeLevelUps(db: DbOrTx, classId: string, changes: LevelChange[]): Promise<LevelUp[]> {
+  if (changes.length === 0) return [];
   const map = await getStageMap(
     db,
-    ups.map((u) => u.characterTypeId),
+    changes.flatMap((c) => [c.fromTypeId, c.toTypeId]),
     [classId],
   );
-  return ups.map(({ studentId, characterTypeId, fromLevel, toLevel }) => ({
+  return changes.map(({ studentId, fromTypeId, fromLevel, toTypeId, toLevel, newCharacter }) => ({
     studentId,
     fromLevel,
     toLevel,
-    from: stageOf(map, characterTypeId, fromLevel, classId),
-    to: stageOf(map, characterTypeId, toLevel, classId),
+    from: stageOf(map, fromTypeId, fromLevel, classId),
+    to: stageOf(map, toTypeId, toLevel, classId),
+    ...(newCharacter && { newCharacter }),
   }));
 }
 
+/** More characters than this in one score means broken settings, not progress. */
+const MAX_COMPLETIONS_PER_SCORE = 10;
+
 /**
- * Raises the level of students of one class whose XP changed, inside the caller's transaction.
- * Rows must already be locked; `xp` is the new value.
+ * Applies an XP gain to the characters of students of one class, inside the caller's transaction:
+ * raises the level and, once the character's XP reaches the class's completion XP, records the
+ * character as finished and starts the next one in the class's order (after the last, the first
+ * again) at level 1. Rows must already be locked; `xp` is the new value. Nothing here ever
+ * moves a character back: deleting events lowers XP only.
  */
 export async function raiseLevels(
   tx: DbOrTx,
   classId: string,
-  rows: { id: string; xp: number; characterLevel: number; characterTypeId: string }[],
+  rows: { id: string; xp: number; characterLevel: number; characterTypeId: string; characterXpBase: number }[],
 ): Promise<LevelUp[]> {
-  const thresholds = await getClassLevelThresholds(tx, classId);
-  const ups = rows.flatMap((r) => {
-    const toLevel = levelForXp(thresholds, r.xp);
-    return toLevel > r.characterLevel
-      ? [{ studentId: r.id, characterTypeId: r.characterTypeId, fromLevel: r.characterLevel, toLevel }]
-      : [];
-  });
-  for (const up of ups) {
-    await tx
-      .update(student)
-      .set({ characterLevel: sql`greatest(${student.characterLevel}, ${up.toLevel})` })
-      .where(eq(student.id, up.studentId));
+  const { thresholds, completeXp } = await getClassLevelSettings(tx, classId);
+  const maxLevel = thresholds.length;
+  let order: string[] | undefined;
+  const changes: LevelChange[] = [];
+
+  for (const row of rows) {
+    let { characterTypeId: typeId, characterLevel: level, characterXpBase: base } = row;
+    const completed: { characterTypeId: string; level: number }[] = [];
+
+    for (;;) {
+      const own = row.xp - base;
+      const target = levelForXp(thresholds, own);
+      if (target > level) {
+        changes.push({ studentId: row.id, fromTypeId: typeId, fromLevel: level, toTypeId: typeId, toLevel: target });
+        level = target;
+      }
+      if (own < completeXp || completed.length >= MAX_COMPLETIONS_PER_SCORE) break;
+
+      order ??= (await listClassCharacterTypes(tx, classId)).map((t) => t.id);
+      // A type the class no longer offers continues from the start of the order.
+      const next = order[(order.indexOf(typeId) + 1) % order.length]!;
+      const finalLevel = Math.max(level, maxLevel);
+      completed.push({ characterTypeId: typeId, level: finalLevel });
+      changes.push({
+        studentId: row.id,
+        fromTypeId: typeId,
+        fromLevel: finalLevel,
+        toTypeId: next,
+        toLevel: 1,
+        newCharacter: true,
+      });
+      typeId = next;
+      level = 1;
+      base += completeXp;
+    }
+
+    if (completed.length > 0) {
+      await tx.insert(studentCharacterCompletion).values(completed.map((c) => ({ studentId: row.id, ...c })));
+    }
+    if (typeId !== row.characterTypeId || level !== row.characterLevel || base !== row.characterXpBase) {
+      await tx
+        .update(student)
+        .set({ characterTypeId: typeId, characterLevel: level, characterXpBase: base })
+        .where(eq(student.id, row.id));
+    }
   }
-  return describeLevelUps(tx, classId, ups);
+  return describeLevelUps(tx, classId, changes);
+}
+
+/** Characters a student finished, oldest first, as the stage they were finished at. */
+export async function listCompletedCharacters(db: DbOrTx, studentId: string, classId: string) {
+  const rows = await db
+    .select({
+      id: studentCharacterCompletion.id,
+      characterTypeId: studentCharacterCompletion.characterTypeId,
+      level: studentCharacterCompletion.level,
+      typeName: characterType.name,
+      completedAt: studentCharacterCompletion.completedAt,
+    })
+    .from(studentCharacterCompletion)
+    .innerJoin(characterType, eq(characterType.id, studentCharacterCompletion.characterTypeId))
+    .where(eq(studentCharacterCompletion.studentId, studentId))
+    .orderBy(asc(studentCharacterCompletion.completedAt), asc(studentCharacterCompletion.id));
+  const map = await getStageMap(
+    db,
+    rows.map((r) => r.characterTypeId),
+    [classId],
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    typeName: r.typeName,
+    completedAt: r.completedAt,
+    stage: stageOf(map, r.characterTypeId, r.level, classId),
+  }));
 }
 
 /**
@@ -500,46 +634,6 @@ export async function updateCharacterType(
   });
 }
 
-/** Call only after assertTeacherOfStudent. The level is kept: it belongs to the student, not the type. */
-export async function setStudentCharacterType(
-  db: Db,
-  actor: AuthUser,
-  studentId: string,
-  characterTypeId: string,
-  ip?: string | null,
-) {
-  await db.transaction(async (tx) => {
-    const [row] = await tx
-      .select({ from: student.characterTypeId, classId: student.classId, schoolId: schoolClass.schoolId })
-      .from(student)
-      .innerJoin(schoolClass, eq(schoolClass.id, student.classId))
-      .where(eq(student.id, studentId))
-      .for("update", { of: student });
-    if (!row) throw forbidden();
-    if (row.from === characterTypeId) return;
-
-    const [type] = await tx
-      .select({ id: characterType.id })
-      .from(characterType)
-      .where(and(eq(characterType.id, characterTypeId), availableTo(row.schoolId)));
-    if (!type) throw forbidden();
-    // Inactive types and types the teacher left out of the class are not offered.
-    const offered = await listClassCharacterTypes(tx, row.classId);
-    if (!offered.some((t) => t.id === characterTypeId)) throw new UserError("Bu karakter türü şu an kullanılamıyor.");
-
-    await tx.update(student).set({ characterTypeId }).where(eq(student.id, studentId));
-    await writeAudit(tx, {
-      action: "student.character_change",
-      entity: "student",
-      entityId: studentId,
-      actorId: actor.id,
-      schoolId: row.schoolId,
-      data: { from: row.from, to: characterTypeId },
-      ip,
-    });
-  });
-}
-
 /** Call only after assertTeacherOfStudent. */
 export async function getStudentCharacter(db: Db, studentId: string) {
   const [row] = await db
@@ -547,28 +641,35 @@ export async function getStudentCharacter(db: Db, studentId: string) {
       characterTypeId: student.characterTypeId,
       characterLevel: student.characterLevel,
       xp: student.xp,
+      characterXpBase: student.characterXpBase,
       classId: student.classId,
     })
     .from(student)
     .where(eq(student.id, studentId));
   if (!row) throw forbidden();
 
-  const [thresholds, [withStage], types] = await Promise.all([
-    getClassLevelThresholds(db, row.classId),
+  const [{ thresholds, completeXp }, [withStage], types, completed] = await Promise.all([
+    getClassLevelSettings(db, row.classId),
     withStages(db, [row]),
     listClassCharacterTypes(db, row.classId),
+    listCompletedCharacters(db, studentId, row.classId),
   ]);
   const level = row.characterLevel;
   const maxLevel = thresholds.length;
+  const own = Math.max(row.xp - row.characterXpBase, 0);
+  // After the last type the order starts again.
+  const next = types[(types.findIndex((t) => t.id === row.characterTypeId) + 1) % types.length];
   return {
     characterTypeId: row.characterTypeId,
     level,
     maxLevel,
-    xp: row.xp,
+    /** XP on the current character; `nextThreshold` is what the next level or the next character needs. */
+    xp: own,
     stage: withStage!.stage,
-    progress: levelProgress(thresholds, level, row.xp),
-    nextThreshold: level < maxLevel ? thresholds[level]! : null,
-    types: types.map(({ id, name, stages }) => ({ id, name, assetUrl: stages[level - 1]!.assetUrl })),
+    progress: characterProgress(thresholds, completeXp, level, own),
+    nextThreshold: level < maxLevel ? thresholds[level]! : completeXp,
+    nextCharacter: next ? { name: next.name, assetUrl: next.stages[0]!.assetUrl } : null,
+    completed,
   };
 }
 
@@ -578,8 +679,8 @@ export async function getStudentCharacter(db: Db, studentId: string) {
  * Call only after assertTeacherOfClass.
  */
 export async function listBoardStudents(db: Db, classId: string) {
-  const [thresholds, rows] = await Promise.all([
-    getClassLevelThresholds(db, classId),
+  const [{ thresholds, completeXp }, rows] = await Promise.all([
+    getClassLevelSettings(db, classId),
     db
       .select({
         id: student.id,
@@ -588,6 +689,7 @@ export async function listBoardStudents(db: Db, classId: string) {
         characterTypeId: student.characterTypeId,
         characterLevel: student.characterLevel,
         xp: student.xp,
+        characterXpBase: student.characterXpBase,
       })
       .from(student)
       .where(and(eq(student.classId, classId), eq(student.active, true), isNull(student.deletedAt))),
@@ -609,7 +711,7 @@ export async function listBoardStudents(db: Db, classId: string) {
       stage: stageOf(map, s.characterTypeId, s.characterLevel, classId),
       // "Fidan olmaya çok az kaldı!" on the board: a name, not a number.
       nextStageName: s.characterLevel < maxLevel ? stageOf(map, s.characterTypeId, s.characterLevel + 1, classId).name : null,
-      progress: levelProgress(thresholds, s.characterLevel, s.xp),
+      progress: characterProgress(thresholds, completeXp, s.characterLevel, s.xp - s.characterXpBase),
     }))
     .sort(byName);
 }

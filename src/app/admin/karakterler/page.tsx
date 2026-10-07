@@ -5,7 +5,7 @@ import { LevelThresholdsForm } from "@/components/characters/level-thresholds-fo
 import { cn } from "@/lib/utils";
 import { db } from "@/server/db";
 import { requirePageRole } from "@/server/auth/session";
-import { getLevelThresholds, listCharacterTypes } from "@/server/services/character";
+import { getSchoolLevelSettings, listCharacterTypes } from "@/server/services/character";
 
 export default async function AdminCharactersPage() {
   const { user } = await requirePageRole("admin");
@@ -13,8 +13,8 @@ export default async function AdminCharactersPage() {
     return <p className="text-muted-foreground">Hesabınız bir okula bağlı değil.</p>;
   }
 
-  const [thresholds, types] = await Promise.all([
-    getLevelThresholds(db, user.schoolId),
+  const [{ thresholds, completeXp }, types] = await Promise.all([
+    getSchoolLevelSettings(db, user.schoolId),
     listCharacterTypes(db, user.schoolId),
   ]);
 
@@ -28,7 +28,7 @@ export default async function AdminCharactersPage() {
         <AdminSectionTitle title="Seviye eşikleri">
           Bir karakterin o seviyeye ulaşması için gereken XP (gelişim puanı).
         </AdminSectionTitle>
-        <LevelThresholdsForm thresholds={thresholds} />
+        <LevelThresholdsForm thresholds={thresholds} completeXp={completeXp} />
       </section>
 
       <section className="flex flex-col gap-4">

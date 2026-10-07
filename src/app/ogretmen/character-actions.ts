@@ -29,9 +29,12 @@ export async function updateClassLevelsAction(
 ): Promise<ActionResult<undefined>> {
   try {
     const user = await authorizeClass(classId);
-    const input = classLevelsSchema.parse({ thresholds: formData.getAll("threshold") });
+    const input = classLevelsSchema.parse({
+      thresholds: formData.getAll("threshold"),
+      completeXp: formData.get("completeXp"),
+    });
     const { ip } = await getRequestMeta();
-    const { raised } = await updateClassLevels(db, user, classId, input.thresholds, ip);
+    const { raised } = await updateClassLevels(db, user, classId, input.thresholds, ip, input.completeXp ?? null);
     refresh();
     return ok(undefined, raisedMessage(raised));
   } catch (error) {

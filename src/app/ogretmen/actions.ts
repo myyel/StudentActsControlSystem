@@ -11,7 +11,6 @@ import { ok, toActionError, type ActionResult } from "@/server/action-result";
 import { getRequestMeta } from "@/server/request";
 import { formatInviteCode } from "@/lib/invite-code";
 import { formatStudentName } from "@/lib/student-names";
-import { setStudentCharacterType } from "@/server/services/character";
 import { createClass, updateHomeDailyXpCap } from "@/server/services/class";
 import { endClassGoal, setClassGoal } from "@/server/services/class-goal";
 import {
@@ -24,7 +23,6 @@ import {
 import { addStudents, listStudentsForClass, updateStudent } from "@/server/services/student";
 import { classGoalSchema, createClassSchema, homeDailyXpCapSchema } from "@/server/validation/class";
 import { classInviteSchema, inviteOptionsSchema } from "@/server/validation/invite";
-import { studentCharacterSchema } from "@/server/validation/character";
 import { bulkStudentsSchema, optionalGradeLevelSchema, studentNameSchema } from "@/server/validation/student";
 
 export type InviteCard = { studentName: string; code: string; url: string; qrSvg: string };
@@ -175,23 +173,6 @@ export async function setStudentActiveAction(studentId: string, active: boolean)
     await updateStudent(db, user, studentId, { active: parsed }, ip);
     refresh();
     return ok(undefined, parsed ? "Öğrenci aktif." : "Öğrenci pasif.");
-  } catch (error) {
-    return toActionError(error);
-  }
-}
-
-export async function setStudentCharacterTypeAction(
-  studentId: string,
-  characterTypeId: string,
-): Promise<ActionResult<undefined>> {
-  try {
-    const { user } = await requireRole("teacher");
-    await assertTeacherOfStudent(user, studentId);
-    const input = studentCharacterSchema.parse({ characterTypeId });
-    const { ip } = await getRequestMeta();
-    await setStudentCharacterType(db, user, studentId, input.characterTypeId, ip);
-    refresh();
-    return ok(undefined, "Karakter değiştirildi.");
   } catch (error) {
     return toActionError(error);
   }

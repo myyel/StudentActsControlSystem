@@ -83,6 +83,7 @@ export async function giveBehavior(
           xp: student.xp,
           characterLevel: student.characterLevel,
           characterTypeId: student.characterTypeId,
+          characterXpBase: student.characterXpBase,
         })
         .from(student)
         .where(
@@ -124,7 +125,7 @@ export async function giveBehavior(
         .set({ xp: sql`${student.xp} + ${xpDelta}`, balance: sql`${student.balance} + ${balanceDelta}` })
         .where(inArray(student.id, input.studentIds));
 
-      // Same transaction as the counters (CLAUDE.md rule 4); deletes never lower the level.
+      // Same transaction as the counters (CLAUDE.md rule 4); deletes never move a character back.
       const levelUps = xpDelta > 0 ? await raiseLevels(tx, classId, locked.map((s) => ({ ...s, xp: s.xp + xpDelta }))) : [];
 
       const notificationIds = [
@@ -149,7 +150,12 @@ export async function giveBehavior(
           points: type.points,
           studentIds: input.studentIds,
           ...(levelUps.length > 0 && {
-            levelUps: levelUps.map(({ studentId, fromLevel, toLevel }) => ({ studentId, fromLevel, toLevel })),
+            levelUps: levelUps.map(({ studentId, fromLevel, toLevel, newCharacter }) => ({
+              studentId,
+              fromLevel,
+              toLevel,
+              ...(newCharacter && { newCharacter }),
+            })),
           }),
         },
         ip,

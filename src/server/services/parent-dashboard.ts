@@ -1,10 +1,10 @@
 import { and, desc, eq, gt, gte, isNull, sql } from "drizzle-orm";
 import type { Db } from "@/server/db";
 import { behaviorEvent, parentStudent, school, schoolClass, student } from "@/server/db/schema";
-import { levelProgress } from "@/lib/character";
+import { characterProgress } from "@/lib/character";
 import { forbidden } from "@/server/auth/errors";
 import { listBehaviorTypes } from "./behavior-type";
-import { getClassLevelThresholds, getStageMap, stageOf } from "./character";
+import { getClassLevelSettings, getStageMap, listCompletedCharacters, stageOf } from "./character";
 import { homeCountsToday, homeXpToday } from "./home-behavior";
 import { getRoadmapForParent } from "./progress";
 import { getLast7Days } from "./timeline";
@@ -28,6 +28,7 @@ export async function getParentDashboard(db: Db, parentId: string, studentId: st
       xp: student.xp,
       characterLevel: student.characterLevel,
       characterTypeId: student.characterTypeId,
+      characterXpBase: student.characterXpBase,
       schoolId: schoolClass.schoolId,
       timeZone: school.timezone,
       homeDailyXpCap: schoolClass.homeDailyXpCap,
@@ -39,8 +40,9 @@ export async function getParentDashboard(db: Db, parentId: string, studentId: st
     .where(and(eq(parentStudent.parentId, parentId), eq(parentStudent.studentId, studentId), isNull(student.deletedAt)));
   if (!child) throw forbidden();
 
-  const [thresholds, stageMap, week, recent, roadmap, homeTypes, todayHomeXp, todayCounts, [top]] = await Promise.all([
-    getClassLevelThresholds(db, child.classId),
+  const [levels, completed, stageMap, week, recent, roadmap, homeTypes, todayHomeXp, todayCounts, [top]] = await Promise.all([
+    getClassLevelSettings(db, child.classId),
+    listCompletedCharacters(db, studentId, child.classId),
     getStageMap(db, [child.characterTypeId], [child.classId]),
     getLast7Days(db, studentId, child.timeZone, now),
     db
@@ -77,8 +79,11 @@ export async function getParentDashboard(db: Db, parentId: string, studentId: st
       .limit(1),
   ]);
 
+  const { thresholds, completeXp } = levels;
   const level = child.characterLevel;
   const maxLevel = thresholds.length;
+  // XP on the current character; earlier characters are in `completed`.
+  const ownXp = Math.max(child.xp - child.characterXpBase, 0);
   return {
     child: {
       id: child.id,
@@ -91,11 +96,12 @@ export async function getParentDashboard(db: Db, parentId: string, studentId: st
     character: {
       level,
       maxLevel,
-      xp: child.xp,
+      xp: ownXp,
       stage: stageOf(stageMap, child.characterTypeId, level, child.classId),
       nextStageName: level < maxLevel ? stageOf(stageMap, child.characterTypeId, level + 1, child.classId).name : null,
-      progress: levelProgress(thresholds, level, child.xp),
-      nextThreshold: level < maxLevel ? thresholds[level]! : null,
+      progress: characterProgress(thresholds, completeXp, level, ownXp),
+      nextThreshold: level < maxLevel ? thresholds[level]! : completeXp,
+      completed,
     },
     week,
     weekBalance: week.reduce((sum, d) => sum + d.positive - d.negative, 0),

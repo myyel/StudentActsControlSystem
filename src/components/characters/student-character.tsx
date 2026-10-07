@@ -1,41 +1,30 @@
-"use client";
-
-import Link from "next/link";
-import { useState, useTransition } from "react";
-import { setStudentCharacterTypeAction } from "@/app/ogretmen/actions";
-import { FormMessage } from "@/components/form-message";
-import { cn } from "@/lib/utils";
-import type { ActionResult } from "@/server/action-result";
 import { CharacterAvatar } from "./character-avatar";
 import { CharacterImage } from "./character-image";
+import { CompletedCharacters, type CompletedCharacter } from "./completed-characters";
 import { LevelBar } from "./level-bar";
 
 type Props = {
-  studentId: string;
-  /** Board link that opens "hangisi seninle büyüsün?" for this student. */
-  boardHref: string;
   character: {
-    characterTypeId: string;
     level: number;
     maxLevel: number;
+    /** XP on the current character. */
     xp: number;
     progress: number;
-    nextThreshold: number | null;
+    /** XP of the next level, or on the last level of the next character. */
+    nextThreshold: number;
     stage: { name: string; assetUrl: string };
-    types: { id: string; name: string; assetUrl: string }[];
+    nextCharacter: { name: string; assetUrl: string } | null;
+    completed: CompletedCharacter[];
   };
 };
 
-/** Teacher view of a student's character; the type can be changed, the level stays. */
-export function StudentCharacter({ studentId, boardHref, character }: Props) {
-  const [pending, start] = useTransition();
-  const [state, setState] = useState<ActionResult<undefined> | null>(null);
-  const { level, maxLevel, xp, nextThreshold, stage, progress, types, characterTypeId } = character;
-
-  function choose(typeId: string) {
-    if (typeId === characterTypeId) return;
-    start(async () => setState(await setStudentCharacterTypeAction(studentId, typeId)));
-  }
+/**
+ * Teacher view of a student's character. Nobody picks the type: students start with the class's
+ * first character and move through the class's order as they finish each one (PRD §4.6).
+ */
+export function StudentCharacter({ character }: Props) {
+  const { level, maxLevel, xp, nextThreshold, stage, progress, nextCharacter, completed } = character;
+  const lastLevel = level >= maxLevel;
 
   return (
     <div className="flex flex-col gap-4">
@@ -46,40 +35,24 @@ export function StudentCharacter({ studentId, boardHref, character }: Props) {
           <p className="text-muted-foreground">{level}. seviye</p>
           <LevelBar level={level} maxLevel={maxLevel} progress={progress} />
           <p className="text-sm text-muted-foreground">
-            {nextThreshold === null
-              ? "Son seviyeye ulaştı."
-              : `Sonraki seviye ${nextThreshold} XP'de (şu an ${xp} XP).`}
+            {lastLevel
+              ? `Son aşamada. ${nextThreshold} XP'de yeni karaktere geçer (bu karakterde şu an ${xp} XP).`
+              : `Sonraki seviye ${nextThreshold} XP'de (bu karakterde şu an ${xp} XP).`}
           </p>
         </div>
       </div>
 
-      <fieldset className="flex flex-col gap-2" disabled={pending}>
-        <legend className="mb-2 text-sm font-medium">Karakter türü (seviye korunur)</legend>
-        <p className="mb-2 text-sm text-muted-foreground">
-          Çocuk isterse türü tahtada birlikte seçin:{" "}
-          <Link href={boardHref} className="inline-flex min-h-11 items-center font-semibold underline underline-offset-2">
-            Tahtada birlikte seç
-          </Link>
+      {nextCharacter && (
+        <p className="flex items-center gap-3 rounded-xl bg-muted px-3 py-2 text-sm">
+          <CharacterImage stage={{ name: nextCharacter.name, assetUrl: nextCharacter.assetUrl }} size={44} decorative />
+          <span>
+            Sıradaki karakter: <strong>{nextCharacter.name}</strong>. Sırayı sınıfın Karakterler sekmesinden
+            değiştirebilirsiniz.
+          </span>
         </p>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {types.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => choose(t.id)}
-              aria-pressed={t.id === characterTypeId}
-              className={cn(
-                "flex min-h-11 flex-col items-center gap-1 rounded-lg border p-2 text-sm font-medium transition-colors",
-                t.id === characterTypeId ? "border-primary bg-primary/10" : "hover:bg-accent",
-              )}
-            >
-              <CharacterImage stage={{ name: t.name, assetUrl: t.assetUrl }} size={64} decorative />
-              {t.name}
-            </button>
-          ))}
-        </div>
-      </fieldset>
-      <FormMessage state={state} />
+      )}
+
+      <CompletedCharacters items={completed} />
     </div>
   );
 }

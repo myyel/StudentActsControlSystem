@@ -65,11 +65,7 @@ export default async function StudentPage({
           <CardTitle>Karakter</CardTitle>
         </CardHeader>
         <CardContent>
-          <StudentCharacter
-            studentId={student.id}
-            boardHref={`/tahta/${sinifId}?karakter=${student.id}`}
-            character={character}
-          />
+          <StudentCharacter character={character} />
         </CardContent>
       </Card>
 
@@ -82,14 +78,14 @@ export default async function StudentPage({
           className="absolute inset-0 z-10 rounded-xl outline-none"
         />
         <CardHeader>
+          <CardTitle>Son 7 gün</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <WeekChart days={week} />
           <span aria-hidden className="flex items-center gap-1 self-end text-sm font-bold text-sky-ink">
             Her davranışın grafiği
             <ChevronRight className="size-4" />
           </span>
-          <CardTitle>Son 7 gün</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <WeekChart days={week} />
         </CardContent>
       </Card>
 

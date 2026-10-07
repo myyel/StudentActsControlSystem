@@ -1,4 +1,5 @@
 import { CharacterAvatar } from "@/components/characters/character-avatar";
+import { CompletedCharacters, type CompletedCharacter } from "@/components/characters/completed-characters";
 import { LevelBar } from "@/components/characters/level-bar";
 
 type Props = {
@@ -7,11 +8,15 @@ type Props = {
   character: {
     level: number;
     maxLevel: number;
+    /** XP on the current character. */
     xp: number;
     progress: number;
-    nextThreshold: number | null;
+    /** XP of the next level, or on the last level of the next character. */
+    nextThreshold: number;
+    /** Null on the last level: the next step is a new character. */
     nextStageName: string | null;
     stage: { name: string; assetUrl: string };
+    completed: CompletedCharacter[];
   };
 };
 
@@ -20,7 +25,8 @@ type Props = {
  * (child surface); the parent also gets the number to the next stage.
  */
 export function CharacterHero({ childName, className, character }: Props) {
-  const { level, maxLevel, xp, progress, nextThreshold, nextStageName, stage } = character;
+  const { level, maxLevel, xp, progress, nextThreshold, nextStageName, stage, completed } = character;
+  const left = Math.max(0, nextThreshold - xp);
   return (
     <section
       aria-label="Karakter"
@@ -34,14 +40,17 @@ export function CharacterHero({ childName, className, character }: Props) {
         </p>
         <LevelBar level={level} maxLevel={maxLevel} progress={progress} className="h-4" label={`${childName}: ${stage.name}`} />
         <p className="text-sm">
-          {nextThreshold === null || nextStageName === null ? (
-            "Son seviyeye ulaştı!"
+          {nextStageName === null ? (
+            <>
+              Son aşamada! Yeni arkadaşına <strong>{left} XP</strong> kaldı · şu an {xp} XP
+            </>
           ) : (
             <>
-              {nextStageName} olmaya <strong>{Math.max(0, nextThreshold - xp)} XP</strong> kaldı · şu an {xp} XP
+              {nextStageName} olmaya <strong>{left} XP</strong> kaldı · şu an {xp} XP
             </>
           )}
         </p>
+        <CompletedCharacters items={completed} className="items-center sm:items-start" />
       </div>
     </section>
   );

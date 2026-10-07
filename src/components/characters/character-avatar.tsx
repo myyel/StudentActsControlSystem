@@ -30,7 +30,7 @@ type Props = {
   /** Shown as a ring around the picture: progress to the next level (0–1). */
   progress?: number;
   level?: number;
-  /** The class's level count (PRD §4.6); reaching it gives the gold ring. */
+  /** The class's level count (PRD §4.6); on the last level the ring is gold and fills towards the next character. */
   maxLevel?: number;
   className?: string;
   /** Screen reader text, e.g. "Ada Y., Kanatlı ejderha, 4. seviye". Omit when written next to it. */
@@ -42,13 +42,13 @@ const RADIUS = 50 - STROKE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 /**
- * A character with an optional progress ring (no numbers: children see it). The last level gets a
- * full gold ring.
+ * A character with an optional progress ring (no numbers: children see it). On the last level the
+ * ring is gold.
  */
 export function CharacterAvatar({ stage, size, progress, level, maxLevel = MAX_LEVEL, className, label }: Props) {
   const ring = progress !== undefined;
   const done = level !== undefined && level >= maxLevel;
-  const value = done ? 1 : Math.min(1, Math.max(0, progress ?? 0));
+  const value = Math.min(1, Math.max(0, progress ?? 0));
 
   return (
     <span

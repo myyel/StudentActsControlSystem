@@ -12,20 +12,34 @@ const ascending = (t: z.ZodArray<typeof thresholdField>) =>
     .refine((v) => v[0] === 0, "1. seviyenin eşiği 0 olmalı.")
     .refine((v) => v.every((x, i) => i === 0 || x > v[i - 1]!), "Her seviyenin eşiği bir öncekinden büyük olmalı.");
 
+/** Character XP that finishes a character; empty means the default (defaultCompleteXp). */
+const completeXpField = z.preprocess((v) => (v === "" || v === null ? undefined : v), thresholdField.optional());
+
+/** The character is finished only after its last level. */
+const afterLastLevel = <T extends { thresholds: number[]; completeXp?: number }>(v: T) =>
+  v.completeXp === undefined || v.completeXp > (v.thresholds.at(-1) ?? 0);
+const afterLastLevelError = { message: "Yeni karaktere geçiş eşiği son seviyenin eşiğinden büyük olmalı.", path: ["completeXp"] };
+
 /** School thresholds (admin): always all five levels. */
-export const levelThresholdsSchema = z.object({
-  thresholds: ascending(z.array(thresholdField).length(MAX_LEVEL, `${MAX_LEVEL} seviyenin de eşiğini girin.`)),
-});
+export const levelThresholdsSchema = z
+  .object({
+    thresholds: ascending(z.array(thresholdField).length(MAX_LEVEL, `${MAX_LEVEL} seviyenin de eşiğini girin.`)),
+    completeXp: completeXpField,
+  })
+  .refine(afterLastLevel, afterLastLevelError);
 
 /** A class's own levels (teacher): 2–5 levels, each type uses its first stages. */
-export const classLevelsSchema = z.object({
-  thresholds: ascending(
-    z
-      .array(thresholdField)
-      .min(MIN_CLASS_LEVELS, `En az ${MIN_CLASS_LEVELS} seviye olmalı.`)
-      .max(MAX_LEVEL, `En fazla ${MAX_LEVEL} seviye olabilir.`),
-  ),
-});
+export const classLevelsSchema = z
+  .object({
+    thresholds: ascending(
+      z
+        .array(thresholdField)
+        .min(MIN_CLASS_LEVELS, `En az ${MIN_CLASS_LEVELS} seviye olmalı.`)
+        .max(MAX_LEVEL, `En fazla ${MAX_LEVEL} seviye olabilir.`),
+    ),
+    completeXp: completeXpField,
+  })
+  .refine(afterLastLevel, afterLastLevelError);
 
 /** A class's stage names for one type; an empty name shows the school's name. */
 export const classStageNamesSchema = z.object({
@@ -51,4 +65,3 @@ export const characterTypeSchema = z.object({
 
 export type CharacterTypeInput = z.infer<typeof characterTypeSchema>;
 
-export const studentCharacterSchema = z.object({ characterTypeId: z.uuid("Bir karakter seçin.") });

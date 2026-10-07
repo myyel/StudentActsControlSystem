@@ -30,11 +30,32 @@ export function levelProgress(thresholds: readonly number[], level: number, xp: 
 }
 
 /**
+ * Character XP that finishes a character when nobody set one: the last stage lasts as long as
+ * the step before it (0/20/50/100/200 → 300).
+ */
+export function defaultCompleteXp(thresholds: readonly number[]) {
+  const last = thresholds[thresholds.length - 1]!;
+  return last + Math.max(last - (thresholds[thresholds.length - 2] ?? 0), 1);
+}
+
+/**
+ * Like levelProgress, with the last level filling up towards the next character. `xp` is the
+ * current character's own XP (student.xp - student.characterXpBase).
+ */
+export function characterProgress(thresholds: readonly number[], completeXp: number, level: number, xp: number) {
+  return levelProgress([...thresholds, completeXp], Math.min(level, thresholds.length), xp);
+}
+
+/**
  * A sentence instead of a number for children ("Fidan olmaya çok az kaldı!"). Next stage name is
- * null on the last level.
+ * null on the last level, where the next step is a new character.
  */
 export function nextStageSentence(progress: number, nextStageName: string | null) {
-  if (nextStageName === null) return "En yüksek seviyede!";
+  if (nextStageName === null) {
+    if (progress >= 0.66) return "Yeni bir arkadaşa çok az kaldı!";
+    if (progress >= 0.33) return "Yeni bir arkadaş yolda!";
+    return "Son aşamada! Sırada yeni bir arkadaş var.";
+  }
   if (progress >= 0.66) return `${nextStageName} olmaya çok az kaldı!`;
   if (progress >= 0.33) return `${nextStageName} olma yolunda!`;
   return `Sırada: ${nextStageName}`;

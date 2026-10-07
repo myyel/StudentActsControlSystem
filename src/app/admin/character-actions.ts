@@ -17,9 +17,12 @@ export async function updateLevelThresholdsAction(_: unknown, formData: FormData
     const { user } = await requireRole("admin");
     if (!user.schoolId) throw forbidden();
     assertAdminOfSchool(user, user.schoolId);
-    const input = levelThresholdsSchema.parse({ thresholds: formData.getAll("threshold") });
+    const input = levelThresholdsSchema.parse({
+      thresholds: formData.getAll("threshold"),
+      completeXp: formData.get("completeXp"),
+    });
     const { ip } = await getRequestMeta();
-    const { raised } = await updateLevelThresholds(db, user, user.schoolId, input.thresholds, ip);
+    const { raised } = await updateLevelThresholds(db, user, user.schoolId, input.thresholds, ip, input.completeXp ?? null);
     refresh();
     return ok(undefined, raised > 0 ? `Kaydedildi. ${raised} öğrencinin karakteri seviye atladı.` : "Kaydedildi.");
   } catch (error) {

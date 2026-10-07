@@ -18,10 +18,13 @@ async function studentXp(firstName: string, lastInitial: string) {
   return xp;
 }
 
-/** The low demo thresholds can level a student up; the celebration stays until "Harika!". */
+/** The low demo thresholds can level a student up or finish a character; the celebration stays until "Harika!". */
 async function dismissCelebration(page: Page) {
-  const celebration = page.getByRole("dialog", { name: /büyüdü/ });
-  if (await celebration.count()) await celebration.getByRole("button", { name: /Harika|Sıradaki/ }).click();
+  const celebration = page.getByRole("dialog", { name: /büyüdü|tamamlandı/ });
+  // One score can bring two: the last level, then the next character ("Sıradaki" → "Harika!").
+  for (let i = 0; i < 3 && (await celebration.count()); i++) {
+    await celebration.getByRole("button", { name: /Harika|Sıradaki/ }).click();
+  }
 }
 
 async function expectTargetsInDialog(page: Page, min: number) {
@@ -110,7 +113,7 @@ test.describe("teacher", () => {
 
       await page.getByRole("button", { name: "Baykuş: yukarı taşı" }).click();
       await page.getByRole("button", { name: "Türleri ve sırayı kaydet" }).click();
-      await expect(page.getByText("Bu sınıf için seçtiğiniz türler ve sıraları.")).toBeVisible();
+      await expect(page.getByText("Bu sınıf için seçtiğiniz türler ve öğrencilerin izleyeceği sıra.")).toBeVisible();
       const types = page.getByRole("group", { name: "Sınıfta kullanılacak karakter türleri" });
       await expect(types.getByRole("listitem").first()).toContainText("Baykuş");
 
@@ -123,7 +126,7 @@ test.describe("teacher", () => {
       await page.getByRole("button", { name: "Okul adlarına dön" }).click();
       await expect(types.getByText("Sihirli yumurta")).toHaveCount(0);
       await page.getByRole("button", { name: "Okul ayarına dön" }).first().click();
-      await expect(page.getByText("Bu sınıf okulun tüm aktif türlerini okulun sırasıyla kullanıyor.")).toBeVisible();
+      await expect(page.getByText("Bu sınıf okulun tüm aktif türlerini okulun sırasıyla kullanıyor;")).toBeVisible();
       await expect(types.getByRole("listitem").first()).toContainText("Ejderha");
     });
   });
