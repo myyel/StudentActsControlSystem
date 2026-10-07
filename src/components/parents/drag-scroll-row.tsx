@@ -51,7 +51,9 @@ export function DragScrollRow({ label, className, children }: Props) {
       onPointerUp={end}
       onPointerCancel={end}
       className={cn(
-        "flex cursor-grab snap-x gap-5 overflow-x-auto rounded-[1.75rem] pb-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+        // `relative`: sr-only text inside off-screen cards is absolutely positioned; without a positioned
+        // scroller it escapes the clipping and widens the whole page in Chrome.
+        "relative flex cursor-grab snap-x gap-5 overflow-x-auto rounded-[1.75rem] pb-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         className,
       )}
     >
